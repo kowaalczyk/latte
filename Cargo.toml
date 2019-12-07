@@ -1,0 +1,17 @@
+[package]
+name = "latte"
+version = "0.1.0"
+authors = ["Krzysztof Kowalczyk <k.kowaalczyk@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "latte_utils"
+path = "src/lib.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace]
+members = [".", "parser"]
+
+[dependencies]
+parser = {path = "parser", version = "0.1.0"}
