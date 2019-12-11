@@ -1,7 +1,10 @@
 mod latte;
 mod visitor;
 
-pub mod ast;
-pub mod error;
-pub mod parser;
+mod ast;
+mod sourcemap;
+mod error;
+mod parser;
+
+pub mod frontend;
 // TODO: typechecker, other validations

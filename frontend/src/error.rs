@@ -34,16 +34,26 @@ impl fmt::Display for FrontendError {
 
 impl<T: fmt::Debug, E: fmt::Debug> From<(ErrorRecovery<usize, T, E>)> for FrontendError {
     fn from(err: ErrorRecovery<usize,T,E>) -> Self {
-        let location = match &err.error {
-            LalrpopError::InvalidToken { location } => location.clone(),
-            LalrpopError::UnrecognizedEOF { location, expected: _ } => location.clone(),
-            LalrpopError::ExtraToken { token } => token.0.clone(),
-            LalrpopError::UnrecognizedToken { token, expected: _ } => token.0.clone(),
-            LalrpopError::User { error } => panic!("Undefined lalrpop user error: {:?}", error), // shouldn't be possible
+        let (location, message) = match &err.error {
+            LalrpopError::InvalidToken { location } => {
+                (location.clone(), String::from("InvalidToken"))
+            },
+            LalrpopError::UnrecognizedEOF { location, expected: _ } => {
+                (location.clone(), String::from("Unexpected end of file"))
+            },
+            LalrpopError::ExtraToken { token } => {
+                (token.0.clone(), format!("ExtraToken: {:?}", token.1))
+            },
+            LalrpopError::UnrecognizedToken { token, expected: _ } => {
+                (token.0.clone(), format!("UnrecognizedToken: {:?}", token.1))
+            },
+            LalrpopError::User { error } => {
+                panic!("Impossible: Undefined lalrpop user error: {:#?}", error)
+            }
         };
         FrontendError::ParseError {
-            message: format!("{:#?}", err.error),
-            location: location
+            message,
+            location
         }
     }
 }

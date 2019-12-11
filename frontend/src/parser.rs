@@ -1,3 +1,4 @@
+use crate::ast;
 use crate::ast::Program;
 use crate::latte::ProgramParser;
 use crate::error::FrontendError;
@@ -43,5 +44,36 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn simple_main_parses() -> Result<(), Vec<FrontendError>> {
+        let code = r#"
+        int main() {
+            return 0;
+        }
+        "#;
+        let code_str = String::from(code);
+        let main_block = ast::Block {
+            stmts: vec![
+                Box::new(ast::Statement::Return { 
+                    expr: Some(Box::new(ast::Expression::LitInt { val: 0 }))
+                })
+            ]
+        };
+        let main_fn = ast::TopDef::Function {
+            func: ast::Function {
+                ret: ast::Type::Int,
+                ident: String::from("main"),
+                args: vec![],
+                block: main_block,
+            }
+        };
+        let expected_ast = ast::Program {
+            topdefs: vec![main_fn]
+        };
+        let actual_ast = parse_program(code_str)?;
+        assert_eq!(expected_ast, actual_ast);
+        Ok(())
     }
 }
