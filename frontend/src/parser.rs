@@ -61,12 +61,10 @@ mod tests {
             ]
         };
         let main_fn = ast::TopDef::Function {
-            func: ast::Function {
-                ret: ast::Type::Int,
-                ident: String::from("main"),
-                args: vec![],
-                block: main_block,
-            }
+            ret: ast::Type::Int,
+            ident: String::from("main"),
+            args: vec![],
+            block: main_block,
         };
         let expected_ast = ast::Program {
             topdefs: vec![main_fn]

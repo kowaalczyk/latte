@@ -11,12 +11,21 @@ use crate::error::FrontendErrorKind::SystemError;
 use std::sync::Arc;
 
 
-pub fn process_code(source_code: &String) -> Result<Program, Vec<FrontendError<usize>>> {
+pub fn process_code(file_name: &String, source_code: &String) -> Result<Program, Vec<FrontendError<String>>> {
+    // setup codemap for mapping byte offset to (file, line, column)
+    let mut codemap = CodeMap::new();
+    let codemap_file = codemap.add_file(
+        file_name.clone(),
+        source_code.clone()
+    );
+    // clean code from comments (no custom lexer) and keep source map for corretcting error byte offset
     let (clean_code, source_map) = clean_comments(source_code);
     parse_program(clean_code).or_else(
         |err_vec| { Err(
             err_vec.iter()
                 .map(|e| e.map_location(&source_map))
+                .map(|e| e.map_location(&codemap_file))
+                .map(|e| e.map_location(&codemap))
                 .collect()
         )}
     )
@@ -48,14 +57,5 @@ pub fn process_file(path: &String) -> Result<Program, Vec<FrontendError<String>>
             return Err(vec![err]);
         }
     };
-    let mut codemap = CodeMap::new();
-    let codemap_file = codemap.add_file(path.clone(), source_code.clone());
-    process_code(&source_code).or_else(
-        |err_vec| { Err(
-            err_vec.iter()
-                .map(|e| e.map_location(&codemap_file))
-                .map(|e| e.map_location(&codemap))
-                .collect()
-        )}
-    )
+    process_code(&path, &source_code)
 }

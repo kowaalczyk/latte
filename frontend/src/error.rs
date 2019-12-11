@@ -55,7 +55,7 @@ impl<LocationT1> FrontendError<LocationT1> {
         }
     }
 
-    pub(crate) fn map_location<LocationT2>(&self, mapper: &dyn LocationMapper<LocationT1, LocationT2>) -> FrontendError<LocationT2> {
+    pub fn map_location<LocationT2>(&self, mapper: &dyn LocationMapper<LocationT1, LocationT2>) -> FrontendError<LocationT2> {
         FrontendError::<LocationT2> {
             location: mapper.map_location(&self.location),
             kind: self.kind.clone(),

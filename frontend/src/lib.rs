@@ -3,8 +3,8 @@ mod visitor;
 
 mod ast;
 mod sourcemap;
-mod error;
 mod parser;
 
-pub mod frontend;
 // TODO: typechecker, other validations
+pub mod error;
+pub mod frontend;

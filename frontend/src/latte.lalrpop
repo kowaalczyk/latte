@@ -24,7 +24,6 @@ Separated<Sep, T>: Vec<T> = {
 
 // vector of 1 or more T separated by Sep
 NonEmptySeparated<Sep, T>: Vec<T> = {
-    // TODO: Test this (should work fine, the last token has to be present)
     <v:(<T> Sep)*> <e:T> => {
         let mut v = v;
         v.push(e);
@@ -40,7 +39,7 @@ pub Program: ast::Program = {
 
 pub TopDef: ast::TopDef = {
     <ret:Type> <ident:Ident> "(" <args:Args> ")" <block:Block> => {
-        ast::TopDef::Function { func: ast::Function { ret, ident, args, block } }
+        ast::TopDef::Function { ret, ident, args, block }
     },
     // extension: class
     "class" <t:Type> "{" <vars:ClassVar*> <methods:Method*> "}" => {
@@ -98,14 +97,14 @@ StatementAllowDanglingIf<I>: Box<ast::Statement> = {
     <t:Type> <items:DeclItems> ";" => {
         Box::new(ast::Statement::Decl { t, items })
     },
-    <ident:Ident> "=" <expr:Expr0> ";" => {
-        Box::new(ast::Statement::Ass { ident, expr })
+    <r:Reference> "=" <expr:Expr0> ";" => {
+        Box::new(ast::Statement::Ass { r, expr })
     },
-    <ident:Ident> "++" ";" => {
-        Box::new(ast::Statement::Mut { ident, op: ast::StatementOp::Increment })
+    <r:Reference> "++" ";" => {
+        Box::new(ast::Statement::Mut { r, op: ast::StatementOp::Increment })
     },
-    <ident:Ident> "--" ";" => {
-        Box::new(ast::Statement::Mut { ident, op: ast::StatementOp::Decrement })
+    <r:Reference> "--" ";" => {
+        Box::new(ast::Statement::Mut { r, op: ast::StatementOp::Decrement })
     },
     "return" <e:Expr0> ";" => {
         Box::new(ast::Statement::Return { expr: Option::Some(e) })
@@ -123,7 +122,6 @@ StatementAllowDanglingIf<I>: Box<ast::Statement> = {
     "while" "(" <expr:Expr0> ")" <stmt:StatementAllowDanglingIf<I>> => {
         Box::new(ast::Statement::While { expr, stmt })
     },
-    // extension: arrays
     "for" "(" <t:Type> <ident:Ident> ":" <arr:Expr0> ")" <stmt:StatementAllowDanglingIf<I>> => {
         Box::new(ast::Statement::For { t, ident, arr, stmt })
     },
@@ -150,7 +148,6 @@ Type: ast::Type = {
     "void" => ast::Type::Void,
     <ident:Ident> => ast::Type::Class { ident },
     <t:Type> "[]" => ast::Type::Array { item_t: Box::new(t) },
-    // internal function type does not need to be defined here (?)
 };
 
 Types = Separated<",", Type>;
@@ -219,39 +216,27 @@ Expr5: Box<ast::Expression> = {
 };
 
 Expr6: Box<ast::Expression> = {
-    <ident:Ident> => Box::new(ast::Expression::Var { ident }),
-    // extension: class, struct
     "new" <t:Type> => {
         Box::new(ast::Expression::InitDefault { t })
     },
-    // extension: array
     "new" <item_t:Type> "[" <size:Expr0> "]" => {
         Box::new(ast::Expression::InitArr { 
             t: ast::Type::Array { item_t: Box::new(item_t) }, 
             size 
         })
     },
-    // extension: class, struct
-    <obj:Ident> "." <field:Ident> => Box::new(ast::Expression::Member { obj, field }),
-    // extension: class
-    <obj:Ident> "." <method:Ident> "(" <args:Exprs> ")" => {
-        Box::new(ast::Expression::MethodApp { obj, method, args })
+    <r:Reference> "(" <args:Exprs> ")" => {
+        Box::new(ast::Expression::App { r, args })
     },
-    // extension: array
-    <arr:Ident> "[" <idx:Expr0> "]" => {
-        Box::new(ast::Expression::Index { arr, idx })
+    <r:Reference> => {
+        Box::new(ast::Expression::Reference { r })
     },
     <val:Num> => Box::new(ast::Expression::LitInt { val }),
     "true" => Box::new(ast::Expression::LitBool { val: true }),
     "false" => Box::new(ast::Expression::LitBool { val: false }),
-    // extension: class, struct
     "null" => Box::new(ast::Expression::LitNull),
-    <ident:Ident> "(" <args:Exprs> ")" => {
-        Box::new(ast::Expression::App { ident, args })
-    },
     // TODO: Unescape characters from the string (!!!)
     r#""[^"]*""# => Box::new(ast::Expression::LitStr { val: String::from(<>) }),
-    // extensions: all
     // nested expression conflicts with type cast, so we only implement the possibility of casting null
     "(" <t:Type> ")null" => Box::new(ast::Expression::Cast { t, expr: Box::new(ast::Expression::LitNull) }),
     // https://stackoverflow.com/questions/27448189/bison-reduce-reduce-conflict-with-casting-and-expression-parentheses
@@ -267,10 +252,12 @@ Ident: String = {
     r"[a-zA-Z_][a-zA-Z_0-9]*" => String::from(<>),
 };
 
+Reference: ast::Reference = {
+    <ident:Ident> => ast::Reference::Ident { ident },
+    <obj:Ident> "." <field:Ident> => ast::Reference::Object { obj, field },
+    <arr:Ident> "[" <idx:Expr0> "]" => ast::Reference::Array { arr, idx },
+};
+
 Num: u64 = {
     r"[0-9]+" => u64::from_str(<>).unwrap(),  // no negative numbers, just as the LBNF Integer
 };
-
-// --- comments ---
-
-// TODO: Comments (!!!)
