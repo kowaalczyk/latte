@@ -16,15 +16,15 @@ separator  Arg "," ;
 
 -- statements ----------------------------------------------
 
-Block.     Block ::= "{" [Stmt] "}" ;
+Block.     Block ::= "{" [Statement] "}" ;
 
-separator  Stmt "" ;
+separator  Statement "" ;
 
-Empty.     Stmt ::= ";" ;
+Empty.     Statement ::= ";" ;
 
-BStmt.     Stmt ::= Block ;
+BStatement.     Statement ::= Block ;
 
-Decl.      Stmt ::= Type [Item] ";" ;
+Decl.      Statement ::= Type [Item] ";" ;
 
 NoInit.    Item ::= Ident ; 
 
@@ -32,23 +32,23 @@ Init.      Item ::= Ident "=" Expr ;
 
 separator nonempty Item "," ;
 
-Ass.       Stmt ::= Ident "=" Expr  ";" ;
+Ass.       Statement ::= Ident "=" Expr  ";" ;
 
-Incr.      Stmt ::= Ident "++"  ";" ;
+Incr.      Statement ::= Ident "++"  ";" ;
 
-Decr.      Stmt ::= Ident "--"  ";" ;
+Decr.      Statement ::= Ident "--"  ";" ;
 
-Ret.       Stmt ::= "return" Expr ";" ;
+Ret.       Statement ::= "return" Expr ";" ;
 
-VRet.      Stmt ::= "return" ";" ;
+VRet.      Statement ::= "return" ";" ;
 
-Cond.      Stmt ::= "if" "(" Expr ")" Stmt  ;
+Cond.      Statement ::= "if" "(" Expr ")" Statement  ;
 
-CondElse.  Stmt ::= "if" "(" Expr ")" Stmt "else" Stmt  ;
+CondElse.  Statement ::= "if" "(" Expr ")" Statement "else" Statement  ;
 
-While.     Stmt ::= "while" "(" Expr ")" Stmt ;
+While.     Statement ::= "while" "(" Expr ")" Statement ;
 
-SExp.      Stmt ::= Expr  ";" ;
+SExp.      Statement ::= Expr  ";" ;
 
 -- Types ---------------------------------------------------
 
@@ -104,21 +104,21 @@ Minus.     AddOp ::= "-" ;
 
 Times.     MulOp ::= "*" ;
 
-Div.       MulOp ::= "/" ;
+Divide.       MulOp ::= "/" ;
 
-Mod.       MulOp ::= "%" ;
+Modulo.       MulOp ::= "%" ;
 
-LTH.       RelOp ::= "<" ;
+Less.       RelOp ::= "<" ;
 
-LE.        RelOp ::= "<=" ;
+LessEqual.        RelOp ::= "<=" ;
 
-GTH.       RelOp ::= ">" ;
+Greater.       RelOp ::= ">" ;
 
-GE.        RelOp ::= ">=" ;
+GreaterEqual.        RelOp ::= ">=" ;
 
-EQU.       RelOp ::= "==" ;
+Equal.       RelOp ::= "==" ;
 
-NE.        RelOp ::= "!=" ;
+NotEqual.        RelOp ::= "!=" ;
 
 -- comments ------------------------------------------------
 

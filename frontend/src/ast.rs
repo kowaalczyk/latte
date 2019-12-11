@@ -1,28 +1,28 @@
 
-#[derive(Debug)]
-pub enum BinaryOp {
+#[derive(Debug, PartialEq)]
+pub enum BinaryOperator {
     Plus,
     Minus,
     Times,
-    Div,
-    Mod,
-    LTH,
-    LE,
-    GTH,
-    GE,
-    EQU,
-    NE,
+    Divide,
+    Modulo,
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
+    Equal,
+    NotEqual,
     And,
     Or,
 }
 
-#[derive(Debug)]
-pub enum UnaryOp {
+#[derive(Debug, PartialEq)]
+pub enum UnaryOperator {
     Neg,
     Not,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Var { ident: String },
     LitInt { val: u64 },
@@ -30,65 +30,65 @@ pub enum Expression {
     LitStr { val: String },
     LitNull,  // extension: struct, class
     App { ident: String, args: Vec<Box<Expression>> },
-    Unary { op: UnaryOp, arg: Box<Expression> },
-    Binary { left: Box<Expression>, op: BinaryOp, right: Box<Expression> },
-    InitDefault { class_name: String }, // extension: struct, class
+    Unary { op: UnaryOperator, arg: Box<Expression> },
+    Binary { left: Box<Expression>, op: BinaryOperator, right: Box<Expression> },
+    InitDefault { t: Type }, // extension: struct, class
     // InitFields { }  // TODO (not necessary, but nice)
     InitArr { t: Type, size: Box<Expression> }, // extension: array
     Member { obj: String, field: String }, // extension: struct, class
     Index { arr: String, idx: Box<Expression> }, // extension: array
     MethodApp { obj:String, method: String, args: Vec<Box<Expression>> }, // extension: class
     Cast { t: Type, expr: Box<Expression> },
+    Error,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Type {
     Int,
     Str,
     Bool,
     Void,
-    // extension: class
-    Class { ident: String },
-    // extension: array
-    Array { item_t: Box<Type> },
+    Class { ident: String }, // extension: class
+    Array { item_t: Box<Type> }, // extension: array
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum DeclItem {
     NoInit { ident: String },
     Init { ident: String, val: Box<Expression> }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Block {
-    pub stmts: Vec<Box<Stmt>>
+    pub stmts: Vec<Box<Statement>>
 }
 
-#[derive(Debug)]
-pub enum Stmt {
+#[derive(Debug, PartialEq)]
+pub enum Statement {
     Block { block: Block },
     Empty,
     Decl { t: Type, items: Vec<DeclItem> },
     Ass { ident: String, expr: Box<Expression> },
-    Mut { ident: String, op: StmtOp },
+    Mut { ident: String, op: StatementOp },
     Return { expr: Option<Box<Expression>> },
-    Cond { expr: Box<Expression>, stmt: Box<Stmt> },
-    CondElse { expr: Box<Expression>, stmt_true: Box<Stmt>, stmt_false: Box<Stmt> },
-    While { expr: Box<Expression>, stmt: Box<Stmt> },
-    For { t: Type, ident: String, arr: Box<Expression>, stmt: Box<Stmt> },
+    Cond { expr: Box<Expression>, stmt: Box<Statement> },
+    CondElse { expr: Box<Expression>, stmt_true: Box<Statement>, stmt_false: Box<Statement> },
+    While { expr: Box<Expression>, stmt: Box<Statement> },
+    For { t: Type, ident: String, arr: Box<Expression>, stmt: Box<Statement> },
     Expr { expr: Box<Expression> },
+    Error,
 }
 
-#[derive(Debug)]
-pub enum StmtOp {
+#[derive(Debug, PartialEq)]
+pub enum StatementOp {
     Increment,
     Decrement,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Arg { pub t: Type, pub ident: String }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Function {
     pub ret: Type, 
     pub ident: String, 
@@ -97,24 +97,25 @@ pub struct Function {
 }
 
 // extension: class, struct
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ClassVar {
     pub t: Type,
     pub ident: String,
     pub default: Option<Box<Expression>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TopDef {
     Function { func: Function },
     // extension: class, struct
     Class { 
-        ident: String, 
+        t: Type, 
         vars: Vec<ClassVar>,
         methods: Vec<Function>,
-        parent: Option<String>,  // no need to hold entire class
+        parent: Option<Type>,
     },
+    Error,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Program { pub topdefs: Vec<TopDef> }

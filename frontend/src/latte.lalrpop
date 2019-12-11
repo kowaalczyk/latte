@@ -1,8 +1,12 @@
 use std::str::FromStr;
 use std::iter::FromIterator;
+
+use crate::error::FrontendError;
 use crate::ast;
 
-grammar;
+
+use lalrpop_util::ErrorRecovery;
+grammar<'err>(errors: &'err mut Vec<FrontendError>);
 
 // --- macros ---
 
@@ -39,31 +43,15 @@ pub TopDef: ast::TopDef = {
         ast::TopDef::Function { func: ast::Function { ret, ident, args, block } }
     },
     // extension: class
-    "class" <ident:Type> "{" <vars:ClassVar*> <methods:Method*> "}" => {
-        match ident {
-            ast::Type::Class { ident: class_ident } => {
-                ast::TopDef::Class {
-                    ident: class_ident,
-                    vars,
-                    methods,
-                    parent: Option::None
-                }
-            },
-            _ => panic!("Class name conflict"),  // TODO: Better error handling
-        }
+    "class" <t:Type> "{" <vars:ClassVar*> <methods:Method*> "}" => {
+        ast::TopDef::Class { t, vars, methods, parent: Option::None }
     },
-    "class" <ident:Type> "extends" <parent:Type> "{" <vars:ClassVar*> <methods:Method*> "}" => {
-        match (ident, parent) {
-            (ast::Type::Class { ident: class_ident }, ast::Type::Class { ident: parent_ident }) => {
-                ast::TopDef::Class {
-                    ident: class_ident,
-                    vars,
-                    methods,
-                    parent: Option::Some(parent_ident)
-                }
-            },
-            _ => panic!("Class or superclass name conflict"),  // TODO: Better error handling
-        }
+    "class" <t:Type> "extends" <parent:Type> "{" <vars:ClassVar*> <methods:Method*> "}" => {
+        ast::TopDef::Class { t, vars, methods, parent: Option::Some(parent) }
+    },
+    ! => {
+        errors.push(FrontendError::from(<>));
+        ast::TopDef::Error
     },
 };
 
@@ -95,51 +83,55 @@ Args = Separated<",", Arg>;
 // --- blocks ---
 
 Block: ast::Block = {
-    "{" <stmts:Stmt*> "}" => ast::Block { stmts },
+    "{" <stmts:Statement*> "}" => ast::Block { stmts },
 };
 
 // --- statements ---
 
-pub Stmt = StmtAllowDanglingIf<"I">;
+pub Statement = StatementAllowDanglingIf<"I">;
 
-StmtAllowDanglingIf<I>: Box<ast::Stmt> = {
+StatementAllowDanglingIf<I>: Box<ast::Statement> = {
     <block:Block> => {
-        Box::new(ast::Stmt::Block { block })
+        Box::new(ast::Statement::Block { block })
     },
-    ";" => Box::new(ast::Stmt::Empty),
+    ";" => Box::new(ast::Statement::Empty),
     <t:Type> <items:DeclItems> ";" => {
-        Box::new(ast::Stmt::Decl { t, items })
+        Box::new(ast::Statement::Decl { t, items })
     },
     <ident:Ident> "=" <expr:Expr0> ";" => {
-        Box::new(ast::Stmt::Ass { ident, expr })
+        Box::new(ast::Statement::Ass { ident, expr })
     },
     <ident:Ident> "++" ";" => {
-        Box::new(ast::Stmt::Mut { ident, op: ast::StmtOp::Increment })
+        Box::new(ast::Statement::Mut { ident, op: ast::StatementOp::Increment })
     },
     <ident:Ident> "--" ";" => {
-        Box::new(ast::Stmt::Mut { ident, op: ast::StmtOp::Decrement })
+        Box::new(ast::Statement::Mut { ident, op: ast::StatementOp::Decrement })
     },
     "return" <e:Expr0> ";" => {
-        Box::new(ast::Stmt::Return { expr: Option::Some(e) })
+        Box::new(ast::Statement::Return { expr: Option::Some(e) })
     },
     "return" ";" => {
-        Box::new(ast::Stmt::Return { expr: Option::None })
+        Box::new(ast::Statement::Return { expr: Option::None })
     },
     // we only allow dangling if when template parameter I != "" (I == "I")
-    "if" "(" <expr:Expr0> ")" <stmt:StmtAllowDanglingIf<"I">> if I != "" => {
-        Box::new(ast::Stmt::Cond { expr, stmt })
+    "if" "(" <expr:Expr0> ")" <stmt:StatementAllowDanglingIf<"I">> if I != "" => {
+        Box::new(ast::Statement::Cond { expr, stmt })
     },
-    "if" "(" <expr:Expr0> ")" <stmt_true:StmtAllowDanglingIf<"">> "else" <stmt_false:StmtAllowDanglingIf<I>> => {
-        Box::new(ast::Stmt::CondElse { expr, stmt_true, stmt_false })
+    "if" "(" <expr:Expr0> ")" <stmt_true:StatementAllowDanglingIf<"">> "else" <stmt_false:StatementAllowDanglingIf<I>> => {
+        Box::new(ast::Statement::CondElse { expr, stmt_true, stmt_false })
     },
-    "while" "(" <expr:Expr0> ")" <stmt:StmtAllowDanglingIf<I>> => {
-        Box::new(ast::Stmt::While { expr, stmt })
+    "while" "(" <expr:Expr0> ")" <stmt:StatementAllowDanglingIf<I>> => {
+        Box::new(ast::Statement::While { expr, stmt })
     },
     // extension: arrays
-    "for" "(" <t:Type> <ident:Ident> ":" <arr:Expr0> ")" <stmt:StmtAllowDanglingIf<I>> => {
-        Box::new(ast::Stmt::For { t, ident, arr, stmt })
+    "for" "(" <t:Type> <ident:Ident> ":" <arr:Expr0> ")" <stmt:StatementAllowDanglingIf<I>> => {
+        Box::new(ast::Statement::For { t, ident, arr, stmt })
     },
-    <expr:Expr0> ";" => Box::new(ast::Stmt::Expr { expr }),
+    <expr:Expr0> ";" => Box::new(ast::Statement::Expr { expr }),
+    ! => {
+        errors.push(FrontendError::from(<>));
+        Box::new(ast::Statement::Error)
+    },
 };
 
 DeclItem: ast::DeclItem = {
@@ -167,14 +159,14 @@ Types = Separated<",", Type>;
 
 Expr0: Box<ast::Expression> = {
     <l:Expr1> "||" <r:Expr0> => {
-        Box::new(ast::Expression::Binary { left: l, op: ast::BinaryOp::Or, right: r })
+        Box::new(ast::Expression::Binary { left: l, op: ast::BinaryOperator::Or, right: r })
     },
     <e:Expr1> => (<>),
 };
 
 Expr1: Box<ast::Expression> = {
     <l:Expr2> "&&" <r:Expr1> => {
-        Box::new(ast::Expression::Binary { left: l, op: ast::BinaryOp::And, right: r })
+        Box::new(ast::Expression::Binary { left: l, op: ast::BinaryOperator::And, right: r })
     },
     <e:Expr2> => (<>),
 };
@@ -186,12 +178,13 @@ Expr2: Box<ast::Expression> = {
     <e:Expr3> => (<>),
 };
 
-RelOp: ast::BinaryOp = {
-    "<" => ast::BinaryOp::LTH,
-    "<=" => ast::BinaryOp::LTH,
-    "==" => ast::BinaryOp::EQU,
-    ">=" => ast::BinaryOp::GE,
-    ">" => ast::BinaryOp::GTH,
+RelOp: ast::BinaryOperator = {
+    "<" => ast::BinaryOperator::Less,
+    "<=" => ast::BinaryOperator::Less,
+    "==" => ast::BinaryOperator::Equal,
+    "!=" => ast::BinaryOperator::NotEqual,
+    ">=" => ast::BinaryOperator::GreaterEqual,
+    ">" => ast::BinaryOperator::Greater,
 };
 
 Expr3: Box<ast::Expression> = {
@@ -201,9 +194,9 @@ Expr3: Box<ast::Expression> = {
     <e:Expr4> => (<>),
 };
 
-AddOp: ast::BinaryOp = {
-    "+" => ast::BinaryOp::Plus,
-    "-" => ast::BinaryOp::Minus,
+AddOp: ast::BinaryOperator = {
+    "+" => ast::BinaryOperator::Plus,
+    "-" => ast::BinaryOperator::Minus,
 };
 
 Expr4: Box<ast::Expression> = {
@@ -213,15 +206,15 @@ Expr4: Box<ast::Expression> = {
     <e:Expr5> => (<>),
 };
 
-MulOp: ast::BinaryOp = {
-    "*" => ast::BinaryOp::Times,
-    "/" => ast::BinaryOp::Div,
-    "%" => ast::BinaryOp::Mod,
+MulOp: ast::BinaryOperator = {
+    "*" => ast::BinaryOperator::Times,
+    "/" => ast::BinaryOperator::Divide,
+    "%" => ast::BinaryOperator::Modulo,
 };
 
 Expr5: Box<ast::Expression> = {
-    "-" <e:Expr6> => Box::new(ast::Expression::Unary { op: ast::UnaryOp::Neg, arg: e }),
-    "!" <e:Expr6> => Box::new(ast::Expression::Unary { op: ast::UnaryOp::Not, arg: e }),
+    "-" <e:Expr6> => Box::new(ast::Expression::Unary { op: ast::UnaryOperator::Neg, arg: e }),
+    "!" <e:Expr6> => Box::new(ast::Expression::Unary { op: ast::UnaryOperator::Not, arg: e }),
     <e:Expr6> => (<>),
 };
 
@@ -229,12 +222,7 @@ Expr6: Box<ast::Expression> = {
     <ident:Ident> => Box::new(ast::Expression::Var { ident }),
     // extension: class, struct
     "new" <t:Type> => {
-        match t {
-            ast::Type::Class { ident: class_name } => {
-                Box::new(ast::Expression::InitDefault { class_name })
-            },
-            _ => panic!("Class name conflict"),  // TODO: Better error handling
-        }
+        Box::new(ast::Expression::InitDefault { t })
     },
     // extension: array
     "new" <item_t:Type> "[" <size:Expr0> "]" => {
@@ -264,10 +252,11 @@ Expr6: Box<ast::Expression> = {
     // TODO: Unescape characters from the string (!!!)
     r#""[^"]*""# => Box::new(ast::Expression::LitStr { val: String::from(<>) }),
     // extensions: all
-    // TODO: how to handle casting? For now I disabled nested expression for tests to pass
+    // nested expression conflicts with type cast, so we only implement the possibility of casting null
+    "(" <t:Type> ")null" => Box::new(ast::Expression::Cast { t, expr: Box::new(ast::Expression::LitNull) }),
     // https://stackoverflow.com/questions/27448189/bison-reduce-reduce-conflict-with-casting-and-expression-parentheses
-    "(" <t:Type> ")" <expr:Expr6> => Box::new(ast::Expression::Cast { t, expr }),
-    // "(" <e:Expr0> ")" => (<>),
+    // "(" <t:Type> ")" <expr:Expr6> => Box::new(ast::Expression::Cast { t, expr }),
+    "(" <e:Expr0> ")" => (<>),
 };
 
 Exprs = Separated<",", Expr0>;
