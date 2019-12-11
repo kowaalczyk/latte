@@ -5,34 +5,71 @@ use lalrpop_util::{ErrorRecovery, ParseError as LalrpopError};
 use crate::ast;
 
 
-#[derive(Debug)]
-pub enum FrontendError {
+#[derive(Debug, PartialEq, Clone)]
+pub enum FrontendErrorKind {
     ParseError {
         message: String,
-        location: usize,
     },
     TypeError {
         expected: ast::Type,
         actual: ast::Type,
-        location: usize,
     },
+    SystemError {
+        message: String
+    }
 }
 
-// TODO: Use CodeMap in application layer to print file, row and column isntead of usize offset
-impl fmt::Display for FrontendError {
+impl fmt::Display for FrontendErrorKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            FrontendError::ParseError { message, location } => {
-                write!(f, "{} ParseError: {}", location, message)
+            FrontendErrorKind::ParseError { message} => {
+                write!(f, "ParseError: {}", message)
             },
-            FrontendError::TypeError { expected, actual, location } => {
-                write!(f, "{} TypeError: expected `{:?}`, got `{:?}`", location, expected, actual)
+            FrontendErrorKind::TypeError { expected, actual} => {
+                write!(f, "TypeError: expected `{:?}`, got `{:?}`", expected, actual)
             },
+            FrontendErrorKind::SystemError { message } => {
+                write!(f, "SystemError: {}", message)
+            }
         }
     }
 }
 
-impl<T: fmt::Debug, E: fmt::Debug> From<(ErrorRecovery<usize, T, E>)> for FrontendError {
+#[derive(Debug, PartialEq, Clone)]
+pub struct FrontendError<LocationT> {
+    pub location: LocationT,
+    kind: FrontendErrorKind,
+}
+
+/// for file preprocessors that alter code layout (ie. comment removal)
+pub trait LocationMapper<LocationT1, LocationT2> {
+    fn map_location(&self, loc: &LocationT1) -> LocationT2;
+}
+
+/// using Mappers, we can correct the original location from lalrpop to the actual file location
+impl<LocationT1> FrontendError<LocationT1> {
+    pub fn new(kind: FrontendErrorKind, location: LocationT1) -> Self {
+        Self {
+            kind,
+            location
+        }
+    }
+
+    pub(crate) fn map_location<LocationT2>(&self, mapper: &dyn LocationMapper<LocationT1, LocationT2>) -> FrontendError<LocationT2> {
+        FrontendError::<LocationT2> {
+            location: mapper.map_location(&self.location),
+            kind: self.kind.clone(),
+        }
+    }
+}
+
+impl<LocationT: fmt::Display> fmt::Display for FrontendError<LocationT> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} {}", self.location, self.kind)
+    }
+}
+
+impl<T: fmt::Debug, E: fmt::Debug> From<(ErrorRecovery<usize, T, E>)> for FrontendError<usize> {
     fn from(err: ErrorRecovery<usize,T,E>) -> Self {
         let (location, message) = match &err.error {
             LalrpopError::InvalidToken { location } => {
@@ -51,8 +88,8 @@ impl<T: fmt::Debug, E: fmt::Debug> From<(ErrorRecovery<usize, T, E>)> for Fronte
                 panic!("Impossible: Undefined lalrpop user error: {:#?}", error)
             }
         };
-        FrontendError::ParseError {
-            message,
+        FrontendError::<usize> {
+            kind: FrontendErrorKind::ParseError { message },
             location
         }
     }

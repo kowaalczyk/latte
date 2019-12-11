@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.17.2"
-// sha256: 1852f328ddbbcc828fc16d80dccfe36d9550cc8e8a75dec345786c151e7d38f4
+// sha256: 1fc8faba61f5b12e67db403377cd31f9568938cd1cc45c61edc27532723e5f1
 use std::str::FromStr;
 use std::iter::FromIterator;
 use crate::error::FrontendError;
@@ -1481,7 +1481,7 @@ mod __parse__Program {
     pub struct __StateMachine<'input, 'err>
     where 
     {
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __phantom: ::std::marker::PhantomData<(&'input (), &'err ())>,
     }
@@ -2788,7 +2788,7 @@ mod __parse__Program {
             'err,
         >(
             &self,
-            errors: &'err mut Vec<FrontendError>,
+            errors: &'err mut Vec<FrontendError<usize>>,
             input: &'input str,
         ) -> Result<ast::Program, __lalrpop_util::ParseError<usize, Token<'input>, &'static str>>
         {
@@ -2808,7 +2808,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __error_state: i16,
         __states: & [i16],
@@ -2844,7 +2844,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3664,7 +3664,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3686,7 +3686,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3706,7 +3706,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3727,7 +3727,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3749,7 +3749,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3772,7 +3772,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3794,7 +3794,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3814,7 +3814,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3835,7 +3835,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3857,7 +3857,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3880,7 +3880,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3902,7 +3902,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3922,7 +3922,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3943,7 +3943,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3965,7 +3965,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -3988,7 +3988,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4010,7 +4010,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4030,7 +4030,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4051,7 +4051,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4073,7 +4073,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4096,7 +4096,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4117,7 +4117,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4138,7 +4138,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4160,7 +4160,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4181,7 +4181,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4201,7 +4201,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4222,7 +4222,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4244,7 +4244,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4267,7 +4267,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4290,7 +4290,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4315,7 +4315,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4335,7 +4335,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4356,7 +4356,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4377,7 +4377,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4399,7 +4399,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4420,7 +4420,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4443,7 +4443,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4464,7 +4464,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4487,7 +4487,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4508,7 +4508,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4529,7 +4529,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4549,7 +4549,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4572,7 +4572,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4593,7 +4593,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4616,7 +4616,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4637,7 +4637,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4660,7 +4660,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4681,7 +4681,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4704,7 +4704,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4725,7 +4725,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4747,7 +4747,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4769,7 +4769,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4790,7 +4790,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4811,7 +4811,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4833,7 +4833,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4858,7 +4858,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4881,7 +4881,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4907,7 +4907,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4931,7 +4931,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4952,7 +4952,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4973,7 +4973,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -4994,7 +4994,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5015,7 +5015,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5039,7 +5039,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5060,7 +5060,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5083,7 +5083,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5106,7 +5106,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5127,7 +5127,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5148,7 +5148,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5174,7 +5174,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5194,7 +5194,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5215,7 +5215,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5236,7 +5236,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5258,7 +5258,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5279,7 +5279,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5300,7 +5300,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5321,7 +5321,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5342,7 +5342,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5364,7 +5364,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5385,7 +5385,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5406,7 +5406,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5427,7 +5427,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5448,7 +5448,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5469,7 +5469,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5490,7 +5490,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5511,7 +5511,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5532,7 +5532,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5553,7 +5553,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5573,7 +5573,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5595,7 +5595,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5616,7 +5616,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5637,7 +5637,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5657,7 +5657,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5679,7 +5679,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5700,7 +5700,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5721,7 +5721,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5741,7 +5741,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5763,7 +5763,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5784,7 +5784,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5805,7 +5805,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5825,7 +5825,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5846,7 +5846,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5867,7 +5867,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5889,7 +5889,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5910,7 +5910,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5931,7 +5931,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5954,7 +5954,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -5978,7 +5978,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6001,7 +6001,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6024,7 +6024,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6047,7 +6047,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6069,7 +6069,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6096,7 +6096,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6121,7 +6121,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6149,7 +6149,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6171,7 +6171,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6192,7 +6192,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6213,7 +6213,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6234,7 +6234,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6257,7 +6257,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6281,7 +6281,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6304,7 +6304,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6327,7 +6327,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6350,7 +6350,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6372,7 +6372,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6397,7 +6397,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6424,7 +6424,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6449,7 +6449,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6477,7 +6477,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6499,7 +6499,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6520,7 +6520,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6546,7 +6546,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6570,7 +6570,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6595,7 +6595,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6620,7 +6620,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6646,7 +6646,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6672,7 +6672,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6699,7 +6699,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6726,7 +6726,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6754,7 +6754,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6775,7 +6775,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6796,7 +6796,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6818,7 +6818,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6839,7 +6839,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6860,7 +6860,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6881,7 +6881,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6902,7 +6902,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6923,7 +6923,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6945,7 +6945,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6966,7 +6966,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -6986,7 +6986,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -7007,7 +7007,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -7028,7 +7028,7 @@ mod __parse__Program {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -8195,7 +8195,7 @@ mod __parse__Statement {
     pub struct __StateMachine<'input, 'err>
     where 
     {
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __phantom: ::std::marker::PhantomData<(&'input (), &'err ())>,
     }
@@ -9502,7 +9502,7 @@ mod __parse__Statement {
             'err,
         >(
             &self,
-            errors: &'err mut Vec<FrontendError>,
+            errors: &'err mut Vec<FrontendError<usize>>,
             input: &'input str,
         ) -> Result<Box<ast::Statement>, __lalrpop_util::ParseError<usize, Token<'input>, &'static str>>
         {
@@ -9522,7 +9522,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __error_state: i16,
         __states: & [i16],
@@ -9558,7 +9558,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10378,7 +10378,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10400,7 +10400,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10420,7 +10420,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10441,7 +10441,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10463,7 +10463,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10486,7 +10486,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10508,7 +10508,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10528,7 +10528,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10549,7 +10549,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10571,7 +10571,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10594,7 +10594,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10616,7 +10616,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10636,7 +10636,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10657,7 +10657,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10679,7 +10679,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10702,7 +10702,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10724,7 +10724,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10744,7 +10744,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10765,7 +10765,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10787,7 +10787,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10810,7 +10810,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10831,7 +10831,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10852,7 +10852,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10874,7 +10874,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10895,7 +10895,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10915,7 +10915,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10936,7 +10936,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10958,7 +10958,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -10981,7 +10981,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11004,7 +11004,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11029,7 +11029,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11049,7 +11049,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11070,7 +11070,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11091,7 +11091,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11113,7 +11113,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11134,7 +11134,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11157,7 +11157,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11178,7 +11178,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11201,7 +11201,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11222,7 +11222,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11243,7 +11243,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11263,7 +11263,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11286,7 +11286,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11307,7 +11307,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11330,7 +11330,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11351,7 +11351,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11374,7 +11374,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11395,7 +11395,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11418,7 +11418,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11439,7 +11439,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11461,7 +11461,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11483,7 +11483,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11504,7 +11504,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11525,7 +11525,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11547,7 +11547,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11572,7 +11572,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11595,7 +11595,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11621,7 +11621,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11645,7 +11645,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11666,7 +11666,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11687,7 +11687,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11708,7 +11708,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11729,7 +11729,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11753,7 +11753,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11774,7 +11774,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11797,7 +11797,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11820,7 +11820,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11841,7 +11841,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11862,7 +11862,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11888,7 +11888,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11908,7 +11908,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11929,7 +11929,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11950,7 +11950,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11972,7 +11972,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -11993,7 +11993,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12014,7 +12014,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12035,7 +12035,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12056,7 +12056,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12078,7 +12078,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12099,7 +12099,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12120,7 +12120,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12141,7 +12141,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12162,7 +12162,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12183,7 +12183,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12204,7 +12204,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12225,7 +12225,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12246,7 +12246,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12267,7 +12267,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12287,7 +12287,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12309,7 +12309,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12330,7 +12330,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12351,7 +12351,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12371,7 +12371,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12393,7 +12393,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12414,7 +12414,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12435,7 +12435,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12455,7 +12455,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12477,7 +12477,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12498,7 +12498,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12519,7 +12519,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12539,7 +12539,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12560,7 +12560,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12581,7 +12581,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12603,7 +12603,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12624,7 +12624,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12645,7 +12645,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12668,7 +12668,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12692,7 +12692,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12715,7 +12715,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12738,7 +12738,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12761,7 +12761,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12783,7 +12783,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12810,7 +12810,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12835,7 +12835,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12863,7 +12863,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12885,7 +12885,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12906,7 +12906,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12927,7 +12927,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12948,7 +12948,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12971,7 +12971,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -12995,7 +12995,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13018,7 +13018,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13041,7 +13041,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13064,7 +13064,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13086,7 +13086,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13111,7 +13111,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13138,7 +13138,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13163,7 +13163,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13191,7 +13191,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13213,7 +13213,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13234,7 +13234,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13260,7 +13260,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13284,7 +13284,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13309,7 +13309,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13334,7 +13334,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13360,7 +13360,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13386,7 +13386,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13413,7 +13413,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13440,7 +13440,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13468,7 +13468,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13489,7 +13489,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13510,7 +13510,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13532,7 +13532,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13553,7 +13553,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13574,7 +13574,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13595,7 +13595,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13616,7 +13616,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13637,7 +13637,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13659,7 +13659,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13680,7 +13680,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13700,7 +13700,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13721,7 +13721,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -13742,7 +13742,7 @@ mod __parse__Statement {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -15215,7 +15215,7 @@ mod __parse__TopDef {
     pub struct __StateMachine<'input, 'err>
     where 
     {
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __phantom: ::std::marker::PhantomData<(&'input (), &'err ())>,
     }
@@ -16522,7 +16522,7 @@ mod __parse__TopDef {
             'err,
         >(
             &self,
-            errors: &'err mut Vec<FrontendError>,
+            errors: &'err mut Vec<FrontendError<usize>>,
             input: &'input str,
         ) -> Result<ast::TopDef, __lalrpop_util::ParseError<usize, Token<'input>, &'static str>>
         {
@@ -16542,7 +16542,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __error_state: i16,
         __states: & [i16],
@@ -16578,7 +16578,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17398,7 +17398,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17420,7 +17420,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17440,7 +17440,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17461,7 +17461,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17483,7 +17483,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17506,7 +17506,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17528,7 +17528,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17548,7 +17548,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17569,7 +17569,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17591,7 +17591,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17614,7 +17614,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17636,7 +17636,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17656,7 +17656,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17677,7 +17677,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17699,7 +17699,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17722,7 +17722,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17744,7 +17744,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17764,7 +17764,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17785,7 +17785,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17807,7 +17807,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17830,7 +17830,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17851,7 +17851,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17872,7 +17872,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17894,7 +17894,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17915,7 +17915,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17935,7 +17935,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17956,7 +17956,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -17978,7 +17978,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18001,7 +18001,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18024,7 +18024,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18049,7 +18049,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18069,7 +18069,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18090,7 +18090,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18111,7 +18111,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18133,7 +18133,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18154,7 +18154,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18177,7 +18177,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18198,7 +18198,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18221,7 +18221,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18242,7 +18242,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18263,7 +18263,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18283,7 +18283,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18306,7 +18306,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18327,7 +18327,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18350,7 +18350,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18371,7 +18371,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18394,7 +18394,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18415,7 +18415,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18438,7 +18438,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18459,7 +18459,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18481,7 +18481,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18503,7 +18503,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18524,7 +18524,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18545,7 +18545,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18567,7 +18567,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18592,7 +18592,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18615,7 +18615,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18641,7 +18641,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18665,7 +18665,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18686,7 +18686,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18707,7 +18707,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18728,7 +18728,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18749,7 +18749,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18773,7 +18773,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18794,7 +18794,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18817,7 +18817,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18840,7 +18840,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18861,7 +18861,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18882,7 +18882,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18908,7 +18908,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18928,7 +18928,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18949,7 +18949,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18970,7 +18970,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -18992,7 +18992,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19013,7 +19013,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19034,7 +19034,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19055,7 +19055,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19076,7 +19076,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19098,7 +19098,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19119,7 +19119,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19140,7 +19140,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19161,7 +19161,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19182,7 +19182,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19203,7 +19203,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19224,7 +19224,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19245,7 +19245,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19266,7 +19266,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19287,7 +19287,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19307,7 +19307,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19329,7 +19329,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19350,7 +19350,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19371,7 +19371,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19391,7 +19391,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19413,7 +19413,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19434,7 +19434,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19455,7 +19455,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19475,7 +19475,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19497,7 +19497,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19518,7 +19518,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19539,7 +19539,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19559,7 +19559,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19580,7 +19580,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19601,7 +19601,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19623,7 +19623,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19644,7 +19644,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19665,7 +19665,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19688,7 +19688,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19712,7 +19712,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19735,7 +19735,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19758,7 +19758,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19781,7 +19781,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19803,7 +19803,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19830,7 +19830,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19855,7 +19855,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19883,7 +19883,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19905,7 +19905,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19926,7 +19926,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19947,7 +19947,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19968,7 +19968,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -19991,7 +19991,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20015,7 +20015,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20038,7 +20038,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20061,7 +20061,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20084,7 +20084,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20106,7 +20106,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20131,7 +20131,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20158,7 +20158,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20183,7 +20183,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20211,7 +20211,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20233,7 +20233,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20254,7 +20254,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20280,7 +20280,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20304,7 +20304,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20329,7 +20329,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20354,7 +20354,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20380,7 +20380,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20406,7 +20406,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20433,7 +20433,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20460,7 +20460,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20488,7 +20488,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20509,7 +20509,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20530,7 +20530,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20552,7 +20552,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20573,7 +20573,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20594,7 +20594,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20615,7 +20615,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20636,7 +20636,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20657,7 +20657,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20679,7 +20679,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20700,7 +20700,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20720,7 +20720,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20741,7 +20741,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20762,7 +20762,7 @@ mod __parse__TopDef {
         'input,
         'err,
     >(
-        errors: &'err mut Vec<FrontendError>,
+        errors: &'err mut Vec<FrontendError<usize>>,
         input: &'input str,
         __action: i16,
         __lookahead_start: Option<&usize>,
@@ -20977,7 +20977,7 @@ fn __action0<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, ast::Program, usize),
 ) -> ast::Program
@@ -20990,7 +20990,7 @@ fn __action1<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, ast::TopDef, usize),
 ) -> ast::TopDef
@@ -21003,7 +21003,7 @@ fn __action2<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, Box<ast::Statement>, usize),
 ) -> Box<ast::Statement>
@@ -21016,7 +21016,7 @@ fn __action3<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, topdefs, _): (usize, ::std::vec::Vec<ast::TopDef>, usize),
 ) -> ast::Program
@@ -21029,7 +21029,7 @@ fn __action4<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, ret, _): (usize, ast::Type, usize),
     (_, ident, _): (usize, String, usize),
@@ -21049,7 +21049,7 @@ fn __action5<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, t, _): (usize, ast::Type, usize),
@@ -21069,7 +21069,7 @@ fn __action6<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, t, _): (usize, ast::Type, usize),
@@ -21091,7 +21091,7 @@ fn __action7<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, __lalrpop_util::ErrorRecovery<usize, Token<'input>, &'static str>, usize),
 ) -> ast::TopDef
@@ -21107,7 +21107,7 @@ fn __action8<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, t, _): (usize, ast::Type, usize),
     (_, ident, _): (usize, String, usize),
@@ -21124,7 +21124,7 @@ fn __action9<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, t, _): (usize, ast::Type, usize),
     (_, ident, _): (usize, String, usize),
@@ -21143,7 +21143,7 @@ fn __action10<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, ret, _): (usize, ast::Type, usize),
     (_, ident, _): (usize, String, usize),
@@ -21163,7 +21163,7 @@ fn __action11<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, t, _): (usize, ast::Type, usize),
     (_, ident, _): (usize, String, usize),
@@ -21177,7 +21177,7 @@ fn __action12<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, Vec<ast::Arg>, usize),
 ) -> Vec<ast::Arg>
@@ -21190,7 +21190,7 @@ fn __action13<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, stmts, _): (usize, ::std::vec::Vec<Box<ast::Statement>>, usize),
@@ -21205,7 +21205,7 @@ fn __action14<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, Box<ast::Statement>, usize),
 ) -> Box<ast::Statement>
@@ -21218,7 +21218,7 @@ fn __action15<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, ident, _): (usize, String, usize),
 ) -> ast::DeclItem
@@ -21231,7 +21231,7 @@ fn __action16<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, ident, _): (usize, String, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -21246,7 +21246,7 @@ fn __action17<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, Vec<ast::DeclItem>, usize),
 ) -> Vec<ast::DeclItem>
@@ -21259,7 +21259,7 @@ fn __action18<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::Type
@@ -21272,7 +21272,7 @@ fn __action19<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::Type
@@ -21285,7 +21285,7 @@ fn __action20<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::Type
@@ -21298,7 +21298,7 @@ fn __action21<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::Type
@@ -21311,7 +21311,7 @@ fn __action22<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, ident, _): (usize, String, usize),
 ) -> ast::Type
@@ -21324,7 +21324,7 @@ fn __action23<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, t, _): (usize, ast::Type, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -21338,7 +21338,7 @@ fn __action24<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, Vec<ast::Type>, usize),
 ) -> Vec<ast::Type>
@@ -21351,7 +21351,7 @@ fn __action25<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, l, _): (usize, Box<ast::Expression>, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -21368,7 +21368,7 @@ fn __action26<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, e, _): (usize, Box<ast::Expression>, usize),
 ) -> Box<ast::Expression>
@@ -21381,7 +21381,7 @@ fn __action27<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, l, _): (usize, Box<ast::Expression>, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -21398,7 +21398,7 @@ fn __action28<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, e, _): (usize, Box<ast::Expression>, usize),
 ) -> Box<ast::Expression>
@@ -21411,7 +21411,7 @@ fn __action29<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, left, _): (usize, Box<ast::Expression>, usize),
     (_, op, _): (usize, ast::BinaryOperator, usize),
@@ -21428,7 +21428,7 @@ fn __action30<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, e, _): (usize, Box<ast::Expression>, usize),
 ) -> Box<ast::Expression>
@@ -21441,7 +21441,7 @@ fn __action31<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::BinaryOperator
@@ -21454,7 +21454,7 @@ fn __action32<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::BinaryOperator
@@ -21467,7 +21467,7 @@ fn __action33<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::BinaryOperator
@@ -21480,7 +21480,7 @@ fn __action34<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::BinaryOperator
@@ -21493,7 +21493,7 @@ fn __action35<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::BinaryOperator
@@ -21506,7 +21506,7 @@ fn __action36<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::BinaryOperator
@@ -21519,7 +21519,7 @@ fn __action37<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, l, _): (usize, Box<ast::Expression>, usize),
     (_, op, _): (usize, ast::BinaryOperator, usize),
@@ -21536,7 +21536,7 @@ fn __action38<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, e, _): (usize, Box<ast::Expression>, usize),
 ) -> Box<ast::Expression>
@@ -21549,7 +21549,7 @@ fn __action39<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::BinaryOperator
@@ -21562,7 +21562,7 @@ fn __action40<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::BinaryOperator
@@ -21575,7 +21575,7 @@ fn __action41<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, l, _): (usize, Box<ast::Expression>, usize),
     (_, op, _): (usize, ast::BinaryOperator, usize),
@@ -21592,7 +21592,7 @@ fn __action42<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, e, _): (usize, Box<ast::Expression>, usize),
 ) -> Box<ast::Expression>
@@ -21605,7 +21605,7 @@ fn __action43<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::BinaryOperator
@@ -21618,7 +21618,7 @@ fn __action44<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::BinaryOperator
@@ -21631,7 +21631,7 @@ fn __action45<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> ast::BinaryOperator
@@ -21644,7 +21644,7 @@ fn __action46<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, e, _): (usize, Box<ast::Expression>, usize),
@@ -21658,7 +21658,7 @@ fn __action47<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, e, _): (usize, Box<ast::Expression>, usize),
@@ -21672,7 +21672,7 @@ fn __action48<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, e, _): (usize, Box<ast::Expression>, usize),
 ) -> Box<ast::Expression>
@@ -21685,7 +21685,7 @@ fn __action49<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, ident, _): (usize, String, usize),
 ) -> Box<ast::Expression>
@@ -21698,7 +21698,7 @@ fn __action50<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, t, _): (usize, ast::Type, usize),
@@ -21714,7 +21714,7 @@ fn __action51<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, item_t, _): (usize, ast::Type, usize),
@@ -21736,7 +21736,7 @@ fn __action52<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, obj, _): (usize, String, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -21751,7 +21751,7 @@ fn __action53<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, obj, _): (usize, String, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -21771,7 +21771,7 @@ fn __action54<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, arr, _): (usize, String, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -21789,7 +21789,7 @@ fn __action55<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, val, _): (usize, u64, usize),
 ) -> Box<ast::Expression>
@@ -21802,7 +21802,7 @@ fn __action56<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> Box<ast::Expression>
@@ -21815,7 +21815,7 @@ fn __action57<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> Box<ast::Expression>
@@ -21828,7 +21828,7 @@ fn __action58<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> Box<ast::Expression>
@@ -21841,7 +21841,7 @@ fn __action59<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, ident, _): (usize, String, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -21859,7 +21859,7 @@ fn __action60<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> Box<ast::Expression>
@@ -21872,7 +21872,7 @@ fn __action61<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, t, _): (usize, ast::Type, usize),
@@ -21887,7 +21887,7 @@ fn __action62<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, e, _): (usize, Box<ast::Expression>, usize),
@@ -21902,7 +21902,7 @@ fn __action63<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, Vec<Box<ast::Expression>>, usize),
 ) -> Vec<Box<ast::Expression>>
@@ -21915,7 +21915,7 @@ fn __action64<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> String
@@ -21928,7 +21928,7 @@ fn __action65<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> u64
@@ -21941,7 +21941,7 @@ fn __action66<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<Box<ast::Expression>>, usize),
     (_, e, _): (usize, ::std::option::Option<Box<ast::Expression>>, usize),
@@ -21962,7 +21962,7 @@ fn __action67<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<ast::Type>, usize),
     (_, e, _): (usize, ::std::option::Option<ast::Type>, usize),
@@ -21983,7 +21983,7 @@ fn __action68<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<ast::DeclItem>, usize),
     (_, e, _): (usize, ast::DeclItem, usize),
@@ -22001,7 +22001,7 @@ fn __action69<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, block, _): (usize, ast::Block, usize),
 ) -> Box<ast::Statement>
@@ -22016,7 +22016,7 @@ fn __action70<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> Box<ast::Statement>
@@ -22029,7 +22029,7 @@ fn __action71<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, t, _): (usize, ast::Type, usize),
     (_, items, _): (usize, Vec<ast::DeclItem>, usize),
@@ -22046,7 +22046,7 @@ fn __action72<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, ident, _): (usize, String, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22064,7 +22064,7 @@ fn __action73<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, ident, _): (usize, String, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22081,7 +22081,7 @@ fn __action74<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, ident, _): (usize, String, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22098,7 +22098,7 @@ fn __action75<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, e, _): (usize, Box<ast::Expression>, usize),
@@ -22115,7 +22115,7 @@ fn __action76<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
     (_, __1, _): (usize, &'input str, usize),
@@ -22131,7 +22131,7 @@ fn __action77<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22150,7 +22150,7 @@ fn __action78<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22171,7 +22171,7 @@ fn __action79<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22190,7 +22190,7 @@ fn __action80<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22212,7 +22212,7 @@ fn __action81<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, expr, _): (usize, Box<ast::Expression>, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22226,7 +22226,7 @@ fn __action82<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, __lalrpop_util::ErrorRecovery<usize, Token<'input>, &'static str>, usize),
 ) -> Box<ast::Statement>
@@ -22242,7 +22242,7 @@ fn __action83<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
@@ -22256,7 +22256,7 @@ fn __action84<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<Box<ast::Statement>>, usize),
 ) -> ::std::vec::Vec<Box<ast::Statement>>
@@ -22269,7 +22269,7 @@ fn __action85<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<ast::Arg>, usize),
     (_, e, _): (usize, ::std::option::Option<ast::Arg>, usize),
@@ -22290,7 +22290,7 @@ fn __action86<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
@@ -22304,7 +22304,7 @@ fn __action87<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<ast::Function>, usize),
 ) -> ::std::vec::Vec<ast::Function>
@@ -22317,7 +22317,7 @@ fn __action88<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
@@ -22331,7 +22331,7 @@ fn __action89<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<ast::ClassVar>, usize),
 ) -> ::std::vec::Vec<ast::ClassVar>
@@ -22344,7 +22344,7 @@ fn __action90<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, ast::TopDef, usize),
 ) -> ::std::vec::Vec<ast::TopDef>
@@ -22357,7 +22357,7 @@ fn __action91<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<ast::TopDef>, usize),
     (_, e, _): (usize, ast::TopDef, usize),
@@ -22371,7 +22371,7 @@ fn __action92<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, ast::ClassVar, usize),
 ) -> ::std::vec::Vec<ast::ClassVar>
@@ -22384,7 +22384,7 @@ fn __action93<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<ast::ClassVar>, usize),
     (_, e, _): (usize, ast::ClassVar, usize),
@@ -22398,7 +22398,7 @@ fn __action94<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, ast::Function, usize),
 ) -> ::std::vec::Vec<ast::Function>
@@ -22411,7 +22411,7 @@ fn __action95<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<ast::Function>, usize),
     (_, e, _): (usize, ast::Function, usize),
@@ -22425,7 +22425,7 @@ fn __action96<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, ast::Arg, usize),
 ) -> ::std::option::Option<ast::Arg>
@@ -22438,7 +22438,7 @@ fn __action97<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
@@ -22452,7 +22452,7 @@ fn __action98<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
@@ -22466,7 +22466,7 @@ fn __action99<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<ast::Arg>, usize),
 ) -> ::std::vec::Vec<ast::Arg>
@@ -22479,7 +22479,7 @@ fn __action100<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, ast::Arg, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22493,7 +22493,7 @@ fn __action101<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, Box<ast::Statement>, usize),
 ) -> ::std::vec::Vec<Box<ast::Statement>>
@@ -22506,7 +22506,7 @@ fn __action102<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<Box<ast::Statement>>, usize),
     (_, e, _): (usize, Box<ast::Statement>, usize),
@@ -22520,7 +22520,7 @@ fn __action103<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, block, _): (usize, ast::Block, usize),
 ) -> Box<ast::Statement>
@@ -22535,7 +22535,7 @@ fn __action104<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
 ) -> Box<ast::Statement>
@@ -22548,7 +22548,7 @@ fn __action105<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, t, _): (usize, ast::Type, usize),
     (_, items, _): (usize, Vec<ast::DeclItem>, usize),
@@ -22565,7 +22565,7 @@ fn __action106<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, ident, _): (usize, String, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22583,7 +22583,7 @@ fn __action107<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, ident, _): (usize, String, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22600,7 +22600,7 @@ fn __action108<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, ident, _): (usize, String, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22617,7 +22617,7 @@ fn __action109<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, e, _): (usize, Box<ast::Expression>, usize),
@@ -22634,7 +22634,7 @@ fn __action110<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
     (_, __1, _): (usize, &'input str, usize),
@@ -22650,7 +22650,7 @@ fn __action111<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22671,7 +22671,7 @@ fn __action112<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22690,7 +22690,7 @@ fn __action113<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22712,7 +22712,7 @@ fn __action114<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, expr, _): (usize, Box<ast::Expression>, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22726,7 +22726,7 @@ fn __action115<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, __lalrpop_util::ErrorRecovery<usize, Token<'input>, &'static str>, usize),
 ) -> Box<ast::Statement>
@@ -22742,7 +22742,7 @@ fn __action116<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
@@ -22756,7 +22756,7 @@ fn __action117<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<ast::DeclItem>, usize),
 ) -> ::std::vec::Vec<ast::DeclItem>
@@ -22769,7 +22769,7 @@ fn __action118<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, ast::DeclItem, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22783,7 +22783,7 @@ fn __action119<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, ast::Type, usize),
 ) -> ::std::option::Option<ast::Type>
@@ -22796,7 +22796,7 @@ fn __action120<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
@@ -22810,7 +22810,7 @@ fn __action121<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
@@ -22824,7 +22824,7 @@ fn __action122<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<ast::Type>, usize),
 ) -> ::std::vec::Vec<ast::Type>
@@ -22837,7 +22837,7 @@ fn __action123<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, ast::Type, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22851,7 +22851,7 @@ fn __action124<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, Box<ast::Expression>, usize),
 ) -> ::std::option::Option<Box<ast::Expression>>
@@ -22864,7 +22864,7 @@ fn __action125<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
@@ -22878,7 +22878,7 @@ fn __action126<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
@@ -22892,7 +22892,7 @@ fn __action127<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<Box<ast::Expression>>, usize),
 ) -> ::std::vec::Vec<Box<ast::Expression>>
@@ -22905,7 +22905,7 @@ fn __action128<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, Box<ast::Expression>, usize),
     (_, _, _): (usize, &'input str, usize),
@@ -22919,7 +22919,7 @@ fn __action129<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, Box<ast::Expression>, usize),
 ) -> ::std::vec::Vec<Box<ast::Expression>>
@@ -22932,7 +22932,7 @@ fn __action130<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<Box<ast::Expression>>, usize),
     (_, e, _): (usize, Box<ast::Expression>, usize),
@@ -22946,7 +22946,7 @@ fn __action131<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, ast::Type, usize),
 ) -> ::std::vec::Vec<ast::Type>
@@ -22959,7 +22959,7 @@ fn __action132<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<ast::Type>, usize),
     (_, e, _): (usize, ast::Type, usize),
@@ -22973,7 +22973,7 @@ fn __action133<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, ast::DeclItem, usize),
 ) -> ::std::vec::Vec<ast::DeclItem>
@@ -22986,7 +22986,7 @@ fn __action134<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<ast::DeclItem>, usize),
     (_, e, _): (usize, ast::DeclItem, usize),
@@ -23000,7 +23000,7 @@ fn __action135<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, ast::Arg, usize),
 ) -> ::std::vec::Vec<ast::Arg>
@@ -23013,7 +23013,7 @@ fn __action136<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, v, _): (usize, ::std::vec::Vec<ast::Arg>, usize),
     (_, e, _): (usize, ast::Arg, usize),
@@ -23027,7 +23027,7 @@ fn __action137<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ast::Arg, usize),
     __1: (usize, &'input str, usize),
@@ -23054,7 +23054,7 @@ fn __action138<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::vec::Vec<ast::Arg>, usize),
     __1: (usize, ast::Arg, usize),
@@ -23083,7 +23083,7 @@ fn __action139<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::option::Option<ast::Arg>, usize),
 ) -> Vec<ast::Arg>
@@ -23110,7 +23110,7 @@ fn __action140<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::vec::Vec<ast::Arg>, usize),
     __1: (usize, ::std::option::Option<ast::Arg>, usize),
@@ -23137,7 +23137,7 @@ fn __action141<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ast::DeclItem, usize),
     __1: (usize, &'input str, usize),
@@ -23164,7 +23164,7 @@ fn __action142<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::vec::Vec<ast::DeclItem>, usize),
     __1: (usize, ast::DeclItem, usize),
@@ -23193,7 +23193,7 @@ fn __action143<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ast::DeclItem, usize),
 ) -> Vec<ast::DeclItem>
@@ -23220,7 +23220,7 @@ fn __action144<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::vec::Vec<ast::DeclItem>, usize),
     __1: (usize, ast::DeclItem, usize),
@@ -23247,7 +23247,7 @@ fn __action145<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, Box<ast::Expression>, usize),
     __1: (usize, &'input str, usize),
@@ -23274,7 +23274,7 @@ fn __action146<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::vec::Vec<Box<ast::Expression>>, usize),
     __1: (usize, Box<ast::Expression>, usize),
@@ -23303,7 +23303,7 @@ fn __action147<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::option::Option<Box<ast::Expression>>, usize),
 ) -> Vec<Box<ast::Expression>>
@@ -23330,7 +23330,7 @@ fn __action148<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::vec::Vec<Box<ast::Expression>>, usize),
     __1: (usize, ::std::option::Option<Box<ast::Expression>>, usize),
@@ -23357,7 +23357,7 @@ fn __action149<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ast::Type, usize),
     __1: (usize, &'input str, usize),
@@ -23384,7 +23384,7 @@ fn __action150<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::vec::Vec<ast::Type>, usize),
     __1: (usize, ast::Type, usize),
@@ -23413,7 +23413,7 @@ fn __action151<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::option::Option<ast::Type>, usize),
 ) -> Vec<ast::Type>
@@ -23440,7 +23440,7 @@ fn __action152<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::vec::Vec<ast::Type>, usize),
     __1: (usize, ::std::option::Option<ast::Type>, usize),
@@ -23467,7 +23467,7 @@ fn __action153<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ast::Arg, usize),
 ) -> Vec<ast::Arg>
@@ -23492,7 +23492,7 @@ fn __action154<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
@@ -23519,7 +23519,7 @@ fn __action155<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::vec::Vec<ast::Arg>, usize),
     __1: (usize, ast::Arg, usize),
@@ -23546,7 +23546,7 @@ fn __action156<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::vec::Vec<ast::Arg>, usize),
 ) -> Vec<ast::Arg>
@@ -23573,7 +23573,7 @@ fn __action157<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, ast::Type, usize),
@@ -23608,7 +23608,7 @@ fn __action158<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, ast::Type, usize),
@@ -23643,7 +23643,7 @@ fn __action159<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, ast::Type, usize),
@@ -23682,7 +23682,7 @@ fn __action160<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, ast::Type, usize),
@@ -23721,7 +23721,7 @@ fn __action161<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, Box<ast::Expression>, usize),
 ) -> Vec<Box<ast::Expression>>
@@ -23746,7 +23746,7 @@ fn __action162<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
@@ -23773,7 +23773,7 @@ fn __action163<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::vec::Vec<Box<ast::Expression>>, usize),
     __1: (usize, Box<ast::Expression>, usize),
@@ -23800,7 +23800,7 @@ fn __action164<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::vec::Vec<Box<ast::Expression>>, usize),
 ) -> Vec<Box<ast::Expression>>
@@ -23827,7 +23827,7 @@ fn __action165<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, ast::Type, usize),
@@ -23860,7 +23860,7 @@ fn __action166<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, ast::Type, usize),
@@ -23893,7 +23893,7 @@ fn __action167<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, ast::Type, usize),
@@ -23928,7 +23928,7 @@ fn __action168<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, ast::Type, usize),
@@ -23963,7 +23963,7 @@ fn __action169<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, ast::Type, usize),
@@ -24000,7 +24000,7 @@ fn __action170<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, ast::Type, usize),
@@ -24037,7 +24037,7 @@ fn __action171<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, ast::Type, usize),
@@ -24076,7 +24076,7 @@ fn __action172<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, ast::Type, usize),
@@ -24115,7 +24115,7 @@ fn __action173<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, &'input str, usize),
@@ -24144,7 +24144,7 @@ fn __action174<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, &'input str, usize),
     __1: (usize, ::std::vec::Vec<Box<ast::Statement>>, usize),
@@ -24173,7 +24173,7 @@ fn __action175<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ast::Type, usize),
 ) -> Vec<ast::Type>
@@ -24198,7 +24198,7 @@ fn __action176<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __lookbehind: &usize,
     __lookahead: &usize,
@@ -24225,7 +24225,7 @@ fn __action177<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::vec::Vec<ast::Type>, usize),
     __1: (usize, ast::Type, usize),
@@ -24252,7 +24252,7 @@ fn __action178<
     'input,
     'err,
 >(
-    errors: &'err mut Vec<FrontendError>,
+    errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     __0: (usize, ::std::vec::Vec<ast::Type>, usize),
 ) -> Vec<ast::Type>

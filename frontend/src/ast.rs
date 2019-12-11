@@ -1,5 +1,5 @@
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum BinaryOperator {
     Plus,
     Minus,
@@ -16,13 +16,13 @@ pub enum BinaryOperator {
     Or,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum UnaryOperator {
     Neg,
     Not,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
     Var { ident: String },
     LitInt { val: u64 },
@@ -42,7 +42,7 @@ pub enum Expression {
     Error,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Type {
     Int,
     Str,
@@ -52,18 +52,18 @@ pub enum Type {
     Array { item_t: Box<Type> }, // extension: array
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum DeclItem {
     NoInit { ident: String },
     Init { ident: String, val: Box<Expression> }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Block {
     pub stmts: Vec<Box<Statement>>
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
     Block { block: Block },
     Empty,
@@ -79,16 +79,16 @@ pub enum Statement {
     Error,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum StatementOp {
     Increment,
     Decrement,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Arg { pub t: Type, pub ident: String }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Function {
     pub ret: Type, 
     pub ident: String, 
@@ -97,14 +97,14 @@ pub struct Function {
 }
 
 // extension: class, struct
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ClassVar {
     pub t: Type,
     pub ident: String,
     pub default: Option<Box<Expression>>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TopDef {
     Function { func: Function },
     // extension: class, struct
@@ -117,5 +117,5 @@ pub enum TopDef {
     Error,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Program { pub topdefs: Vec<TopDef> }

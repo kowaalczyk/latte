@@ -6,7 +6,7 @@ use crate::ast;
 
 
 use lalrpop_util::ErrorRecovery;
-grammar<'err>(errors: &'err mut Vec<FrontendError>);
+grammar<'err>(errors: &'err mut Vec<FrontendError<usize>>);
 
 // --- macros ---
 

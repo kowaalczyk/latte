@@ -16,10 +16,11 @@ fn core_examples_parsed() {
             let source_code = good_dir
                 .get_file(file_name).unwrap()
                 .contents_utf8().unwrap();
-            let result_file = file.path().with_extension("output");
-            let expected_result = good_dir
-                .get_file(result_file.to_str().unwrap()).unwrap()
-                .contents_utf8().unwrap();
+            // TODO: This will only be necessary for the backend:
+//            let result_file = file.path().with_extension("output");
+//            let expected_result = good_dir
+//                .get_file(result_file.to_str().unwrap()).unwrap()
+//                .contents_utf8().unwrap();
             let source_code = String::from(source_code);
             match process_code(&source_code) {
                 Ok(_) => {

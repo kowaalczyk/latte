@@ -4,7 +4,7 @@ use crate::latte::ProgramParser;
 use crate::error::FrontendError;
 
 
-pub fn parse_program(source_code: String) -> Result<Program, Vec<FrontendError>> {
+pub fn parse_program(source_code: String) -> Result<Program, Vec<FrontendError<usize>>> {
     let mut errors = Vec::new();
     let parser = ProgramParser::new();
     match parser.parse(&mut errors, &source_code) {
@@ -32,14 +32,13 @@ mod tests {
             Ok(_) => Err(String::from("Empty program should not be parsed")),
             Err(errors) => {
                 match errors.get(0) {
-                    Some(FrontendError::ParseError { message: _, location }) => {
-                        if *location == 0usize {
+                    Some(e) => {
+                        if e.location == 0usize {
                             Ok(())
                         } else {
-                            Err(format!("Invalid error location, expected {} got P{}", 0, location))
+                            Err(format!("Invalid error location, expected {} got P{}", 0, e.location))
                         }
                     },
-                    Some(_) => Err(String::from("Invalid error type, expected ParseError")),
                     None => Err(String::from("Missing ParseError in parsing results"))
                 }
             }
@@ -47,7 +46,7 @@ mod tests {
     }
 
     #[test]
-    fn simple_main_parses() -> Result<(), Vec<FrontendError>> {
+    fn simple_main_parses() -> Result<(), Vec<FrontendError<usize>>> {
         let code = r#"
         int main() {
             return 0;

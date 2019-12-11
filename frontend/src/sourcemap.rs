@@ -1,3 +1,4 @@
+use crate::error::{LocationMapper};
 
 pub struct CharOffset {
     /// (offset start, length of this + previous offsets)
@@ -29,12 +30,27 @@ impl CharOffset {
 
     fn get_source_position(&self, offset_pos: usize) -> usize {
         let key = (offset_pos, std::u16::MAX);
-        let index = match self.offsets.binary_search(&key) {
-            Ok(idx) => idx, // apply offset of all comments before and at offset_pos
-            Err(idx) => idx-1, // apply offset of all comments before offset_pos
+        let offset_to_apply = match self.offsets.binary_search(&key) {
+            Ok(idx) => {
+                // apply offset of all comments before and at offset_pos
+                self.offsets[idx].1
+            },
+            Err(idx) => {
+                // apply offset of all comments before offset_pos
+                if idx > 0 {
+                    self.offsets[idx-1].1
+                } else {
+                    0
+                }
+            },
         };
-        let offset_to_apply = self.offsets[index].1;
         offset_pos + (offset_to_apply as usize)
+    }
+}
+
+impl LocationMapper<usize, usize> for CharOffset {
+    fn map_location(&self, loc: &usize) -> usize {
+        self.get_source_position(*loc)
     }
 }
 
