@@ -1,4 +1,3 @@
-use crate::ast;
 use crate::ast::Program;
 use crate::latte::ProgramParser;
 use crate::error::FrontendError;
@@ -24,6 +23,7 @@ pub fn parse_program(source_code: String) -> Result<Program, Vec<FrontendError<u
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast;
 
     #[test]
     fn empty_program_fails() -> Result<(), String> {

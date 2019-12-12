@@ -1,7 +1,7 @@
 use crate::sourcemap::clean_comments;
 use crate::parser::parse_program;
 use crate::ast::Program;
-use crate::error::{FrontendError, LocationMapper, FrontendErrorKind};
+use crate::error::{FrontendError, LocationMapper};
 
 use codemap::{CodeMap, Pos, File};
 
