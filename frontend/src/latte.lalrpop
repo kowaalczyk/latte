@@ -1,8 +1,10 @@
 use std::str::FromStr;
-use std::iter::FromIterator;
 
+use crate::{ast, env};
+use crate::ast::Keyed;
+use crate::env::UniqueEnv;
+use crate::location::Located;
 use crate::error::FrontendError;
-use crate::ast;
 
 
 use lalrpop_util::ErrorRecovery;
@@ -10,7 +12,7 @@ grammar<'err>(errors: &'err mut Vec<FrontendError<usize>>);
 
 // --- macros ---
 
-// vector of 0 or more T separated by Sep
+/// vector of 0 or more T separated by Sep
 Separated<Sep, T>: Vec<T> = {
     <v:(<T> Sep)*> <e:T?> => match e {
         None => v,
@@ -22,7 +24,7 @@ Separated<Sep, T>: Vec<T> = {
     }
 };
 
-// vector of 1 or more T separated by Sep
+/// vector of 1 or more T separated by Sep
 NonEmptySeparated<Sep, T>: Vec<T> = {
     <v:(<T> Sep)*> <e:T> => {
         let mut v = v;
@@ -31,22 +33,87 @@ NonEmptySeparated<Sep, T>: Vec<T> = {
     }
 };
 
+/// wraps T in the Located struct, storing beginning and the end of the span
+ToLocated<T>: Located<T, usize> = {
+    <begin:@L> <item:T> => Located::new(item, begin)
+};
+
 // --- top level ---
 
 pub Program: ast::Program = {
-    <topdefs:TopDef+> => ast::Program { topdefs },
+    <topdefs:LocTopDef+> => {
+        let mut functions = env::Env::new();
+        let mut classes = env::Env::new();
+        for topdef in topdefs {
+            let location = topdef.get_location();
+            match topdef.item {
+                ast::TopDef::Class { cls } => {
+                    classes.insert_unique(cls.get_key().clone(), cls, location)
+                        .or_else(|e| { errors.push(e); Err(()) });
+                },
+                ast::TopDef::Function { func } => {
+                    functions.insert_unique(func.get_key().clone(), func, location)
+                        .or_else(|e| { errors.push(e); Err(()) });
+                },
+                ast::TopDef::Error => (),
+            };
+        }
+        ast::Program { functions, classes }
+    },
 };
 
-pub TopDef: ast::TopDef = {
-    <ret:Type> <ident:Ident> "(" <args:Args> ")" <block:Block> => {
-        ast::TopDef::Function { ret, ident, args, block }
+LocTopDef = ToLocated<TopDef>;
+TopDef: ast::TopDef = {
+    <ret:Type> <ident:Ident> "(" <arg_vec:LocArgs> ")" <block:Block> => {
+        match ast::Function::new(ret, ident, arg_vec, block) {
+            Ok(func) => ast::TopDef::Function { func },
+            Err(e) => {
+                errors.push(e);
+                ast::TopDef::Error
+            }
+        }
     },
-    // extension: class
-    "class" <t:Type> "{" <vars:ClassVar*> <methods:Method*> "}" => {
-        ast::TopDef::Class { t, vars, methods, parent: Option::None }
+    "class" <ident:Ident> "{" <var_vec:LocClassVar*> <method_vec:LocMethod*> "}" => {
+        let mut method_env_errors: Vec<FrontendError<usize>> = method_vec.iter()
+            .filter(|m| m.item.is_err())
+            .map(|e| e.item.clone().unwrap_err())
+            .collect();
+        if method_env_errors.is_empty() {
+            let method_vec = method_vec.iter()
+                .map(|m| Located::new(m.item.clone().unwrap(), m.get_location()))
+                .collect();
+            match ast::Class::new(ident, var_vec, method_vec) {
+                Ok(cls) => ast::TopDef::Class { cls },
+                Err(e) => {
+                    errors.push(e);
+                    ast::TopDef::Error
+                }
+            }
+        } else {
+            errors.append(&mut method_env_errors);
+            ast::TopDef::Error
+        }
     },
-    "class" <t:Type> "extends" <parent:Type> "{" <vars:ClassVar*> <methods:Method*> "}" => {
-        ast::TopDef::Class { t, vars, methods, parent: Option::Some(parent) }
+    "class" <ident:Ident> "extends" <parent:Ident> "{" <var_vec:LocClassVar*> <method_vec:LocMethod*> "}" => {
+        let mut method_env_errors: Vec<FrontendError<usize>> = method_vec.iter()
+            .filter(|m| m.item.is_err())
+            .map(|e| e.item.clone().unwrap_err())
+            .collect();
+        if method_env_errors.is_empty() {
+            let method_vec = method_vec.iter()
+                .map(|m| Located::new(m.item.clone().unwrap(), m.get_location()))
+                .collect();
+            match ast::Class::new(ident, var_vec, method_vec) {
+                Ok(mut cls) => ast::TopDef::Class { cls: cls.with_parent(&parent) },
+                Err(e) => {
+                    errors.push(e);
+                    ast::TopDef::Error
+                }
+            }
+        } else {
+            errors.append(&mut method_env_errors);
+            ast::TopDef::Error
+        }
     },
     ! => {
         errors.push(FrontendError::from(<>));
@@ -54,7 +121,7 @@ pub TopDef: ast::TopDef = {
     },
 };
 
-// extension: class
+LocClassVar = ToLocated<ClassVar>;
 ClassVar: ast::ClassVar = {
     <t:Type> <ident:Ident> ";" => {
         ast::ClassVar { t, ident, default: Option::None }
@@ -64,19 +131,20 @@ ClassVar: ast::ClassVar = {
     },
 };
 
-// extension: class
-Method: ast::Function = {
-    <ret:Type> <ident:Ident> "(" <args:Args> ")" <block:Block> => {
-        ast::Function { ret, ident, args, block }
+LocMethod = ToLocated<Method>;
+Method: Result<ast::Function, FrontendError<usize>> = {
+    <ret:Type> <ident:Ident> "(" <args:LocArgs> ")" <block:Block> => {
+        // not to be confused with ast::TopDef::Function 
+        ast::Function::new(ret, ident, args, block)
     },
 };
 
-
+LocArg = ToLocated<Arg>;
 Arg: ast::Arg = {
     <t:Type> <ident:Ident> => ast::Arg { t, ident },
 };
 
-Args = Separated<",", Arg>;
+LocArgs = Separated<",", LocArg>;
 
 
 // --- blocks ---
@@ -87,7 +155,7 @@ Block: ast::Block = {
 
 // --- statements ---
 
-pub Statement = StatementAllowDanglingIf<"I">;
+Statement = StatementAllowDanglingIf<"I">;
 
 StatementAllowDanglingIf<I>: Box<ast::Statement> = {
     <block:Block> => {

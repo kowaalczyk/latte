@@ -1,3 +1,11 @@
+use crate::env::{Env, FromMemberVec};
+use crate::location::Located;
+use crate::error::FrontendError;
+
+/// trait for marking ast items that can searched by key (in an environment)
+pub trait Keyed {
+    fn get_key(&self) -> &String;
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum BinaryOperator {
@@ -93,12 +101,32 @@ pub enum StatementOp {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Arg { pub t: Type, pub ident: String }
 
+impl Keyed for Arg {
+    fn get_key(&self) -> &String {
+        &self.ident
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Function {
     pub ret: Type, 
     pub ident: String, 
-    pub args: Vec<Arg>, 
+    pub args: Env<Arg>,
     pub block: Block
+}
+
+impl Function {
+    pub fn new(ret: Type, ident: String, arg_vec: Vec<Located<Arg, usize>>, block: Block) 
+    -> Result<Self, FrontendError<usize>> {
+        let args = Env::from_vec(arg_vec)?;
+        Ok(Self { ret, ident, args, block })
+    }
+}
+
+impl Keyed for Function {
+    fn get_key(&self) -> &String {
+        &self.ident
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -108,22 +136,50 @@ pub struct ClassVar {
     pub default: Option<Box<Expression>>,
 }
 
+impl Keyed for ClassVar {
+    fn get_key(&self) -> &String {
+        &self.ident
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Class {
+    ident: String,
+    vars: Env<ClassVar>,
+    methods: Env<Function>,
+    parent: Option<String>,
+}
+
+impl Class {
+    pub fn new(ident: String, var_vec: Vec<Located<ClassVar, usize>>, method_vec: Vec<Located<Function, usize>>) 
+    -> Result<Self, FrontendError<usize>> {
+        let vars = Env::from_vec(var_vec)?;
+        let methods = Env::from_vec(method_vec)?;
+        let cls = Self { ident, vars, methods, parent: Option::None };
+        Ok(cls)
+    }
+
+    pub fn with_parent(&mut self, parent: &String) -> Self {
+        self.parent = Option::Some(parent.clone());
+        self.clone()
+    }
+}
+
+impl Keyed for Class {
+    fn get_key(&self) -> &String {
+        &self.ident
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum TopDef {
-    Function { 
-        ret: Type, 
-        ident: String, 
-        args: Vec<Arg>, 
-        block: Block
-    },
-    Class { 
-        t: Type, 
-        vars: Vec<ClassVar>,
-        methods: Vec<Function>,
-        parent: Option<Type>,
-    },
+    Function { func: Function },
+    Class { cls: Class },
     Error,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Program { pub topdefs: Vec<TopDef> }
+pub struct Program {
+    pub classes: Env<Class>,
+    pub functions: Env<Function>,
+}

@@ -1,7 +1,8 @@
 use crate::sourcemap::clean_comments;
 use crate::parser::parse_program;
 use crate::ast::Program;
-use crate::error::{FrontendError, LocationMapper};
+use crate::location::LocationMapper;
+use crate::error::{FrontendError};
 
 use codemap::{CodeMap, Pos, File};
 
@@ -23,9 +24,7 @@ pub fn process_code(file_name: &String, source_code: &String) -> Result<Program,
     parse_program(clean_code).or_else(
         |err_vec| { Err(
             err_vec.iter()
-                .map(|e| e.map_location(&source_map))
-                .map(|e| e.map_location(&codemap_file))
-                .map(|e| e.map_location(&codemap))
+                .map(|e| e.map_location(&source_map).map_location(&codemap_file).map_location(&codemap))
                 .collect()
         )}
     )

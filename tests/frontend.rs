@@ -3,7 +3,7 @@ extern crate include_dir;
 
 use include_dir::{include_dir, Dir};
 use frontend::frontend::process_code;
-use frontend::error::{FrontendError, LocationMapper, FrontendErrorKind};
+
 
 fn parse_good_dir(dir: Dir, failed_cases: &mut Vec<String>) {
     for file in dir.files() {

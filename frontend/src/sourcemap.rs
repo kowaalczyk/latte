@@ -1,4 +1,4 @@
-use crate::error::{LocationMapper};
+use crate::location::{LocationMapper};
 
 pub struct CharOffset {
     /// (offset start, length of this + previous offsets)
