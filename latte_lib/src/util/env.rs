@@ -1,4 +1,4 @@
-use crate::ast::Keyed;
+use crate::parser::ast::Keyed;
 use crate::location::Located;
 use crate::error::{FrontendError, FrontendErrorKind};
 

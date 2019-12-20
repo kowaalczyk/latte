@@ -1,5 +1,6 @@
 use crate::location::{LocationMapper};
 
+/// stores position of characters removed from original code (ie. comments)
 pub struct CharOffset {
     /// (offset start, length of this + previous offsets)
     offsets: Vec<(usize, u16)>,
@@ -10,6 +11,7 @@ impl CharOffset {
         Self { offsets: vec![] }
     }
 
+    /// start new offset on source_pos at original file, with length=0
     fn add_offset(&mut self, source_pos: usize) {
         let offset_to_apply = match self.offsets.len() {
             0 => 0,
@@ -19,6 +21,7 @@ impl CharOffset {
         self.offsets.push((pos_without_offset, 0));
     }
 
+    /// increase length of last added offset by 1
     fn increase_offset(&mut self) {
         match self.offsets.len() {
             0 => panic!("Impossible: trying to increase non-existing offset"),
@@ -28,6 +31,7 @@ impl CharOffset {
         }
     }
 
+    /// translate offset_pos to position in original file
     fn get_source_position(&self, offset_pos: usize) -> usize {
         let key = (offset_pos, std::u16::MAX);
         let offset_to_apply = match self.offsets.binary_search(&key) {
@@ -54,6 +58,7 @@ impl LocationMapper<usize, usize> for CharOffset {
     }
 }
 
+/// remove comments from source_code and remember position mapping in CharOffset
 pub fn clean_comments(source_code: &String) -> (String, CharOffset) {
     // containers for the results
     let mut clean_code = String::from("");

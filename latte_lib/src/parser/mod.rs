@@ -1,6 +1,8 @@
-// use crate::env::{Env, UniqueEnv};
-use crate::ast::Program;
-use crate::latte::ProgramParser;
+mod latte;
+pub mod ast;
+
+use self::ast::Program;
+use self::latte::ProgramParser;
 use crate::error::FrontendError;
 
 

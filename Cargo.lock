@@ -240,16 +240,6 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "frontend"
-version = "0.1.0"
-dependencies = [
- "codemap 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "lalrpop 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "lalrpop-util 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "regex 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "fuchsia-cprng"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -330,8 +320,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "latte"
 version = "0.1.0"
 dependencies = [
- "frontend 0.1.0",
  "include_dir 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "latte_lib 0.1.0",
+]
+
+[[package]]
+name = "latte_lib"
+version = "0.1.0"
+dependencies = [
+ "codemap 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lalrpop 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lalrpop-util 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "regex 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

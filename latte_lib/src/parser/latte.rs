@@ -1,9 +1,10 @@
 // auto-generated: "lalrpop 0.17.2"
-// sha256: bba3bea183ee8d08abd6aecee2a73c19af74812139476a227f20e3b0dd6bff
+// sha256: ee17acfe27e3c47132686a56c49104eadf630e687d26f8f3331e444fc258ddb
 use std::str::FromStr;
-use crate::{ast, env};
-use crate::ast::Keyed;
-use crate::env::UniqueEnv;
+use crate::parser::ast;
+use crate::parser::ast::Keyed;
+use crate::util::env;
+use crate::util::env::UniqueEnv;
 use crate::location::Located;
 use crate::error::FrontendError;
 use lalrpop_util::ErrorRecovery;
@@ -17,9 +18,10 @@ mod __parse__Program {
     #![allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens)]
 
     use std::str::FromStr;
-    use crate::{ast, env};
-    use crate::ast::Keyed;
-    use crate::env::UniqueEnv;
+    use crate::parser::ast;
+    use crate::parser::ast::Keyed;
+    use crate::util::env;
+    use crate::util::env::UniqueEnv;
     use crate::location::Located;
     use crate::error::FrontendError;
     use lalrpop_util::ErrorRecovery;
@@ -7367,9 +7369,10 @@ pub use self::__parse__Program::ProgramParser;
 mod __intern_token {
     #![allow(unused_imports)]
     use std::str::FromStr;
-    use crate::{ast, env};
-    use crate::ast::Keyed;
-    use crate::env::UniqueEnv;
+    use crate::parser::ast;
+    use crate::parser::ast::Keyed;
+    use crate::util::env;
+    use crate::util::env::UniqueEnv;
     use crate::location::Located;
     use crate::error::FrontendError;
     use lalrpop_util::ErrorRecovery;

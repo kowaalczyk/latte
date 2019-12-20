@@ -2,8 +2,8 @@ use std::fmt;
 
 use lalrpop_util::{ErrorRecovery, ParseError as LalrpopError};
 
-use crate::ast;
-use crate::location::{Located};
+use crate::parser::ast;
+use crate::location::Located;
 
 
 #[derive(Debug, PartialEq, Clone)]

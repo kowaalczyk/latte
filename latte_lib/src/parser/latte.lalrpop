@@ -1,8 +1,9 @@
 use std::str::FromStr;
 
-use crate::{ast, env};
-use crate::ast::Keyed;
-use crate::env::UniqueEnv;
+use crate::parser::ast;
+use crate::parser::ast::Keyed;
+use crate::util::env;
+use crate::util::env::UniqueEnv;
 use crate::location::Located;
 use crate::error::FrontendError;
 

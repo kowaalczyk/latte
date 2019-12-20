@@ -1,20 +1,22 @@
 [package]
+# compiler executables
 name = "latte"
 version = "0.1.0"
 authors = ["Krzysztof Kowalczyk <k.kowaalczyk@gmail.com>"]
 edition = "2018"
 
 [lib]
+# utility functions for compiler executables
 name = "latte_utils"
 path = "src/lib.rs"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [workspace]
-members = [".", "frontend"]
+members = [".", "latte_lib"]
 
 [dependencies]
-frontend = {path = "frontend", version = "0.1.0"}
+# actual compiler & frontend logic implementation
+latte_lib = {path = "latte_lib", version = "0.1.0"}
 
 [dev-dependencies]
+# compile-time embedding of files from source directories, used for testing
 include_dir = "0.4.1"

@@ -1,4 +1,7 @@
+mod sourcemap;
+
 use std::fmt;
+pub use sourcemap::clean_comments;
 
 
 #[derive(Debug, PartialEq, Clone)]

@@ -1,8 +1,8 @@
-extern crate frontend;
+extern crate latte_lib;
 extern crate include_dir;
 
 use include_dir::{include_dir, Dir};
-use frontend::frontend::process_code;
+use latte_lib::frontend::process_code;
 
 
 fn parse_good_dir(dir: Dir, failed_cases: &mut Vec<String>) {
