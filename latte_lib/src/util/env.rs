@@ -1,4 +1,4 @@
-use crate::parser::ast::Keyed;
+use crate::parser::ast::{Keyed, Type};
 use crate::location::Located;
 use crate::error::{FrontendError, FrontendErrorKind};
 
@@ -6,21 +6,25 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 
+/// alias, we use String as key everywhere in the project
 pub type Env<T> = HashMap<String, T>;
 
-pub trait UniqueEnv<EnvT> {
-    /// insert or throw error if key already exists in the environment
-    fn insert_unique(&mut self, k: String, v: EnvT, location: usize) -> Result<(), FrontendError<usize>>;
+/// alias, useful for creating environment where all values remember their location
+pub type LocEnv<ItemT, LocT> = HashMap<String, Located<ItemT, LocT>>;
+
+pub trait UniqueLocEnv<ItemT, LocT> {
+    fn insert_unique(&mut self, k: String, v: Located<ItemT, LocT>) -> Result<(), FrontendError<LocT>>;
 }
 
-impl<T: Debug+Keyed> UniqueEnv<T> for Env<T> {
-    fn insert_unique(&mut self, k: String, v: T, location: usize) -> Result<(), FrontendError<usize>> {
+impl<ItemT: Debug+Clone, LocT: Clone> UniqueLocEnv<ItemT, LocT> for LocEnv<ItemT, LocT> {
+    fn insert_unique(&mut self, k: String, v: Located<ItemT, LocT>) -> Result<(), Located<FrontendErrorKind, LocT>> {
+        let loc = v.get_location().clone();
         match self.insert(k, v) {
             Some(previous_val) => {
                 let kind = FrontendErrorKind::EnvError {
-                    message: format!("Duplicate declaration of {:?}", previous_val)
+                    message: format!("Duplicate declaration of {:?}", previous_val.item)
                 };
-                Err(FrontendError::new(kind, location))
+                Err(FrontendError::new(kind, loc))
             },
             None => {
                 Ok(())
@@ -29,16 +33,22 @@ impl<T: Debug+Keyed> UniqueEnv<T> for Env<T> {
     }
 }
 
-pub trait FromMemberVec<MemberT, LocationT> {
-    fn from_vec(member_vec: Vec<Located<MemberT, LocationT>>) -> Result<Env<MemberT>, FrontendError<LocationT>>;
+pub trait FromMemberVec<MemberT, LocT> {
+    fn from_vec(member_vec: Vec<Located<MemberT, LocT>>)
+        -> Result<Env<Located<MemberT, LocT>>, FrontendError<LocT>>;
 }
 
-impl<T: Debug+Keyed+Clone> FromMemberVec<T, usize> for Env<T> {
-    fn from_vec(member_vec: Vec<Located<T, usize>>) -> Result<Self, FrontendError<usize>> {
+impl<MemberT: Debug+Keyed+Clone, LocT: Clone> FromMemberVec<MemberT, LocT> for LocEnv<MemberT, LocT> {
+    fn from_vec(member_vec: Vec<Located<MemberT, LocT>>) -> Result<Self, FrontendError<LocT>> {
         let mut env = Self::new();
         for member in member_vec {
-            env.insert_unique(member.item.get_key().clone(), member.item.clone(), member.get_location())?;
+            env.insert_unique(member.item.get_key().clone(), member.clone())?;
         }
         Ok(env)
     }
+}
+
+pub trait ToTypeEnv {
+    /// convert env with complex values to only store type information
+    fn to_type_env(&self) -> Env<Type>;
 }

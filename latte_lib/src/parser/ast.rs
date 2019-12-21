@@ -8,6 +8,9 @@ pub trait Keyed {
     fn get_key(&self) -> &String;
 }
 
+/// initially, all ast items are located by usize (byte offset)
+type Loc<AstT> = Located<AstT, usize>;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum BinaryOperator {
     Plus,
@@ -38,13 +41,18 @@ pub enum Expression {
     LitBool { val: bool },
     LitStr { val: String },
     LitNull,
-    App { r: Reference, args: Vec<Box<Expression>> },
-    Unary { op: UnaryOperator, arg: Box<Expression> },
-    Binary { left: Box<Expression>, op: BinaryOperator, right: Box<Expression> },
+    App { r: Reference, args: Vec<Loc<Box<Expression>>> },
+    Unary { op: UnaryOperator, arg: Loc<Box<Expression>> },
+    Binary {
+        left: Loc<Box<Expression>>,
+        op: BinaryOperator,
+        right: Loc<Box<Expression>>
+    },
     InitDefault { t: Type },
     // InitFields { }  // TODO (not necessary, but nice)
-    InitArr { t: Type, size: Box<Expression> },
+    InitArr { t: Type, size: Loc<Box<Expression>> },
     Reference { r: Reference },
+    // edge case: expr in Cast is always null so we don't need to locate it:
     Cast { t: Type, expr: Box<Expression> },
     Error,
 }
@@ -63,18 +71,18 @@ pub enum Type {
 pub enum Reference {
     Ident { ident: String },
     Object { obj: String, field: String },
-    Array { arr: String, idx: Box<Expression> },
+    Array { arr: String, idx: Loc<Box<Expression>> },
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum DeclItem {
     NoInit { ident: String },
-    Init { ident: String, val: Box<Expression> }
+    Init { ident: String, val: Loc<Box<Expression>> }
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Block {
-    pub stmts: Vec<Box<Statement>>
+    pub stmts: Vec<Loc<Box<Statement>>>
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -82,14 +90,23 @@ pub enum Statement {
     Block { block: Block },
     Empty,
     Decl { t: Type, items: Vec<DeclItem> },
-    Ass { r: Reference, expr: Box<Expression> },
+    Ass { r: Reference, expr: Loc<Box<Expression>> },
     Mut { r: Reference, op: StatementOp },
-    Return { expr: Option<Box<Expression>> },
-    Cond { expr: Box<Expression>, stmt: Box<Statement> },
-    CondElse { expr: Box<Expression>, stmt_true: Box<Statement>, stmt_false: Box<Statement> },
-    While { expr: Box<Expression>, stmt: Box<Statement> },
-    For { t: Type, ident: String, arr: Box<Expression>, stmt: Box<Statement> },
-    Expr { expr: Box<Expression> },
+    Return { expr: Option<Loc<Box<Expression>>> },
+    Cond { expr: Loc<Box<Expression>>, stmt: Loc<Box<Statement>> },
+    CondElse {
+        expr: Loc<Box<Expression>>,
+        stmt_true: Loc<Box<Statement>>,
+        stmt_false: Loc<Box<Statement>>
+    },
+    While { expr: Loc<Box<Expression>>, stmt: Loc<Box<Statement>> },
+    For {
+        t: Type,
+        ident: String,
+        arr: Loc<Box<Expression>>,
+        stmt: Loc<Box<Statement>>
+    },
+    Expr { expr: Loc<Box<Expression>> },
     Error,
 }
 
@@ -112,7 +129,7 @@ impl Keyed for Arg {
 pub struct Function {
     pub ret: Type, 
     pub ident: String, 
-    pub args: Env<Arg>,
+    pub args: Env<Located<Arg, usize>>,
     pub block: Block
 }
 
@@ -134,7 +151,7 @@ impl Keyed for Function {
 pub struct ClassVar {
     pub t: Type,
     pub ident: String,
-    pub default: Option<Box<Expression>>,
+    pub default: Option<Loc<Box<Expression>>>, // TODO: is this even used?
 }
 
 impl Keyed for ClassVar {
@@ -146,9 +163,9 @@ impl Keyed for ClassVar {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Class {
     ident: String,
-    vars: Env<ClassVar>,
-    methods: Env<Function>,
-    parent: Option<String>,
+    pub vars: Env<Located<ClassVar, usize>>,
+    pub methods: Env<Located<Function, usize>>,
+    pub parent: Option<String>,
 }
 
 impl Class {
@@ -181,6 +198,6 @@ pub enum TopDef {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Program {
-    pub classes: Env<Class>,
-    pub functions: Env<Function>,
+    pub classes: Env<Located<Class, usize>>,
+    pub functions: Env<Located<Function, usize>>,
 }

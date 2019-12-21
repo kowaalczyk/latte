@@ -3,7 +3,7 @@ use std::str::FromStr;
 use crate::parser::ast;
 use crate::parser::ast::Keyed;
 use crate::util::env;
-use crate::util::env::UniqueEnv;
+use crate::util::env::UniqueLocEnv;
 use crate::location::Located;
 use crate::error::FrontendError;
 
@@ -43,17 +43,19 @@ ToLocated<T>: Located<T, usize> = {
 
 pub Program: ast::Program = {
     <topdefs:LocTopDef+> => {
-        let mut functions = env::Env::new();
-        let mut classes = env::Env::new();
+        let mut functions = env::LocEnv::new();
+        let mut classes = env::LocEnv::new();
         for topdef in topdefs {
             let location = topdef.get_location();
             match topdef.item {
                 ast::TopDef::Class { cls } => {
-                    classes.insert_unique(cls.get_key().clone(), cls, location)
+                    let mut loc_cls = Located::new(cls.clone(), location);
+                    classes.insert_unique(cls.get_key().clone(), loc_cls)
                         .or_else(|e| { errors.push(e); Err(()) });
                 },
                 ast::TopDef::Function { func } => {
-                    functions.insert_unique(func.get_key().clone(), func, location)
+                    let mut loc_func = Located::new(func.clone(), location);
+                    functions.insert_unique(func.get_key().clone(), loc_func)
                         .or_else(|e| { errors.push(e); Err(()) });
                 },
                 ast::TopDef::Error => (),
@@ -127,7 +129,7 @@ ClassVar: ast::ClassVar = {
     <t:Type> <ident:Ident> ";" => {
         ast::ClassVar { t, ident, default: Option::None }
     },
-    <t:Type> <ident:Ident> "=" <default:Expr0> ";" => {
+    <t:Type> <ident:Ident> "=" <default:LocExpr0> ";" => {
         ast::ClassVar { t, ident, default: Option::Some(default) }
     },
 };
@@ -151,13 +153,15 @@ LocArgs = Separated<",", LocArg>;
 // --- blocks ---
 
 Block: ast::Block = {
-    "{" <stmts:Statement*> "}" => ast::Block { stmts },
+    "{" <stmts:LocStatement*> "}" => ast::Block { stmts },
 };
 
 // --- statements ---
 
+LocStatement = ToLocated<Statement>;
 Statement = StatementAllowDanglingIf<"I">;
 
+LocStatementADI<I> = ToLocated<StatementAllowDanglingIf<I>>;
 StatementAllowDanglingIf<I>: Box<ast::Statement> = {
     <block:Block> => {
         Box::new(ast::Statement::Block { block })
@@ -166,7 +170,7 @@ StatementAllowDanglingIf<I>: Box<ast::Statement> = {
     <t:Type> <items:DeclItems> ";" => {
         Box::new(ast::Statement::Decl { t, items })
     },
-    <r:Reference> "=" <expr:Expr0> ";" => {
+    <r:Reference> "=" <expr:LocExpr0> ";" => {
         Box::new(ast::Statement::Ass { r, expr })
     },
     <r:Reference> "++" ";" => {
@@ -175,26 +179,26 @@ StatementAllowDanglingIf<I>: Box<ast::Statement> = {
     <r:Reference> "--" ";" => {
         Box::new(ast::Statement::Mut { r, op: ast::StatementOp::Decrement })
     },
-    "return" <e:Expr0> ";" => {
+    "return" <e:LocExpr0> ";" => {
         Box::new(ast::Statement::Return { expr: Option::Some(e) })
     },
     "return" ";" => {
         Box::new(ast::Statement::Return { expr: Option::None })
     },
     // we only allow dangling if when template parameter I != "" (I == "I")
-    "if" "(" <expr:Expr0> ")" <stmt:StatementAllowDanglingIf<"I">> if I != "" => {
+    "if" "(" <expr:LocExpr0> ")" <stmt:LocStatementADI<"I">> if I != "" => {
         Box::new(ast::Statement::Cond { expr, stmt })
     },
-    "if" "(" <expr:Expr0> ")" <stmt_true:StatementAllowDanglingIf<"">> "else" <stmt_false:StatementAllowDanglingIf<I>> => {
+    "if" "(" <expr:LocExpr0> ")" <stmt_true:LocStatementADI<"">> "else" <stmt_false:LocStatementADI<I>> => {
         Box::new(ast::Statement::CondElse { expr, stmt_true, stmt_false })
     },
-    "while" "(" <expr:Expr0> ")" <stmt:StatementAllowDanglingIf<I>> => {
+    "while" "(" <expr:LocExpr0> ")" <stmt:LocStatementADI<I>> => {
         Box::new(ast::Statement::While { expr, stmt })
     },
-    "for" "(" <t:Type> <ident:Ident> ":" <arr:Expr0> ")" <stmt:StatementAllowDanglingIf<I>> => {
+    "for" "(" <t:Type> <ident:Ident> ":" <arr:LocExpr0> ")" <stmt:LocStatementADI<I>> => {
         Box::new(ast::Statement::For { t, ident, arr, stmt })
     },
-    <expr:Expr0> ";" => Box::new(ast::Statement::Expr { expr }),
+    <expr:LocExpr0> ";" => Box::new(ast::Statement::Expr { expr }),
     ! => {
         errors.push(FrontendError::from(<>));
         Box::new(ast::Statement::Error)
@@ -203,7 +207,7 @@ StatementAllowDanglingIf<I>: Box<ast::Statement> = {
 
 DeclItem: ast::DeclItem = {
     <ident:Ident> => ast::DeclItem::NoInit { ident },
-    <ident:Ident> "=" <val:Expr0> => ast::DeclItem::Init { ident, val },
+    <ident:Ident> "=" <val:LocExpr0> => ast::DeclItem::Init { ident, val },
 };
 
 DeclItems = NonEmptySeparated<",", DeclItem>;
@@ -223,22 +227,25 @@ Types = Separated<",", Type>;
 
 // --- expressions ---
 
+LocExpr0 = ToLocated<Expr0>;
 Expr0: Box<ast::Expression> = {
-    <l:Expr1> "||" <r:Expr0> => {
+    <l:LocExpr1> "||" <r:LocExpr0> => {
         Box::new(ast::Expression::Binary { left: l, op: ast::BinaryOperator::Or, right: r })
     },
     <e:Expr1> => (<>),
 };
 
+LocExpr1 = ToLocated<Expr1>;
 Expr1: Box<ast::Expression> = {
-    <l:Expr2> "&&" <r:Expr1> => {
+    <l:LocExpr2> "&&" <r:LocExpr1> => {
         Box::new(ast::Expression::Binary { left: l, op: ast::BinaryOperator::And, right: r })
     },
     <e:Expr2> => (<>),
 };
 
+LocExpr2 = ToLocated<Expr2>;
 Expr2: Box<ast::Expression> = {
-    <left:Expr2> <op:RelOp> <right:Expr3> => {
+    <left:LocExpr2> <op:RelOp> <right:LocExpr3> => {
         Box::new(ast::Expression::Binary { left, op, right })
     },
     <e:Expr3> => (<>),
@@ -253,8 +260,9 @@ RelOp: ast::BinaryOperator = {
     ">" => ast::BinaryOperator::Greater,
 };
 
+LocExpr3 = ToLocated<Expr3>;
 Expr3: Box<ast::Expression> = {
-    <l:Expr3> <op:AddOp> <r:Expr4> => {
+    <l:LocExpr3> <op:AddOp> <r:LocExpr4> => {
         Box::new(ast::Expression::Binary { left: l, op: op, right: r })
     },
     <e:Expr4> => (<>),
@@ -265,8 +273,9 @@ AddOp: ast::BinaryOperator = {
     "-" => ast::BinaryOperator::Minus,
 };
 
+LocExpr4 = ToLocated<Expr4>;
 Expr4: Box<ast::Expression> = {
-    <l:Expr4> <op:MulOp> <r:Expr5> => {
+    <l:LocExpr4> <op:MulOp> <r:LocExpr5> => {
         Box::new(ast::Expression::Binary { left: l, op: op, right: r })
     },
     <e:Expr5> => (<>),
@@ -278,17 +287,19 @@ MulOp: ast::BinaryOperator = {
     "%" => ast::BinaryOperator::Modulo,
 };
 
+LocExpr5 = ToLocated<Expr5>;
 Expr5: Box<ast::Expression> = {
-    "-" <e:Expr6> => Box::new(ast::Expression::Unary { op: ast::UnaryOperator::Neg, arg: e }),
-    "!" <e:Expr6> => Box::new(ast::Expression::Unary { op: ast::UnaryOperator::Not, arg: e }),
+    "-" <e:LocExpr6> => Box::new(ast::Expression::Unary { op: ast::UnaryOperator::Neg, arg: e }),
+    "!" <e:LocExpr6> => Box::new(ast::Expression::Unary { op: ast::UnaryOperator::Not, arg: e }),
     <e:Expr6> => (<>),
 };
 
+LocExpr6 = ToLocated<Expr6>;
 Expr6: Box<ast::Expression> = {
     "new" <t:Type> => {
         Box::new(ast::Expression::InitDefault { t })
     },
-    "new" <item_t:Type> "[" <size:Expr0> "]" => {
+    "new" <item_t:Type> "[" <size:LocExpr0> "]" => {
         Box::new(ast::Expression::InitArr { 
             t: ast::Type::Array { item_t: Box::new(item_t) }, 
             size 
@@ -313,7 +324,7 @@ Expr6: Box<ast::Expression> = {
     "(" <e:Expr0> ")" => (<>),
 };
 
-Exprs = Separated<",", Expr0>;
+Exprs = Separated<",", LocExpr0>;
 
 // --- literals ---
 
@@ -324,7 +335,7 @@ Ident: String = {
 Reference: ast::Reference = {
     <ident:Ident> => ast::Reference::Ident { ident },
     <obj:Ident> "." <field:Ident> => ast::Reference::Object { obj, field },
-    <arr:Ident> "[" <idx:Expr0> "]" => ast::Reference::Array { arr, idx },
+    <arr:Ident> "[" <idx:LocExpr0> "]" => ast::Reference::Array { arr, idx },
 };
 
 Num: u64 = {
