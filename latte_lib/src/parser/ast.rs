@@ -65,6 +65,7 @@ pub enum Type {
     Void,
     Class { ident: String },
     Array { item_t: Box<Type> },
+    Error
 }
 
 #[derive(Debug, PartialEq, Clone)]

@@ -4,6 +4,7 @@ use crate::error::{FrontendError, FrontendErrorKind};
 
 use std::collections::HashMap;
 use std::fmt::Debug;
+use std::ops::Deref;
 
 
 /// alias, we use String as key everywhere in the project
@@ -29,6 +30,24 @@ impl<ItemT: Debug+Clone, LocT: Clone> UniqueLocEnv<ItemT, LocT> for LocEnv<ItemT
             None => {
                 Ok(())
             }
+        }
+    }
+}
+
+pub trait GetAtLocation<ItemT, LocT> {
+    fn get_at_location(&self, key: &String, loc: &LocT) -> Result<ItemT, FrontendError<LocT>>;
+}
+
+impl<ItemT: Clone, LocT: Clone> GetAtLocation<ItemT, LocT> for Env<ItemT> {
+    fn get_at_location(&self, key: &String, loc: &LocT) -> Result<ItemT, FrontendError<LocT>> {
+        match self.get(key) {
+            None => {
+                let kind = FrontendErrorKind::EnvError {
+                    message: format!("Key {} is not defined in active environemnt", key.clone())
+                };
+                Err(FrontendError::new(kind, loc.clone()))
+            },
+            Some(v) => Ok(v.clone()),
         }
     }
 }

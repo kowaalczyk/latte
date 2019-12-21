@@ -1,8 +1,9 @@
 use crate::util::visitor::AstVisitor;
 use crate::parser::ast::{Expression, Statement, Program, Type, Function, Class, DeclItem, Reference};
-use crate::util::env::{Env, ToTypeEnv};
-use crate::error::FrontendError;
+use crate::util::env::{Env, ToTypeEnv, GetAtLocation};
+use crate::error::{FrontendError, FrontendErrorKind};
 use std::iter::FromIterator;
+use crate::location::Located;
 
 
 #[derive(Debug, PartialEq)]
@@ -10,7 +11,7 @@ pub struct TypeChecker<'prog> {
     /// contains global envs (functions and classes)
     program: &'prog Program,
     /// used in blocks, maps variable identifier to its type
-    local_env: Env<Type>
+    local_env: Env<Type>,
 }
 
 impl<'p> TypeChecker<'p> {
@@ -51,9 +52,8 @@ impl Clone for TypeChecker<'_> {
     }
 }
 
-
-type TypeCheckResult = Result<Option<Type>, FrontendError<usize>>;
-
+// no need for Option<Type>, as it has the same semantics as Type::Void
+type TypeCheckResult = Result<Type, Vec<FrontendError<usize>>>;
 
 impl ToTypeEnv for Function {
     fn to_type_env(&self) -> Env<Type> {
@@ -81,7 +81,7 @@ pub fn check_types(program: &Program) -> TypeCheckResult {
     for function in program.functions.values() {
         typechecker.with_clean_env().visit_function(&function.item)?;
     }
-    Ok(Option::None)
+    Ok(Type::Void)
 }
 
 
@@ -90,96 +90,193 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
         match stmt {
             Statement::Block { block } => {
                 let mut typechecker = self.with_nested_env(Env::new());
-                let mut return_type = Option::None;
+                let mut stmt_result = Type::Void;
+                let mut errors = Vec::new();
                 for block_stmt in block.stmts.iter() {
-                    return_type = typechecker.visit_statement(&block_stmt.item)?;
+                    match typechecker.visit_statement(&block_stmt.item) {
+                        Ok(stmt_t) => {
+                            stmt_result = stmt_t;
+                        }
+                        Err(mut v) => {
+                            errors.append(&mut v);
+                        }
+                    }
                 }
-                Ok(return_type)
-            },
-            Statement::Empty => Ok(Option::None),
+                match errors.is_empty() {
+                    true => Ok(stmt_result),
+                    false => Err(errors)
+                }
+            }
+            Statement::Empty => Ok(Type::Void),
             Statement::Decl { items, t } => {
+                let mut errors = Vec::new();
                 for item in items.iter() {
                     match item {
                         DeclItem::NoInit { ident } => {
-                            // TODO: Make sure re-declaration with different type is not an error
                             self.local_env.insert(ident.clone(), t.clone());
-                        },
+                        }
                         DeclItem::Init { ident, val } => {
-                            self.visit_expression(&val.item)?;
-                            // TODO: Make sure re-declaration with different type is not an error
-                            self.local_env.insert(ident.clone(), t.clone());
-                        },
+                            let loc = val.get_location().clone();
+                            match self.visit_expression(&val.item) {
+                                Ok(expr_t) => {
+                                    if expr_t == *t {
+                                        self.local_env.insert(ident.clone(), t.clone());
+                                    } else {
+                                        let kind = FrontendErrorKind::TypeError {
+                                            expected: t.clone(),
+                                            actual: expr_t,
+                                        };
+                                        errors.push(
+                                            FrontendError::new(kind, loc)
+                                        );
+                                    }
+                                }
+                                Err(mut v) => {
+                                    errors.append(&mut v);
+                                }
+                            }
+                        }
                     };
                 }
-                Ok(Option::None)
-            },
+                match errors.is_empty() {
+                    true => Ok(Type::Void),
+                    false => Err(errors)
+                }
+            }
             Statement::Ass { r, expr } => {
+                let loc = expr.get_location().clone();
                 let expr_t = self.visit_expression(&expr.item)?;
-                match (expr_t, r) {
-                    (Option::Some(ref t), Reference::Ident { ident }) => {
-                        unimplemented!() // TODO
-                    },
-                    (Option::Some(ref t), Reference::Object { obj, field }) => {
-                        unimplemented!() // TODO
-                    },
-                    (Option::Some(ref t), Reference::Array { arr, idx: _ }) => {
-                        unimplemented!() // TODO
-                    },
-                    (Option::None, _) => {
-                        unimplemented!() // TODO: Error
-                    },
+                let mut errors: Vec<FrontendError<usize>> = Vec::new();
+                let target_t = match r {
+                    Reference::Ident { ident } => {
+                        self.local_env.get_at_location(ident, &loc)
+                            .unwrap_or_else(|e| {
+                                errors.push(e);
+                                Type::Error
+                            })
+                    }
+                    Reference::Object { obj, field } => {
+                        match self.program.classes.get_at_location(obj, &loc) {
+                            Ok(cls) => {
+                                match cls.item.vars.get_at_location(field, &loc) {
+                                    Ok(var) => var.item.t,
+                                    Err(e) => {
+                                        errors.push(e);
+                                        Type::Error
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                errors.push(e);
+                                Type::Error
+                            }
+                        }
+                    }
+                    Reference::Array { arr, idx } => {
+                        // check idx expression type
+                        let idx_loc = idx.get_location().clone();
+                        let idx_t = self.visit_expression(&idx.item)
+                            .unwrap_or_else(|mut es|
+                                {
+                                    errors.append(&mut es);
+                                    Type::Error
+                                }
+                            );
+                        if idx_t != Type::Int {
+                            // TODO: Support slice assignment? Not necessary but nice
+                            let kind = FrontendErrorKind::TypeError {
+                                expected: Type::Int,
+                                actual: idx_t,
+                            };
+                            errors.push(FrontendError::new(kind, idx_loc));
+                        }
+                        // check array item type
+                        match self.local_env.get_at_location(arr, &idx_loc) {
+                            Ok(arr_t) => {
+                                match arr_t {
+                                    Type::Array { item_t } => {
+                                        item_t.as_ref().clone()
+                                    }
+                                    t => {
+                                        let kind = FrontendErrorKind::TypeError {
+                                            expected: Type::Array { item_t: Box::new(expr_t.clone()) },
+                                            actual: t,
+                                        };
+                                        errors.push(FrontendError::new(kind, loc));
+                                        Type::Error
+                                    }
+                                }
+                            },
+                            Err(e) => {
+                                errors.push(e);
+                                Type::Error
+                            }
+                        }
+                    }
                 };
-                Ok(Option::None)
-            },
+                if errors.is_empty() {
+                    if target_t == expr_t {
+                        Ok(Type::Void)
+                    } else {
+                        let kind = FrontendErrorKind::TypeError {
+                            expected: target_t.clone(),
+                            actual: expr_t,
+                        };
+                        Err(vec![FrontendError::new(kind, loc)])
+                    }
+                } else {
+                    Err(errors)
+                }
+            }
             Statement::Mut { r, op } => {
                 match r {
                     Reference::Ident { ident } => {
                         unimplemented!()  // TODO
-                    },
+                    }
                     Reference::Object { obj, field } => {
                         unimplemented!()  // TODO
-                    },
+                    }
                     Reference::Array { arr, idx } => {
                         unimplemented!()  // TODO
-                    },
+                    }
                 };
-                Ok(Option::None)
-            },
+                Ok(Type::Void)
+            }
             Statement::Return { expr } => {
                 match expr {
                     None => {
-                        Ok(Option::Some(Type::Void))
-                    },
+                        Ok(Type::Void)
+                    }
                     Some(expr) => {
                         self.visit_expression(&expr.item)
-                    },
+                    }
                 }
-            },
+            }
             Statement::Cond { expr, stmt } => {
                 unimplemented!() // TODO
-            },
+            }
             Statement::CondElse { expr, stmt_true, stmt_false } => {
                 unimplemented!() // TODO
-            },
+            }
             Statement::While { expr, stmt } => {
                 self.visit_expression(&expr.item)?;
                 let mut typechecker = self.with_nested_env(Env::new());
                 typechecker.visit_statement(&stmt.item)?;
-                Ok(Option::None)
-            },
+                Ok(Type::Void)
+            }
             Statement::For { t, ident, arr, stmt } => {
                 let mut loop_env = Env::new();
                 loop_env.insert(ident.clone(), t.clone());
                 // TODO: check if item type is the same as array item type
                 let mut typechecker = self.with_nested_env(loop_env);
                 typechecker.visit_statement(&stmt.item)?;
-                Ok(Option::None)
-            },
+                Ok(Type::Void)
+            }
             Statement::Expr { expr } => {
                 self.visit_expression(&expr.item)?;
-                Ok(Option::None)
-            },
-            Statement::Error => Ok(Option::None),
+                Ok(Type::Void)
+            }
+            Statement::Error => Ok(Type::Void),
         }
     }
 
@@ -192,7 +289,7 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
         for method in class.methods.values() {
             typechecker.visit_function(&method.item)?;
         }
-        Ok(Option::None)
+        Ok(Type::Void)
     }
 
     fn visit_function(&mut self, function: &Function) -> TypeCheckResult {
@@ -201,7 +298,7 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
             typechecker.visit_statement(&stmt.item)?;
         }
         // TODO: Check return type
-        Ok(Option::None)
+        Ok(Type::Void)
     }
 }
 
