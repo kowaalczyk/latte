@@ -5,8 +5,6 @@ use crate::parser::ast::{Block, Type, Function, Class, Arg};
 use crate::location::Located;
 use crate::util::env::Env;
 
-// TODO: add Array.length
-
 /// get environment containing all builtin functions
 pub fn get_builtins() -> Env<Function> {
     let builtin_print_int: Function = Function {

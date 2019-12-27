@@ -157,6 +157,19 @@ impl<'p> TypeChecker<'p> {
                             }
                         }
                     },
+                    Ok(Type::Array { .. }) => {
+                        // edge case: array.lenght attribute
+                        // defined here as there are no other builtin attributes to consider
+                        if field == "length" {
+                            Type::Int
+                        } else {
+                            let kind = FrontendErrorKind::EnvError {
+                                message: format!("Invalid attribute {} for array", field)
+                            };
+                            errors.push(FrontendError::new(kind, loc));
+                            Type::Error
+                        }
+                    },
                     Ok(t) => {
                         let kind = FrontendErrorKind::TypeError {
                             expected: Type::Object,

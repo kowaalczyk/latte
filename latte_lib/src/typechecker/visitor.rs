@@ -138,7 +138,9 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
             Expression::InitArr { t, size } => {
                 let size_t = self.visit_expression(&size.item)?;
                 if size_t == Type::Int {
-                    Ok(Type::Array { item_t: Box::new(t.clone()) })
+                    // in this scope, t is always an array (by parser definition)
+                    // + the type that we return will always be checked by the caller
+                    Ok(t.clone())
                 } else {
                     let kind = FrontendErrorKind::TypeError { expected: Type::Int, actual: size_t };
                     Err(vec![FrontendError::new(kind, size.get_location())])

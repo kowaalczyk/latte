@@ -14,11 +14,34 @@ pub fn check_types(program: &Program) -> TypeCheckResult {
     // TODO: Check if there are no conflicts with builtin functions
     // TODO: Check if main function exists and has correct types
     let mut typechecker = TypeChecker::new(program, &buitlins);
-    for class in program.classes.values() {
-        typechecker.with_clean_env().visit_class(&class.item)?;
+    let mut errors: Vec<_> = program.classes
+        .values()
+        .map(|cls| {
+            typechecker.with_clean_env().visit_class(&cls.item)
+        })
+        .filter_map(Result::err)
+        .map(Vec::into_iter)
+        .flatten()
+        .collect();
+    let mut func_errors: Vec<_> = program.functions
+        .values()
+        .map(|func| {
+            typechecker.with_clean_env().visit_function(&func.item)
+        })
+        .filter_map(Result::err)
+        .map(Vec::into_iter)
+        .flatten()
+        .collect();
+//    for class in program.classes.values() {
+//        typechecker.with_clean_env().visit_class(&class.item)?;
+//    }
+//    for function in program.functions.values() {
+//        typechecker.with_clean_env().visit_function(&function.item)?;
+//    }
+    errors.append(&mut func_errors);
+    if errors.is_empty() {
+        Ok(Type::Void)
+    } else {
+        Err(errors)
     }
-    for function in program.functions.values() {
-        typechecker.with_clean_env().visit_function(&function.item)?;
-    }
-    Ok(Type::Void)
 }
