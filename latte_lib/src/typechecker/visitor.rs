@@ -12,7 +12,7 @@ use crate::util::env::{Env, GetAtLocation};
 pub type TypeCheckResult = Result<Type, Vec<FrontendError<usize>>>;
 
 impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
-    fn visit_expression(&self, expr: &Expression) -> TypeCheckResult {
+    fn visit_expression(&mut self, expr: &Expression) -> TypeCheckResult {
         match expr {
             Expression::LitInt { .. } => {
                 Ok(Type::Int)

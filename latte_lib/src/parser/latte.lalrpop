@@ -347,6 +347,6 @@ Reference: ast::Reference = {
     <arr:Ident> "[" <idx:LocExpr0> "]" => ast::Reference::Array { arr, idx },
 };
 
-Num: u64 = {
-    r"[0-9]+" => u64::from_str(<>).unwrap(),  // no negative numbers, just as the LBNF Integer
+Num: i32 = {
+    r"[0-9]+" => i32::from_str(<>).unwrap(),  // no negative numbers, just as the LBNF Integer
 };

@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.17.2"
-// sha256: 545d5ed79dc922c8638866f22449aa32f54540ff4f8ec2f2fc7d5e617fc5f5d
+// sha256: ea51b71b8321c6efb8927fcb9d51ac5c63aaa9c3c69db5189eda617d6f36eb
 use std::str::FromStr;
 use crate::parser::ast;
 use crate::parser::ast::Keyed;
@@ -66,7 +66,7 @@ mod __parse__Program {
         Variant30(Located<ast::TopDef, usize>),
         Variant31(::std::vec::Vec<Located<ast::TopDef, usize>>),
         Variant32(Result<ast::Function, FrontendError<usize>>),
-        Variant33(u64),
+        Variant33(i32),
         Variant34(ast::Program),
         Variant35(ast::Reference),
         Variant36(Vec<ast::Type>),
@@ -4158,7 +4158,7 @@ mod __parse__Program {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, u64, usize)
+    ) -> (usize, i32, usize)
      {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::Variant33(__v), __r) => (__l, __v, __r),
@@ -9589,7 +9589,7 @@ fn __action64<
 >(
     errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
-    (_, val, _): (usize, u64, usize),
+    (_, val, _): (usize, i32, usize),
 ) -> Box<ast::Expression>
 {
     Box::new(ast::Expression::LitInt { val })
@@ -9794,9 +9794,9 @@ fn __action79<
     errors: &'err mut Vec<FrontendError<usize>>,
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
-) -> u64
+) -> i32
 {
-    u64::from_str(__0).unwrap()
+    i32::from_str(__0).unwrap()
 }
 
 #[allow(unused_variables)]

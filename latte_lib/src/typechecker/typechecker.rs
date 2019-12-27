@@ -127,7 +127,7 @@ impl<'p> TypeChecker<'p> {
 
     /// get type of reference and collect all possible errors
     pub fn get_reference_type(
-        &self, r: &Loc<Reference>, errors: &mut Vec<FrontendError<usize>>
+        &mut self, r: &Loc<Reference>, errors: &mut Vec<FrontendError<usize>>
     ) -> Type {
         let loc = r.get_location();
         match &r.item {
@@ -211,7 +211,7 @@ impl<'p> TypeChecker<'p> {
                     Ok(t) => {
                         let kind = FrontendErrorKind::TypeError {
                             expected: Type::Int,
-                            actual: t,
+                            actual: t.clone(),
                         };
                         errors.push(FrontendError::new(kind, idx_loc));
                         Type::Error

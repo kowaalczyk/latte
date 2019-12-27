@@ -36,7 +36,7 @@ pub enum UnaryOperator {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
-    LitInt { val: u64 },
+    LitInt { val: i32 },
     LitBool { val: bool },
     LitStr { val: String },
     LitNull,
