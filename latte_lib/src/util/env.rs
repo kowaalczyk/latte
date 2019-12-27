@@ -66,8 +66,3 @@ impl<MemberT: Debug+Keyed+Clone, LocT: Clone> FromMemberVec<MemberT, LocT> for L
         Ok(env)
     }
 }
-
-pub trait ToTypeEnv {
-    /// convert env with complex values to only store type information
-    fn to_type_env(&self) -> Env<Type>;
-}

@@ -1,5 +1,5 @@
 use crate::parser::parse_program;
-use crate::parser::ast::Program;
+use crate::parser::ast::{Program, Type};
 use crate::location::{clean_comments, LocationMapper};
 use crate::error::FrontendError;
 
@@ -9,9 +9,10 @@ use std::fs;
 use std::ops::Add;
 use crate::error::FrontendErrorKind::SystemError;
 use std::sync::Arc;
+use crate::typechecker::check_types;
 
 
-pub fn process_code(file_name: &String, source_code: &String) -> Result<Program, Vec<FrontendError<String>>> {
+pub fn process_code(file_name: &String, source_code: &String) -> Result<Type, Vec<FrontendError<String>>> {
     // setup codemap for mapping byte offset to (file, line, column)
     let mut codemap = CodeMap::new();
     let codemap_file = codemap.add_file(
@@ -20,18 +21,16 @@ pub fn process_code(file_name: &String, source_code: &String) -> Result<Program,
     );
     // clean code from comments (no custom lexer) and keep source map for corretcting error byte offset
     let (clean_code, source_map) = clean_comments(source_code);
-    parse_program(clean_code).or_else(
-        |err_vec| { Err(
-            err_vec.iter()
-                .map(|e|
-                    e.map_location(&source_map)
-                        .map_location(&codemap_file)
-                        .map_location(&codemap))
-                .collect()
+    parse_program(clean_code)
+        .and_then(|p| check_types(&p))
+        .or_else(|err_vec| { Err(
+            err_vec.iter().map(|e|
+                e.map_location(&source_map)
+                    .map_location(&codemap_file)
+                    .map_location(&codemap)
+            ).collect()
         )}
     )
-    // TODO: build envs
-    // TODO: check types
 }
 
 impl LocationMapper<usize, Pos> for Arc<File> {
@@ -46,7 +45,7 @@ impl LocationMapper<Pos, String> for CodeMap {
     }
 }
 
-pub fn process_file(path: &String) -> Result<Program, Vec<FrontendError<String>>> {
+pub fn process_file(path: &String) -> Result<Type, Vec<FrontendError<String>>> {
     let source_code = match fs::read_to_string(path) {
         Ok(source_code) => source_code,
         Err(e) => {

@@ -9,7 +9,7 @@ pub trait Keyed {
 }
 
 /// initially, all ast items are located by usize (byte offset)
-type Loc<AstT> = Located<AstT, usize>;
+pub type Loc<AstT> = Located<AstT, usize>;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum BinaryOperator {
@@ -36,12 +36,11 @@ pub enum UnaryOperator {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
-    Var { ident: String },
     LitInt { val: u64 },
     LitBool { val: bool },
     LitStr { val: String },
     LitNull,
-    App { r: Reference, args: Vec<Loc<Box<Expression>>> },
+    App { r: Loc<Reference>, args: Vec<Loc<Box<Expression>>> },
     Unary { op: UnaryOperator, arg: Loc<Box<Expression>> },
     Binary {
         left: Loc<Box<Expression>>,
@@ -51,21 +50,29 @@ pub enum Expression {
     InitDefault { t: Type },
     // InitFields { }  // TODO (not necessary, but nice)
     InitArr { t: Type, size: Loc<Box<Expression>> },
-    Reference { r: Reference },
+    Reference { r: Loc<Reference> },
     // edge case: expr in Cast is always null so we don't need to locate it:
-    Cast { t: Type, expr: Box<Expression> },
+    Cast { t: Type, expr: Loc<Box<Expression>> },
     Error,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Type {
+    /// basic types
     Int,
     Str,
     Bool,
     Void,
+    Null,
+
+    /// complex types (extensions)
     Class { ident: String },
     Array { item_t: Box<Type> },
-    Error
+
+    /// extra types for reporting / propagating errors
+    Error,
+    Any,
+    Object,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -88,11 +95,11 @@ pub struct Block {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
-    Block { block: Block },
+    Block { block: Loc<Block> },
     Empty,
     Decl { t: Type, items: Vec<DeclItem> },
-    Ass { r: Reference, expr: Loc<Box<Expression>> },
-    Mut { r: Reference, op: StatementOp },
+    Ass { r: Loc<Reference>, expr: Loc<Box<Expression>> },
+    Mut { r: Loc<Reference>, op: StatementOp },
     Return { expr: Option<Loc<Box<Expression>>> },
     Cond { expr: Loc<Box<Expression>>, stmt: Loc<Box<Statement>> },
     CondElse {
@@ -117,7 +124,7 @@ pub enum StatementOp {
     Decrement,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Hash, Clone)]
 pub struct Arg { pub t: Type, pub ident: String }
 
 impl Keyed for Arg {
@@ -128,16 +135,20 @@ impl Keyed for Arg {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Function {
-    pub ret: Type, 
-    pub ident: String, 
-    pub args: Env<Located<Arg, usize>>,
-    pub block: Block
+    pub ret: Type,
+    pub ident: String,
+    pub args: Vec<Loc<Arg>>,
+    pub block: Loc<Block>
 }
 
 impl Function {
-    pub fn new(ret: Type, ident: String, arg_vec: Vec<Located<Arg, usize>>, block: Block) 
-    -> Result<Self, FrontendError<usize>> {
-        let args = Env::from_vec(arg_vec)?;
+    pub fn new(
+        ret: Type, ident: String, args: Vec<Located<Arg, usize>>, block: Loc<Block>
+    ) -> Result<Self, FrontendError<usize>> {
+        // check if there are no duplicate arguments
+        Env::from_vec(args.clone())?;
+
+        // insert actual vector into the Function to preserve order
         Ok(Self { ret, ident, args, block })
     }
 }
@@ -170,7 +181,7 @@ pub struct Class {
 }
 
 impl Class {
-    pub fn new(ident: String, var_vec: Vec<Located<ClassVar, usize>>, method_vec: Vec<Located<Function, usize>>) 
+    pub fn new(ident: String, var_vec: Vec<Located<ClassVar, usize>>, method_vec: Vec<Located<Function, usize>>)
     -> Result<Self, FrontendError<usize>> {
         let vars = Env::from_vec(var_vec)?;
         let methods = Env::from_vec(method_vec)?;

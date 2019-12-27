@@ -1,7 +1,7 @@
 mod util;
 mod location;
 mod parser;
-mod processor;
+mod typechecker;
 mod compiler;
 
 pub mod frontend;

@@ -67,7 +67,7 @@ pub Program: ast::Program = {
 
 LocTopDef = ToLocated<TopDef>;
 TopDef: ast::TopDef = {
-    <ret:Type> <ident:Ident> "(" <arg_vec:LocArgs> ")" <block:Block> => {
+    <ret:Type> <ident:Ident> "(" <arg_vec:LocArgs> ")" <block:LocBlock> => {
         match ast::Function::new(ret, ident, arg_vec, block) {
             Ok(func) => ast::TopDef::Function { func },
             Err(e) => {
@@ -136,7 +136,7 @@ ClassVar: ast::ClassVar = {
 
 LocMethod = ToLocated<Method>;
 Method: Result<ast::Function, FrontendError<usize>> = {
-    <ret:Type> <ident:Ident> "(" <args:LocArgs> ")" <block:Block> => {
+    <ret:Type> <ident:Ident> "(" <args:LocArgs> ")" <block:LocBlock> => {
         // not to be confused with ast::TopDef::Function 
         ast::Function::new(ret, ident, args, block)
     },
@@ -152,6 +152,7 @@ LocArgs = Separated<",", LocArg>;
 
 // --- blocks ---
 
+LocBlock = ToLocated<Block>;
 Block: ast::Block = {
     "{" <stmts:LocStatement*> "}" => ast::Block { stmts },
 };
@@ -163,20 +164,20 @@ Statement = StatementAllowDanglingIf<"I">;
 
 LocStatementADI<I> = ToLocated<StatementAllowDanglingIf<I>>;
 StatementAllowDanglingIf<I>: Box<ast::Statement> = {
-    <block:Block> => {
+    <block:LocBlock> => {
         Box::new(ast::Statement::Block { block })
     },
     ";" => Box::new(ast::Statement::Empty),
     <t:Type> <items:DeclItems> ";" => {
         Box::new(ast::Statement::Decl { t, items })
     },
-    <r:Reference> "=" <expr:LocExpr0> ";" => {
+    <r:LocRef> "=" <expr:LocExpr0> ";" => {
         Box::new(ast::Statement::Ass { r, expr })
     },
-    <r:Reference> "++" ";" => {
+    <r:LocRef> "++" ";" => {
         Box::new(ast::Statement::Mut { r, op: ast::StatementOp::Increment })
     },
-    <r:Reference> "--" ";" => {
+    <r:LocRef> "--" ";" => {
         Box::new(ast::Statement::Mut { r, op: ast::StatementOp::Decrement })
     },
     "return" <e:LocExpr0> ";" => {
@@ -305,10 +306,10 @@ Expr6: Box<ast::Expression> = {
             size 
         })
     },
-    <r:Reference> "(" <args:Exprs> ")" => {
+    <r:LocRef> "(" <args:Exprs> ")" => {
         Box::new(ast::Expression::App { r, args })
     },
-    <r:Reference> => {
+    <r:LocRef> => {
         Box::new(ast::Expression::Reference { r })
     },
     <val:Num> => Box::new(ast::Expression::LitInt { val }),
@@ -318,7 +319,7 @@ Expr6: Box<ast::Expression> = {
     // TODO: Unescape characters from the string (!!!)
     r#""[^"]*""# => Box::new(ast::Expression::LitStr { val: String::from(<>) }),
     // nested expression conflicts with type cast, so we only implement the possibility of casting null
-    "(" <t:Type> ")null" => Box::new(ast::Expression::Cast { t, expr: Box::new(ast::Expression::LitNull) }),
+    "(" <t:Type> <expr:LocNullCast> => Box::new(ast::Expression::Cast { t, expr }),
     // https://stackoverflow.com/questions/27448189/bison-reduce-reduce-conflict-with-casting-and-expression-parentheses
     // "(" <t:Type> ")" <expr:Expr6> => Box::new(ast::Expression::Cast { t, expr }),
     "(" <e:Expr0> ")" => (<>),
@@ -326,12 +327,20 @@ Expr6: Box<ast::Expression> = {
 
 Exprs = Separated<",", LocExpr0>;
 
+// --- special null cast ---
+
+LocNullCast = ToLocated<NullCast>;
+NullCast: Box<ast::Expression> = {
+    ")null" => Box::new(ast::Expression::LitNull),
+};
+
 // --- literals ---
 
 Ident: String = {
     r"[a-zA-Z_][a-zA-Z_0-9]*" => String::from(<>),
 };
 
+LocRef = ToLocated<Reference>;
 Reference: ast::Reference = {
     <ident:Ident> => ast::Reference::Ident { ident },
     <obj:Ident> "." <field:Ident> => ast::Reference::Object { obj, field },

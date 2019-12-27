@@ -18,9 +18,12 @@ pub enum FrontendErrorKind {
         expected: ast::Type,
         actual: ast::Type,
     },
+    ArgumentError {
+        message: String,
+    },
     SystemError {
-        message: String
-    }
+        message: String,
+    },
 }
 
 impl fmt::Display for FrontendErrorKind {
@@ -34,6 +37,9 @@ impl fmt::Display for FrontendErrorKind {
             },
             FrontendErrorKind::TypeError { expected, actual} => {
                 write!(f, "TypeError: expected `{:?}`, got `{:?}`", expected, actual)
+            },
+            FrontendErrorKind::ArgumentError { message } => {
+                write!(f, "ArgumentError: {}", message)
             },
             FrontendErrorKind::SystemError { message } => {
                 write!(f, "SystemError: {}", message)
