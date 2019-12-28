@@ -1,6 +1,5 @@
 use crate::parser::ast::{Program, Function, Type};
-use crate::typechecker::visitor::TypeCheckResult;
-use crate::location::Located;
+use crate::typechecker::mapper::TypeCheckResult;
 use crate::error::{FrontendErrorKind, FrontendError};
 use crate::util::env::Env;
 

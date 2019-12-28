@@ -1,12 +1,12 @@
 mod util;
-mod visitor;
+mod mapper;
 mod env;
 mod typechecker;
 
 use crate::parser::ast::{Program, Type};
 use crate::util::visitor::AstVisitor;
 use crate::typechecker::typechecker::TypeChecker;
-use crate::typechecker::visitor::TypeCheckResult;
+use crate::typechecker::mapper::TypeCheckResult;
 use crate::typechecker::util::get_builtins;
 use crate::typechecker::env::{check_builtin_conflicts, check_main};
 

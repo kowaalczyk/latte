@@ -3,7 +3,7 @@ use std::fmt;
 use lalrpop_util::{ErrorRecovery, ParseError as LalrpopError};
 
 use crate::parser::ast;
-use crate::location::Located;
+use crate::meta::Meta;
 
 
 #[derive(Debug, PartialEq, Clone)]
@@ -49,7 +49,7 @@ impl fmt::Display for FrontendErrorKind {
 }
 
 /// standardized type to remember all frontend errors
-pub type FrontendError<LocationT> = Located<FrontendErrorKind, LocationT>;
+pub type FrontendError<LocationT> = Meta<FrontendErrorKind, LocationT>;
 
 impl<T: fmt::Debug, E: fmt::Debug> From<(ErrorRecovery<usize, T, E>)> for FrontendError<usize> {
     fn from(err: ErrorRecovery<usize,T,E>) -> Self {

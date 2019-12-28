@@ -5,7 +5,7 @@
 /// object: pointer to struct, passed by value
 
 use crate::util::env::Env;
-use crate::parser::ast::{ClassVar, Type, UnaryOperator, BinaryOperator};
+use crate::parser::ast::{ClassVarItem, Type, UnaryOperator, BinaryOperator};
 
 pub enum BasicValue {
     Bool { v: bool },

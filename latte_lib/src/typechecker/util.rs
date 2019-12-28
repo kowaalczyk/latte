@@ -1,43 +1,32 @@
 use std::collections::HashMap;
 use std::iter::{FromIterator, IntoIterator};
 
-use crate::parser::ast::{Block, Type, Function, Class, Arg};
-use crate::location::Located;
+use crate::parser::ast::{Block, Type, Class, Arg, FunctionItem, ClassItem};
 use crate::util::env::Env;
 
 /// get environment containing all builtin functions
-pub fn get_builtins() -> Env<Function> {
-    let builtin_print_int: Function = Function {
-        ret: Type::Void,
-        ident: String::from("printInt"),
-        args: vec![Located::new(Arg { t: Type::Int, ident: String::from("") }, 0)],
-        block: Located::new(Block { stmts: vec![] }, 0)
+pub fn get_builtins<T>() -> Env<Type> {
+    let builtin_print_int = Type::Function {
+        args: vec![Box::new(Type::Int)],
+        ret: Box::new(Type::Void)
     };
-    let builtin_print_string: Function = Function {
-        ret: Type::Void,
-        ident: String::from("printString"),
-        args: vec![Located::new(Arg { t: Type::Str, ident: String::from("") }, 0)],
-        block: Located::new(Block { stmts: vec![] }, 0)
+    let builtin_print_string = Type::Function {
+        args: vec![Box::new(Type::Str)],
+        ret: Box::new(Type::Void)
     };
-    let builtin_read_int: Function = Function {
-        ret: Type::Int,
-        ident: String::from("readInt"),
+    let builtin_read_int = Type::Function {
         args: vec![],
-        block: Located::new(Block { stmts: vec![] }, 0)
+        ret: Box::new(Type::Int)
     };
-    let builtin_read_string: Function = Function {
-        ret: Type::Str,
-        ident: String::from("readString"),
+    let builtin_read_string = Type::Function {
         args: vec![],
-        block: Located::new(Block { stmts: vec![] }, 0)
+        ret: Box::new(Type::Str)
     };
-    let builtin_error: Function = Function {
-        ret: Type::Void,
-        ident: String::from("error"),
+    let builtin_error = Type::Function {
         args: vec![],
-        block: Located::new(Block { stmts: vec![] }, 0)
+        ret: Box::new(Type::Void)
     };
-    let builtin_vec: Vec<(String, Function)> = vec![
+    let builtin_vec: Vec<(String, Type)> = vec![
         (String::from("printInt"), builtin_print_int),
         (String::from("printString"), builtin_print_string),
         (String::from("readInt"), builtin_read_int),
@@ -52,7 +41,7 @@ pub trait ToTypeEnv {
     fn to_type_env(&self) -> Env<Type>;
 }
 
-impl ToTypeEnv for Function {
+impl<T> ToTypeEnv for FunctionItem<T> {
     /// creates Env containing types of all function arguments
     fn to_type_env(&self) -> Env<Type> {
         Env::from_iter(self.args.iter().map(
@@ -62,7 +51,7 @@ impl ToTypeEnv for Function {
     }
 }
 
-impl ToTypeEnv for Class {
+impl<T> ToTypeEnv for ClassItem<T> {
     /// creates Env containing types of all instance variables
     fn to_type_env(&self) -> Env<Type> {
         Env::from_iter(self.vars.iter().map(

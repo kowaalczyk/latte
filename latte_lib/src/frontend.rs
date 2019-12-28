@@ -1,6 +1,6 @@
 use crate::parser::parse_program;
-use crate::parser::ast::{Program, Type};
-use crate::location::{clean_comments, LocationMapper};
+use crate::parser::ast::{Program, Type, LocationMeta};
+use crate::meta::MetaMapper;
 use crate::error::FrontendError;
 
 use codemap::{CodeMap, Pos, File};
@@ -33,15 +33,15 @@ pub fn process_code(file_name: &String, source_code: &String) -> Result<Type, Ve
     )
 }
 
-impl LocationMapper<usize, Pos> for Arc<File> {
-    fn map_location(&self, loc: &usize) -> Pos {
-        self.span.low().add(*loc as u64)
+impl MetaMapper<LocationMeta, Pos> for Arc<File> {
+    fn map_meta(&self, from: LocationMeta) -> Pos {
+        self.span.low().add(from.offset as u64)
     }
 }
 
-impl LocationMapper<Pos, String> for CodeMap {
-    fn map_location(&self, loc: &Pos) -> String {
-        self.look_up_pos(*loc).to_string()
+impl MetaMapper<Pos, String> for CodeMap {
+    fn map_meta(&self, from: Pos) -> String {
+        self.look_up_pos(from).to_string()
     }
 }
 

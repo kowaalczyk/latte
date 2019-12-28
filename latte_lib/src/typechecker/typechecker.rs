@@ -1,21 +1,21 @@
 use std::collections::HashSet;
 
-use crate::parser::ast::{Program, Type, Class, Reference, Loc, Function};
+use crate::parser::ast::{Program, Type, Class, Reference, Function, LocationMeta};
 use crate::error::{FrontendErrorKind, FrontendError};
-use crate::util::env::{Env, GetAtLocation};
+use crate::util::env::{Env, UniqueEnv};
 use crate::util::visitor::AstVisitor;
 use std::io::empty;
 
 #[derive(Debug, PartialEq)]
 pub struct TypeChecker<'prog> {
     /// contains global envs (functions and classes)
-    program: &'prog Program,
+    program: &'prog Program<LocationMeta>,
 
     /// environment containing builtin functions
-    builtins: &'prog Env<Function>,
+    builtins: &'prog Env<Function<LocationMeta>>,
 
     /// additional context when checking a class
-    class: Option<&'prog Class>,
+    current_class: Option<&'prog Class<LocationMeta>>,
 
     /// used in blocks, maps variable identifier to its type
     /// public to allow easy override during declaration
@@ -26,8 +26,8 @@ pub struct TypeChecker<'prog> {
 
 impl<'p> TypeChecker<'p> {
     /// typechecker is created with empty env, with lifetime same as the lifetime of passed program
-    pub fn new(program: &'p Program, builtins: &'p Env<Function>) -> Self {
-        Self { program, builtins, local_env: Env::new(), class: Option::None }
+    pub fn new(program: &'p Program<LocationMeta>, builtins: &'p Env<Function<LocationMeta>>) -> Self {
+        Self { program, builtins, local_env: Env::new(), current_class: Option::None }
     }
 
     /// creates TypeChecker for the same program, but fresh environment
@@ -37,7 +37,7 @@ impl<'p> TypeChecker<'p> {
 
     /// creates TypeChecker for the same program, but specified environment
     pub fn with_env(&self, env: Env<Type>) -> Self {
-        Self { program: self.program, local_env: env, builtins: self.builtins, class: self.class }
+        Self { program: self.program, local_env: env, builtins: self.builtins, current_class: self.current_class }
     }
 
     /// creates TypeChecker for same program and copy of current environment
@@ -52,9 +52,9 @@ impl<'p> TypeChecker<'p> {
 
     /// creates TypeChecker for same program and copy of current environment
     /// extended to contain all values from nested_env
-    pub fn with_class(&self, cls: &'p Class) -> Self {
+    pub fn with_class(&self, cls: &'p Class<LocationMeta>) -> Self {
         let mut new_self = self.clone();
-        new_self.class = Option::Some(cls);
+        new_self.current_class = Option::Some(cls);
         new_self
     }
 
@@ -247,7 +247,7 @@ impl<'p> TypeChecker<'p> {
                 } else if let Some(func) = self.builtins.get(ident) {
                     // call to a builtin function
                     Ok(func.clone())
-                } else if let Some(cls) = &self.class.clone() {
+                } else if let Some(cls) = &self.current_class.clone() {
                     // call to a method for current class
                     if let Some(func) = self.get_method(&ident, &cls) {
                         Ok(func.clone())
@@ -320,7 +320,7 @@ impl Clone for TypeChecker<'_> {
             program: self.program,
             builtins: self.builtins,
             local_env: self.local_env.clone(),
-            class: self.class,
+            current_class: self.current_class,
         }
     }
 
@@ -328,6 +328,6 @@ impl Clone for TypeChecker<'_> {
         self.program = source.program;
         self.builtins = source.builtins;
         self.local_env = source.local_env.clone();
-        self.class = source.class;
+        self.current_class = source.current_class;
     }
 }

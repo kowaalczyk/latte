@@ -1,4 +1,4 @@
-use crate::location::{LocationMapper};
+use crate::meta::{MetaMapper};
 
 /// stores position of characters removed from original code (ie. comments)
 pub struct CharOffset {
@@ -52,9 +52,9 @@ impl CharOffset {
     }
 }
 
-impl LocationMapper<usize, usize> for CharOffset {
-    fn map_location(&self, loc: &usize) -> usize {
-        self.get_source_position(*loc)
+impl MetaMapper<usize, usize> for CharOffset {
+    fn map_meta(&self, from: usize) -> usize {
+        self.get_source_position(from)
     }
 }
 

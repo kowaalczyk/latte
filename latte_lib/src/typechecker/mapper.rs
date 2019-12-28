@@ -5,7 +5,7 @@ use crate::error::{FrontendError, FrontendErrorKind};
 use crate::util::visitor::AstVisitor;
 use crate::typechecker::typechecker::TypeChecker;
 use crate::typechecker::util::ToTypeEnv;
-use crate::util::env::{Env, GetAtLocation};
+use crate::util::env::{Env, UniqueEnv};
 
 /// default result type for all type checking operations
 /// NOTE: no need for Option<Type>, as it has the same semantics as Type::Void
