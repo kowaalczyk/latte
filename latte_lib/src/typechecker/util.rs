@@ -4,6 +4,12 @@ use std::iter::{FromIterator, IntoIterator};
 use crate::parser::ast::{Block, Type, Class, Arg, FunctionItem, ClassItem};
 use crate::util::env::Env;
 
+/// metadata used to store type information
+#[derive(Debug, PartialEq, Clone)]
+pub struct TypeMeta {
+    pub t: Type
+}
+
 /// get environment containing all builtin functions
 pub fn get_builtins<T>() -> Env<Type> {
     let builtin_print_int = Type::Function {

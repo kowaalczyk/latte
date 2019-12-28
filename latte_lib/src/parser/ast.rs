@@ -20,6 +20,7 @@ impl<ItemT: Keyed, MetaT> Keyed for AstItem<ItemT, MetaT> {
 }
 
 /// metadata type for location data (used by generated parser)
+#[derive(Debug, PartialEq, Clone)]
 pub struct LocationMeta {
     /// byte offset from the beginning of source code
     pub offset: usize,

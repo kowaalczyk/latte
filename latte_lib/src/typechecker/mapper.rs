@@ -1,50 +1,61 @@
 use std::iter::FromIterator;
 
-use crate::parser::ast::{Type, Expression, UnaryOperator, BinaryOperator, Statement, DeclItem, Class, Function};
+use crate::parser::ast::{Type, Expression, UnaryOperator, BinaryOperator, Statement, DeclItem, Class, Function, LocationMeta, ExpressionKind, ReferenceKind, Reference};
 use crate::error::{FrontendError, FrontendErrorKind};
-use crate::util::visitor::AstVisitor;
 use crate::typechecker::typechecker::TypeChecker;
-use crate::typechecker::util::ToTypeEnv;
+use crate::typechecker::util::{ToTypeEnv, TypeMeta};
 use crate::util::env::{Env, UniqueEnv};
+use crate::util::mapper::AstMapper;
+use crate::meta::Meta;
 
-/// default result type for all type checking operations
-/// NOTE: no need for Option<Type>, as it has the same semantics as Type::Void
-pub type TypeCheckResult = Result<Type, Vec<FrontendError<usize>>>;
+type TypeCheckResult<AstT> = Result<AstT, Vec<FrontendError<LocationMeta>>>;
 
-impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
-    fn visit_expression(&mut self, expr: &Expression) -> TypeCheckResult {
-        match expr {
-            Expression::LitInt { .. } => {
-                Ok(Type::Int)
+impl AstMapper<LocationMeta, TypeMeta> for TypeChecker<'_> {
+    fn map_reference(&mut self, r: &Meta<ReferenceKind<LocationMeta>, LocationMeta>) -> TypeCheckResult<Reference<TypeMeta>> {
+        unimplemented!()
+    }
+
+    fn map_expression(&mut self, expr: &Expression<LocationMeta>) -> TypeCheckResult<Expression<TypeMeta>> {
+        let typecheck_result = match &expr.item {
+            ExpressionKind::LitInt { val } => {
+                Ok((ExpressionKind::LitInt { val: val.clone() }, Type::Int))
             },
-            Expression::LitBool { .. } => {
-                Ok(Type::Bool)
+            ExpressionKind::LitBool { val } => {
+                Ok((ExpressionKind::LitBool { val: val.clone() }, Type::Bool))
             },
-            Expression::LitStr { .. } => {
-                Ok(Type::Str)
+            ExpressionKind::LitStr { val } => {
+                Ok((ExpressionKind::LitStr { val: val.clone() }, Type::Str))
             },
-            Expression::LitNull => {
-                Ok(Type::Null)
+            ExpressionKind::LitNull => {
+                Ok((ExpressionKind::LitNull, Type::Null))
             },
-            Expression::App { r, args } => {
-                match self.get_func_or_method(r) {
-                    Ok(func) => {
-                        let mut errors = Vec::new();
-                        if func.args.len() != args.len() {
+            ExpressionKind::App { r, args } => {
+                let mapped_r = self.map_reference(&r)?;
+                match &mapped_r.get_meta().t {
+                    Type::Function { args: exp_args, ret } => {
+                        let mut mapped_args = Vec::new();
+                        let mut errors: Vec<FrontendError<LocationMeta>> = Vec::new();
+                        if exp_args.len() != args.len() {
                             let kind = FrontendErrorKind::ArgumentError {
                                 message: format!(
                                     "Incorrect argument count, expected {} got {}",
-                                    func.args.len(),
+                                    exp_args.len(),
                                     args.len()
                                 )
                             };
-                            errors.push(FrontendError::new(kind, r.get_location()));
+                            errors.push(FrontendError::new(kind, r.get_meta().clone()));
                         } else {
-                            for (expected_arg, arg_expr) in func.args.iter().zip(args.iter()) {
-                                match self.visit_expression(&arg_expr.item) {
-                                    Ok(actual_arg_t) => {
-                                        if let Err(kind) = self.check_assignment(&expected_arg.item.t, &actual_arg_t) {
-                                            errors.push(FrontendError::new(kind, arg_expr.get_location()));
+                            for (expected_arg, arg_expr) in exp_args.iter().zip(args.iter()) {
+                                match self.map_expression(&arg_expr) {
+                                    Ok(mapped_arg) => {
+                                        let assignment_check = self.check_assignment(
+                                            &expected_arg.item.t,
+                                            &mapped_arg.get_meta().t
+                                        );
+                                        if let Err(kind) = assignment_check {
+                                            errors.push(FrontendError::new(kind, arg_expr.get_meta().clone()));
+                                        } else {
+                                            mapped_args.push(Box::new(mapped_arg));
                                         }
                                     },
                                     Err(mut err_vec) => {
@@ -54,35 +65,43 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
                             }
                         }
                         if errors.is_empty() {
-                            Ok(func.ret.clone())
+                            Ok((ExpressionKind::App { r: mapped_r, args: mapped_args }, ret))
                         } else {
                             Err(errors)
                         }
                     },
-                    Err(kind) => {
-                        Err(vec![FrontendError::new(kind, r.get_location())])
-                    },
+                    t => {
+                        let kind = FrontendErrorKind::TypeError {
+                            expected: Type::Function { args: vec![], ret: Box::new(Type::Any) },
+                            actual: t.clone()
+                        };
+                        Err(vec![FrontendError::new(kind, mapped_r.get_meta())])
+                    }
                 }
             },
-            Expression::Unary { op, arg } => {
+            ExpressionKind::Unary { op, arg } => {
                 let op_t = match op {
                     UnaryOperator::Neg => Type::Int,
                     UnaryOperator::Not => Type::Bool,
                 };
-                let arg_t = self.visit_expression(&arg.item)?;
-                if arg_t == op_t {
-                    Ok(arg_t)
+                let mapped_arg = self.map_expression(&arg)?;
+                if mapped_arg.get_meta().t == op_t {
+                    Ok((ExpressionKind::Unary { op: op.clone(), arg: Box::new(mapped_arg) }, mapped_arg.get_meta().t.clone()))
                 } else {
-                    let kind = FrontendErrorKind::TypeError { expected: op_t, actual: arg_t };
-                    Err(vec![FrontendError::new(kind, arg.get_location())])
+                    let kind = FrontendErrorKind::TypeError {
+                        expected: op_t,
+                        actual: mapped_arg.get_meta().t.clone()
+                    };
+                    Err(vec![FrontendError::new(kind, arg.get_meta())])
                 }
             },
             Expression::Binary { left, op, right } => {
                 // TODO: Collect errors from both sides before terminating
-                let left_t = self.visit_expression(&left.item)?;
-                let right_t = self.visit_expression(&right.item)?;
+                let mapped_l = self.map_expression(&left)?;
+                let mapped_r = self.map_expression(&right)?;
 
-                if left_t == right_t {
+                if mapped_l.get_meta() == mapped_r.get_meta() {
+                    let left_t = mapped_l.get_meta().t.clone();
                     let op_result_t = match op {
                         BinaryOperator::Equal | BinaryOperator::NotEqual => {
                             Option::Some(Type::Bool)
@@ -120,65 +139,84 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
                         },
                     };
                     if let Some(result_t) = op_result_t {
-                        Ok(result_t)
-                    } else {
-                        let kind = FrontendErrorKind::ArgumentError {
-                            message: format!("Invalid argument type {:?} for operator {:?}", left_t, op)
+                        let mapped_expr = ExpressionKind::Binary {
+                            left: Box::new(mapped_l),
+                            op,
+                            right: Box::new(mapped_r)
                         };
+                        Ok((mapped_expr, result_t))
+                    } else {
+                        let kind = FrontendErrorKind::ArgumentError { message: format!(
+                                "Invalid argument type {:?} for operator {:?}",
+                                mapped_l.get_meta().t.clone(),
+                                op
+                        )};
                         Err(vec![FrontendError::new(kind, left.get_location())])
                     }
                 } else {
-                    let kind = FrontendErrorKind::TypeError { expected: left_t, actual: right_t };
+                    let kind = FrontendErrorKind::TypeError {
+                        expected: mapped_l.get_meta().t.clone(),
+                        actual: mapped_r.get_meta().t.clone()
+                    };
                     Err(vec![FrontendError::new(kind, right.get_location())])
                 }
             },
-            Expression::InitDefault { t } => {
-                Ok(t.clone())
+            ExpressionKind::InitDefault { t } => {
+                Ok((ExpressionKind::InitDefault { t: t.clone() }, t.clone()))
             },
-            Expression::InitArr { t, size } => {
-                let size_t = self.visit_expression(&size.item)?;
-                if size_t == Type::Int {
+            ExpressionKind::InitArr { t, size } => {
+                let mapped_size = self.map_expression(&size)?;
+                if mapped_size.get_meta().t == Type::Int {
                     // in this scope, t is always an array (by parser definition)
                     // + the type that we return will always be checked by the caller
-                    Ok(t.clone())
+                    Ok((ExpressionKind::InitArr { t: t.clone(), size: Box::new(mapped_size)}, t.clone()))
                 } else {
-                    let kind = FrontendErrorKind::TypeError { expected: Type::Int, actual: size_t };
-                    Err(vec![FrontendError::new(kind, size.get_location())])
+                    let kind = FrontendErrorKind::TypeError {
+                        expected: Type::Int,
+                        actual: mapped_size.get_meta().t.clone()
+                    };
+                    Err(vec![FrontendError::new(kind, size.get_meta())])
                 }
             },
-            Expression::Reference { r } => {
-                let mut errors = Vec::new();
-                let ref_t = self.get_reference_type(r, &mut errors);
-                if errors.is_empty() {
-                    Ok(ref_t)
-                } else {
-                    Err(errors)
-                }
+            ExpressionKind::Reference { r } => {
+                let mapped_ref = self.map_reference(r)?;
+                Ok((ExpressionKind::Reference { r: mapped_ref }, mapped_ref.get_meta().t.clone()))
             },
-            Expression::Cast { t, expr } => {
-                let expr_t = self.visit_expression(&expr.item)?;
-                if expr_t == Type::Null {
-                    Ok(t.clone())
+            ExpressionKind::Cast { t, expr } => {
+                let mapped_expr = self.map_expression(&expr.item)?;
+                if mapped_expr.get_meta().t == Type::Null {
+                    let kind = ExpressionKind::Cast { t: t.clone(), expr: Box::new(mapped_expr) };
+                    Ok((kind, t.clone()))
                 } else {
                     // for now we only allow the null type to be casted
-                    let kind = FrontendErrorKind::TypeError { expected: Type::Null, actual: expr_t };
-                    Err(vec![FrontendError::new(kind, expr.get_location())])
+                    let kind = FrontendErrorKind::TypeError {
+                        expected: Type::Null,
+                        actual: mapped_expr.get_meta().t.clone()
+                    };
+                    Err(vec![FrontendError::new(kind, expr.get_meta())])
                 }
             },
             Expression::Error => {
                 unreachable!()
             },
+        };
+        match typecheck_result {
+            Ok((kind, t)) => {
+                let mapped: Expression<TypeMeta> = Expression::new(kind, TypeMeta { t });
+                Ok(mapped)
+            },
+            Err(err_vec) => Err(err_vec),
         }
     }
 
-    fn visit_statement(&mut self, stmt: &Statement) -> TypeCheckResult {
+    fn map_statement(&mut self, stmt: &Statement<LocationMeta>) -> TypeCheckResult<Statement<TypeMeta>> {
         match stmt {
             Statement::Block { block } => {
                 let mut typechecker = self.with_nested_env(Env::new());
                 let mut stmt_result = Type::Void;
                 let mut errors = Vec::new();
                 for block_stmt in block.item.stmts.iter() {
-                    match typechecker.visit_statement(&block_stmt.item) {
+                    match typechecker.map_statement(&block_stmt.item) {
                         Ok(stmt_t) => {
                             stmt_result = stmt_t;
                         }
@@ -202,7 +240,7 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
                         }
                         DeclItem::Init { ident, val } => {
                             let loc = val.get_location().clone();
-                            match self.visit_expression(&val.item) {
+                            match self.map_expression(&val.item) {
                                 Ok(expr_t) => {
                                     match self.check_assignment(&t, &expr_t) {
                                         Ok(_) => {
@@ -227,7 +265,7 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
             },
             Statement::Ass { r, expr } => {
                 let expr_loc = expr.get_location().clone();
-                let expr_t = self.visit_expression(&expr.item)?;
+                let expr_t = self.map_expression(&expr.item)?;
                 let mut errors: Vec<FrontendError<usize>> = Vec::new();
                 let target_t = self.get_reference_type(&r, &mut errors);
                 if errors.is_empty() {
@@ -272,14 +310,14 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
                         Ok(Type::Void)
                     }
                     Some(expr) => {
-                        self.visit_expression(&expr.item)
+                        self.map_expression(&expr.item)
                     }
                 }
             },
             Statement::Cond { expr, stmt } => {
-                match self.visit_expression(&expr.item) {
+                match self.map_expression(&expr.item) {
                     Ok(Type::Bool) => {
-                        self.visit_statement(&stmt.item)
+                        self.map_statement(&stmt.item)
                     },
                     Ok(t) => {
                         let kind = FrontendErrorKind::TypeError {
@@ -292,10 +330,10 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
                 }
             },
             Statement::CondElse { expr, stmt_true, stmt_false } => {
-                match self.visit_expression(&expr.item) {
+                match self.map_expression(&expr.item) {
                     Ok(Type::Bool) => {
-                        let true_t = self.visit_statement(&stmt_true.item)?;
-                        let false_t = self.visit_statement(&stmt_false.item)?;
+                        let true_t = self.map_statement(&stmt_true.item)?;
+                        let false_t = self.map_statement(&stmt_false.item)?;
                         match self.get_types_lca(&true_t, &false_t) {
                             Some(lca_t) => Ok(lca_t),
                             None => {
@@ -326,14 +364,14 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
                 }
             },
             Statement::While { expr, stmt } => {
-                self.visit_expression(&expr.item)?;
+                self.map_expression(&expr.item)?;
                 let mut typechecker = self.with_nested_env(Env::new());
-                typechecker.visit_statement(&stmt.item)?;
+                typechecker.map_statement(&stmt.item)?;
                 Ok(Type::Void)
             },
             Statement::For { t, ident, arr, stmt } => {
                 // check if arr is an array
-                match self.visit_expression(&arr.item) {
+                match self.map_expression(&arr.item) {
                     Ok(Type::Array { item_t }) => {
                         // check array item type
                         match self.check_assignment(&t, &item_t) {
@@ -341,7 +379,7 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
                                 let mut loop_env = Env::new();
                                 loop_env.insert(ident.clone(), t.clone());
                                 let mut typechecker = self.with_nested_env(loop_env);
-                                typechecker.visit_statement(&stmt.item)?;
+                                typechecker.map_statement(&stmt.item)?;
                                 Ok(Type::Void)
                             },
                             Err(kind) => {
@@ -360,21 +398,21 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
                 }
             },
             Statement::Expr { expr } => {
-                self.visit_expression(&expr.item)?;
+                self.map_expression(&expr.item)?;
                 Ok(Type::Void)
             },
             Statement::Error => Ok(Type::Void),
         }
     }
 
-    fn visit_class(&mut self, class: &Class) -> TypeCheckResult {
+    fn map_class(&mut self, class: &Class<LocationMeta>) -> TypeCheckResult<Class<TypeMeta>> {
         let mut typechecker = self.with_env(class.to_type_env());
 
         // run typechecker on every method, collect all errors
         let func_errors: Vec<FrontendError<usize>> = class.methods
             .values()
             .map(|func| {
-                typechecker.visit_function(&func.item)
+                typechecker.map_function(&func.item)
             })
             .filter_map(Result::err)
             .into_iter()
@@ -388,7 +426,7 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
         }
     }
 
-    fn visit_function(&mut self, function: &Function) -> TypeCheckResult {
+    fn map_function(&mut self, function: &Function<LocationMeta>) -> TypeCheckResult<Function<TypeMeta>> {
         let mut typechecker = self.with_nested_env(function.to_type_env());
 
         // TODO: treat the function in same way as a block of statements
@@ -399,7 +437,7 @@ impl AstVisitor<TypeCheckResult> for TypeChecker<'_> {
         let (checked_stmts, errors): (Vec<_>, Vec<_>) = function.block.item.stmts
             .iter()
             .map(|stmt| {
-                typechecker.visit_statement(&stmt.item)
+                typechecker.map_statement(&stmt.item)
             })
             .partition(Result::is_ok);
         let checked_stmts: Vec<Type> = checked_stmts.into_iter().map(Result::unwrap).collect();

@@ -21,7 +21,7 @@ pub fn check_types(program: &Program) -> TypeCheckResult {
     let mut errors: Vec<_> = program.classes
         .values()
         .map(|cls| {
-            typechecker.with_clean_env().visit_class(&cls.item)
+            typechecker.with_clean_env().map_class(&cls.item)
         })
         .filter_map(Result::err)
         .map(Vec::into_iter)
@@ -30,7 +30,7 @@ pub fn check_types(program: &Program) -> TypeCheckResult {
     let mut func_errors: Vec<_> = program.functions
         .values()
         .map(|func| {
-            typechecker.with_clean_env().visit_function(&func.item)
+            typechecker.with_clean_env().map_function(&func.item)
         })
         .filter_map(Result::err)
         .map(Vec::into_iter)

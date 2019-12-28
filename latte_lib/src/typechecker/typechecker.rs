@@ -187,7 +187,7 @@ impl<'p> TypeChecker<'p> {
             Reference::Array { arr, idx } => {
                 // check idx expression type
                 let idx_loc = idx.get_location().clone();
-                match self.visit_expression(&idx.item) {
+                match self.map_expression(&idx.item) {
                     Ok(Type::Int) => {
                         // check array item type
                         match self.local_env.get_at_location(arr, &idx_loc) {
