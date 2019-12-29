@@ -102,7 +102,9 @@ pub enum Type {
 pub enum ReferenceKind<MetaT> {
     Ident { ident: String },
     Object { obj: String, field: String },
+    ObjectSelf { field: String },
     Array { arr: String, idx: Box<Expression<MetaT>> },
+    ArrayLen { ident: String },
 }
 pub type Reference<MetaT> = AstItem<ReferenceKind<MetaT>, MetaT>;
 
@@ -179,6 +181,13 @@ impl FunctionItem<LocationMeta> {
 
         // insert actual vector into the Function to preserve order
         Ok(Self { ret, ident, args, block })
+    }
+
+    pub fn get_type(&self) -> Type {
+        let arg_types: Vec<_> = self.args.iter()
+            .map(|arg| Box::new(arg.item.t.clone()))
+            .collect();
+        Type::Function { args: arg_types, ret: Box::new(self.ret.clone()) }
     }
 }
 

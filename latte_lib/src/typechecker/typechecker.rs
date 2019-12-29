@@ -5,6 +5,7 @@ use crate::error::{FrontendErrorKind, FrontendError};
 use crate::util::env::{Env, UniqueEnv};
 use crate::util::visitor::AstVisitor;
 use std::io::empty;
+use std::any::Any;
 
 #[derive(Debug, PartialEq)]
 pub struct TypeChecker<'prog> {
@@ -12,7 +13,7 @@ pub struct TypeChecker<'prog> {
     program: &'prog Program<LocationMeta>,
 
     /// environment containing builtin functions
-    builtins: &'prog Env<Function<LocationMeta>>,
+    builtins: &'prog Env<Type>,
 
     /// additional context when checking a class
     current_class: Option<&'prog Class<LocationMeta>>,
@@ -56,6 +57,11 @@ impl<'p> TypeChecker<'p> {
         let mut new_self = self.clone();
         new_self.current_class = Option::Some(cls);
         new_self
+    }
+
+    /// get current class (this, self)
+    pub fn get_current_class(&self) -> Option<&Class<LocationMeta>> {
+        self.current_class
     }
 
     /// get parent of the current class, necessary for subclass to class assignments
@@ -125,190 +131,91 @@ impl<'p> TypeChecker<'p> {
         }
     }
 
-    /// get type of reference and collect all possible errors
-    pub fn get_reference_type(
-        &mut self, r: &Loc<Reference>, errors: &mut Vec<FrontendError<usize>>
-    ) -> Type {
-        let loc = r.get_location();
-        match &r.item {
-            Reference::Ident { ident } => {
-                self.local_env.get_at_location(ident, &loc)
-                    .unwrap_or_else(|e| {
-                        errors.push(e);
-                        Type::Error
-                    })
-            },
-            Reference::Object { obj, field } => {
-                match self.local_env.get_at_location(obj, &loc) {
-                    Ok(Type::Class { ident }) => {
-                        match self.program.classes.get_at_location(&ident, &loc) {
-                            Ok(cls) => {
-                                match cls.item.vars.get_at_location(field, &loc) {
-                                    Ok(var) => var.item.t,
-                                    Err(e) => {
-                                        errors.push(e);
-                                        Type::Error
-                                    }
-                                }
-                            },
-                            Err(e) => {
-                                errors.push(e);
-                                Type::Error
-                            }
-                        }
-                    },
-                    Ok(Type::Array { .. }) => {
-                        // edge case: array.lenght attribute
-                        // defined here as there are no other builtin attributes to consider
-                        if field == "length" {
-                            Type::Int
-                        } else {
-                            let kind = FrontendErrorKind::EnvError {
-                                message: format!("Invalid attribute {} for array", field)
-                            };
-                            errors.push(FrontendError::new(kind, loc));
-                            Type::Error
-                        }
-                    },
-                    Ok(t) => {
-                        let kind = FrontendErrorKind::TypeError {
-                            expected: Type::Object,
-                            actual: t.clone()
-                        };
-                        errors.push(FrontendError::new(kind, loc));
-                        Type::Error
-                    },
-                    Err(e) => {
-                        errors.push(e);
-                        Type::Error
-                    }
-                }
-            },
-            Reference::Array { arr, idx } => {
-                // check idx expression type
-                let idx_loc = idx.get_location().clone();
-                match self.map_expression(&idx.item) {
-                    Ok(Type::Int) => {
-                        // check array item type
-                        match self.local_env.get_at_location(arr, &idx_loc) {
-                            Ok(Type::Array { item_t }) => {
-                                item_t.as_ref().clone()
-                            },
-                            Ok(t) => {
-                                let kind = FrontendErrorKind::TypeError {
-                                    expected: Type::Array { item_t: Box::new(Type::Any) },
-                                    actual: t,
-                                };
-                                errors.push(FrontendError::new(kind, loc));
-                                Type::Error
-                            },
-                            Err(e) => {
-                                errors.push(e);
-                                Type::Error
-                            }
-                        }
-                    },
-                    Ok(t) => {
-                        let kind = FrontendErrorKind::TypeError {
-                            expected: Type::Int,
-                            actual: t.clone(),
-                        };
-                        errors.push(FrontendError::new(kind, idx_loc));
-                        Type::Error
-                    },
-                    Err(mut es) => {
-                        errors.append(&mut es);
-                        Type::Error
-                    }
-                }
-            },
-        }
-    }
-
-    /// attempts to get a method matching given identifier from class or closest superclass
-    fn get_method(&self, ident: &String, cls: &'p Class) -> Option<&'p Function> {
-        if let Some(func) = cls.methods.get(ident) {
-            Option::Some(&func.item)
-        } else if let Some(superclass_name) = &cls.parent {
-            let superclass_cls = self.program.classes.get(superclass_name)?;
-            self.get_method(&ident, &superclass_cls.item)
+    /// get variable type from local environment
+    pub fn get_local_variable(&self, ident: &String, loc: &LocationMeta) -> Result<&Type, Vec<FrontendError<LocationMeta>>> {
+        if let Some(t) = self.local_env.get(ident) {
+            Ok(t)
         } else {
-            Option::None
+            let kind = FrontendErrorKind::EnvError {
+                message: format!("Undefined variable: {}", ident)
+            };
+            Err(vec![FrontendError::new(kind, loc.clone())])
         }
     }
 
-    /// interprets reference as function, attempts to get its return type
-    pub fn get_func_or_method(&self, r: &Loc<Reference>) -> Result<Function, FrontendErrorKind> {
-        match &r.item {
-            Reference::Ident { ident } => {
-                if let Some(func) = self.program.functions.get(ident) {
-                    // call to a global function
-                    Ok(func.item.clone())
-                } else if let Some(func) = self.builtins.get(ident) {
-                    // call to a builtin function
-                    Ok(func.clone())
-                } else if let Some(cls) = &self.current_class.clone() {
-                    // call to a method for current class
-                    if let Some(func) = self.get_method(&ident, &cls) {
-                        Ok(func.clone())
-                    } else {
-                        Err(FrontendErrorKind::EnvError {
-                            message: format!(
-                                "No method named '{}' in current class scope",
-                                ident.clone()
-                            )
-                        })
-                    }
-                } else {
-                    Err(FrontendErrorKind::EnvError {
-                        message: format!("No function or method named '{}' found", ident.clone())
-                    })
-                }
-            },
-            Reference::Object { obj, field } => {
-                match self.local_env.get(obj) {
-                    Some(Type::Class { ident }) => {
-                        // get class data associated with the given type
-                        if let Some(class) = self.program.classes.get(ident) {
-                            if let Some(func) = self.get_method(&field, &class.item) {
-                                Ok(func.clone())
-                            } else {
-                                Err(FrontendErrorKind::EnvError {
-                                    message: format!(
-                                        "No method named '{}' found for class '{}'",
-                                        field.clone(),
-                                        obj.clone()
-                                    )
-                                })
-                            }
-                        } else {
-                            // this isn't really possible, right?
-                            Err(FrontendErrorKind::EnvError {
-                                message: format!("No class named '{}' found", obj)
-                            })
-                        }
-                    },
-                    Some(t) => {
-                        Err(FrontendErrorKind::TypeError {
-                            expected: Type::Object,
-                            actual: t.clone()
-                        })
-                    },
-                    None => {
-                        Err(FrontendErrorKind::EnvError {
-                            message: format!(
-                                "No object named '{}' found in current scope",
-                                obj.clone()
-                            )
-                        })
-                    }
-                }
-            },
-            other_ref => {
-                Err(FrontendErrorKind::ArgumentError {
-                    message: format!("Expected function or method, got: {:?}", other_ref.clone())
-                })
-            },
+    /// get class object based on type if it is a Type::Class
+    pub fn get_class(&self, t: &Type, loc: &LocationMeta) -> Result<&Class<LocationMeta>, Vec<FrontendError<LocationMeta>>> {
+        if let Type::Class { ident } = t {
+            if let Some(cls) = self.program.classes.get(ident) {
+                Ok(&cls)
+            } else {
+                let kind = FrontendErrorKind::EnvError {
+                    message: format!("Undefined class: {}", ident)
+                };
+                Err(vec![FrontendError::new(kind, loc.clone())])
+            }
+        } else {
+            let kind = FrontendErrorKind::TypeError {
+                expected: Type::Object,
+                actual: t.clone()
+            };
+            Err(vec![FrontendError::new(kind, loc.clone())])
+        }
+    }
+
+    /// get type of variable (field) for object of class cls or closest superclass
+    pub fn get_instance_variable(
+        &self, cls: &Class<LocationMeta>, field: &String, loc: &LocationMeta
+    ) -> Result<&Type, Vec<FrontendError<LocationMeta>>> {
+        if let Some(var) = cls.item.vars.get(field) {
+            // get variable from class directly
+            Ok(&var.item.t)
+        } else if let Some(superclass_name) = &cls.item.parent {
+            // recursively try to get variable that was defined in superclass
+            let super_t = Type::Class { ident: superclass_name.clone() };
+            let super_cls = self.get_class(&super_t, loc)?;
+            self.get_instance_variable(super_cls, field, loc)
+        } else {
+            // no variable and no superclass => error
+            let kind = FrontendErrorKind::EnvError {
+                message: format!("No variable named {} for class {}", field, cls.get_key())
+            };
+            Err(vec![FrontendError::new(kind, loc.clone())])
+        }
+    }
+
+    /// get a type of gloablly defined or bult-in function
+    pub fn get_func(&self, ident: &String, loc: &LocationMeta) -> Result<&Type, Vec<FrontendError<LocationMeta>>> {
+        if let Some(func) = self.program.functions.get(ident) {
+            Ok(&func.item.get_type())
+        } else if let Some(t) = self.builtins.get(ident) {
+            Ok(t)
+        } else {
+            let kind = FrontendErrorKind::EnvError {
+                message: format!("Undefined function: {}", ident)
+            };
+            Err(vec![FrontendError::new(kind, loc.clone())])
+        }
+    }
+
+    /// get type of a method matching given identifier from class or closest superclass
+    pub fn get_method(
+        &self, cls: &Class<LocationMeta>, field: &String, loc: &LocationMeta
+    ) -> Result<&Type, Vec<FrontendError<LocationMeta>>> {
+        if let Some(func) = cls.item.methods.get(field) {
+            // get method for current class
+            Ok(&func.item.get_type())
+        } else if let Some(superclass_name) = &cls.item.parent {
+            // get method from superclass (recursively)
+            let super_t = Type::Class { ident: superclass_name.clone() };
+            let super_cls = self.get_class(&super_t, loc)?;
+            self.get_method(super_cls, field, loc)
+        } else {
+            // no method and no superclass => error
+            let kind = FrontendErrorKind::EnvError {
+                message: format!("No method named {} for class {}", field, cls.get_key())
+            };
+            Err(vec![FrontendError::new(kind, loc.clone())])
         }
     }
 }

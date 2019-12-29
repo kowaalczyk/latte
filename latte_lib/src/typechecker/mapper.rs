@@ -11,8 +11,114 @@ use crate::meta::Meta;
 type TypeCheckResult<AstT> = Result<AstT, Vec<FrontendError<LocationMeta>>>;
 
 impl AstMapper<LocationMeta, TypeMeta> for TypeChecker<'_> {
-    fn map_reference(&mut self, r: &Meta<ReferenceKind<LocationMeta>, LocationMeta>) -> TypeCheckResult<Reference<TypeMeta>> {
-        unimplemented!()
+    fn map_var_reference(&mut self, r: &Reference<LocationMeta>) -> TypeCheckResult<Reference<TypeMeta>> {
+        let loc = r.get_meta();
+        let typecheck_result = match &r.item {
+            ReferenceKind::Ident { ident } => {
+                let var_t = self.get_local_variable(ident, loc)?;
+                Ok((ReferenceKind::Ident { ident: ident.clone() }, var_t.clone()))
+            },
+            ReferenceKind::Object { obj, field } => {
+                let var_t = self.get_local_variable(obj, loc)?;
+                let cls = self.get_class(var_t, loc)?;
+                let field_t = self.get_instance_variable(cls, field, loc)?;
+                Ok((ReferenceKind::Object { obj: obj.clone(), field: field.clone()}, field_t.clone()))
+            },
+            ReferenceKind::ObjectSelf { field } => {
+                if let Some(cls) = self.get_current_class() {
+                    let field_t = self.get_instance_variable(cls, field, loc)?;
+                    Ok((ReferenceKind::ObjectSelf { field: field.clone() }, field_t.clone()))
+                } else {
+                    let kind = FrontendErrorKind::EnvError {
+                        message: String::from("No object in the current context")
+                    };
+                    Err(vec![FrontendError::new(kind, loc.clone())])
+                }
+            },
+            ReferenceKind::Array { arr, idx } => {
+                // TODO: Refactor to 2 simpler methods (like class & member)
+                let var_t = self.get_local_variable(arr, loc)?;
+                if let Type::Array { item_t } = var_t {
+                    let mapped_expr = self.map_expression(idx)?;
+                    let mapped_t = &mapped_expr.get_meta().t;
+                    if mapped_t == Type::Int {
+                        Ok((ReferenceKind::Array { arr: arr.clone(), idx: Box::new(mapped_expr) }, &item_t.clone()))
+                    } else {
+                        let kind = FrontendErrorKind::TypeError {
+                            expected: Type::Int,
+                            actual: mapped_t.clone()
+                        };
+                        Err(vec![FrontendError::new(kind, loc.clone())])
+                    }
+                } else {
+                    let kind = FrontendErrorKind::TypeError {
+                        expected: Type::Array { item_t: Box::new(Type::Any) },
+                        actual: var_t.clone()
+                    };
+                    Err(vec![FrontendError::new(kind, loc.clone())])
+                }
+            },
+            ReferenceKind::ArrayLen { ident } => {
+                let var_t = self.get_local_variable(ident, loc)?;
+                if let Type::Array { item_t } = var_t {
+                    Ok((ReferenceKind::ArrayLen { ident: ident.clone() }, Type::Int))
+                } else {
+                    let kind = FrontendErrorKind::TypeError {
+                        expected: Type::Array { item_t: Box::new(Type::Any) },
+                        actual: var_t.clone()
+                    };
+                    Err(vec![FrontendError::new(kind, loc.clone())])
+                }
+            },
+        };
+        match typecheck_result {
+            Ok((kind, t)) => {
+                let mapped: Reference<TypeMeta> = Reference::new(kind, TypeMeta { t });
+                Ok(mapped)
+            },
+            Err(err_vec) => Err(err_vec),
+        }
+    }
+
+    fn map_func_reference(&mut self, r: &Reference<LocationMeta>) -> TypeCheckResult<Reference<TypeMeta>> {
+        let loc = r.get_meta();
+        let typecheck_result = match &r.item {
+            ReferenceKind::Ident { ident } => {
+                let func_t = self.get_func(ident, loc)?;
+                Ok((ReferenceKind::Ident { ident: ident.clone() }, func_t.clone()))
+            },
+            ReferenceKind::Object { obj, field } => {
+                let var_t = self.get_local_variable(obj, loc)?;
+                let cls = self.get_class(var_t, loc)?;
+                let method_t = self.get_method(cls, field, loc)?;
+                Ok((ReferenceKind::Object { obj: obj.clone(), field: field.clone() }, method_t.clone()))
+            },
+            ReferenceKind::ObjectSelf { field } => {
+                if let Some(cls) = self.get_current_class() {
+                    let method_t = self.get_method(cls, field, loc)?;
+                    Ok((ReferenceKind::ObjectSelf { field: field.clone() }, method_t.clone()))
+                } else {
+                    let kind = FrontendErrorKind::EnvError {
+                        message: String::from("No object in the current context")
+                    };
+                    Err(vec![FrontendError::new(kind, loc.clone())])
+                }
+            },
+            r => {
+                let kind = FrontendErrorKind::ArgumentError {
+                    message: format!("Expected function or method, got: {:?}", r)
+                };
+                Err(vec![FrontendError::new(kind, loc.clone())])
+            },
+        };
+        // TODO: Refactor to separate function (or better: From trait)
+        match typecheck_result {
+            Ok((kind, t)) => {
+                let mapped: Reference<TypeMeta> = Reference::new(kind, TypeMeta { t });
+                Ok(mapped)
+            },
+            Err(err_vec) => Err(err_vec),
+        }
     }
 
     fn map_expression(&mut self, expr: &Expression<LocationMeta>) -> TypeCheckResult<Expression<TypeMeta>> {
@@ -30,7 +136,7 @@ impl AstMapper<LocationMeta, TypeMeta> for TypeChecker<'_> {
                 Ok((ExpressionKind::LitNull, Type::Null))
             },
             ExpressionKind::App { r, args } => {
-                let mapped_r = self.map_reference(&r)?;
+                let mapped_r = self.map_func_reference(&r)?;
                 match &mapped_r.get_meta().t {
                     Type::Function { args: exp_args, ret } => {
                         let mut mapped_args = Vec::new();
@@ -179,11 +285,11 @@ impl AstMapper<LocationMeta, TypeMeta> for TypeChecker<'_> {
                 }
             },
             ExpressionKind::Reference { r } => {
-                let mapped_ref = self.map_reference(r)?;
+                let mapped_ref = self.map_var_reference(r)?;
                 Ok((ExpressionKind::Reference { r: mapped_ref }, mapped_ref.get_meta().t.clone()))
             },
             ExpressionKind::Cast { t, expr } => {
-                let mapped_expr = self.map_expression(&expr.item)?;
+                let mapped_expr = self.map_expression(&expr)?;
                 if mapped_expr.get_meta().t == Type::Null {
                     let kind = ExpressionKind::Cast { t: t.clone(), expr: Box::new(mapped_expr) };
                     Ok((kind, t.clone()))
