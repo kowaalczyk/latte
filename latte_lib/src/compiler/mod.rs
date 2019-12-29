@@ -1,3 +1,3 @@
-//mod ir;
-//mod compiler;
-//mod visitor;
+mod ir;
+mod compiler;
+mod visitor;

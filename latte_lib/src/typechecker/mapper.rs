@@ -20,9 +20,22 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
             },
             ReferenceKind::Object { obj, field } => {
                 let var_t = self.get_local_variable(obj, loc)?;
-                let cls = self.get_class(var_t, loc)?;
-                let field_t = self.get_instance_variable(cls, field, loc)?;
-                Ok((ReferenceKind::Object { obj: obj.clone(), field: field.clone()}, field_t.clone()))
+                if let Type::Array { item_t } = var_t {
+                    // manually check field name and convert ReferenceKind to ArrayLen
+                    if field == "length" {
+                        Ok((ReferenceKind::ArrayLen { ident: obj.clone() }, Type::Int))
+                    } else {
+                        let kind = FrontendErrorKind::EnvError {
+                            message: format!("Invalid instance variable for array: {}", field)
+                        };
+                        Err(vec![FrontendError::new(kind, loc.clone())])
+                    }
+                } else {
+                    // interpret var_t as object and try to get the `field` instance variable
+                    let cls = self.get_class(var_t, loc)?;
+                    let field_t = self.get_instance_variable(cls, field, loc)?;
+                    Ok((ReferenceKind::Object { obj: obj.clone(), field: field.clone()}, field_t.clone()))
+                }
             },
             ReferenceKind::ObjectSelf { field } => {
                 if let Some(cls) = self.get_current_class() {
@@ -60,16 +73,8 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 }
             },
             ReferenceKind::ArrayLen { ident } => {
-                let var_t = self.get_local_variable(ident, loc)?;
-                if let Type::Array { item_t } = var_t {
-                    Ok((ReferenceKind::ArrayLen { ident: ident.clone() }, Type::Int))
-                } else {
-                    let kind = FrontendErrorKind::TypeError {
-                        expected: Type::Array { item_t: Box::new(Type::Any) },
-                        actual: var_t.clone()
-                    };
-                    Err(vec![FrontendError::new(kind, loc.clone())])
-                }
+                // parser never creates these, ArrayLen can only be a result of a transformation
+                unreachable!();
             },
         };
         match typecheck_result {
@@ -589,7 +594,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
     }
 
     fn map_class(&mut self, class: &Class<LocationMeta>) -> TypeCheckResult<Class<TypeMeta>> {
-        let mut typechecker = self.with_env(class.to_type_env());
+        let mut typechecker = self.with_env(class.to_type_env()).with_class(class);
 
         // variables are mapped by swapping meta, no errors can happen here
         let mut mapped_vars: Vec<_> = class.item.vars
@@ -647,16 +652,23 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
         let mut typechecker = self.with_nested_env(function.to_type_env());
         let mapped_block = typechecker.map_block(&function.item.block)?;
 
-        if let Ok(item) = FunctionItem::new(
-            function.item.ret.clone(),
-            function.item.ident.clone(),
-            mapped_args,
-            mapped_block
-        ) {
-            Ok(Function::new(item.clone(), TypeMeta { t: item.get_type() }))
-        } else {
-            // because we only transformed metadata in envs, we know creation cannot fail
-            unreachable!()
+        match self.check_assignment(&function.item.ret, &mapped_block.get_meta().t) {
+            Ok(_) => {
+                if let Ok(item) = FunctionItem::new(
+                    function.item.ret.clone(),
+                    function.item.ident.clone(),
+                    mapped_args,
+                    mapped_block
+                ) {
+                    Ok(Function::new(item.clone(), TypeMeta { t: item.get_type() }))
+                } else {
+                    // because we only transformed metadata in envs, we know creation cannot fail
+                    unreachable!()
+                }
+            },
+            Err(kind) => {
+                Err(vec![FrontendError::new(kind, function.get_meta().clone())])
+            },
         }
     }
 }

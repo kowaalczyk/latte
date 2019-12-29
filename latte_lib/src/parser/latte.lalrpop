@@ -344,7 +344,7 @@ ReferenceKind: ast::ReferenceKind<LocationMeta> = {
     <obj:Ident> "." <field:Ident> => ast::ReferenceKind::Object { obj, field },
     "self" "." <field:Ident> => ast::ReferenceKind::ObjectSelf { field },
     <arr:Ident> "[" <idx:Expr0> "]" => ast::ReferenceKind::Array { arr, idx },
-    <ident:Ident> "." "length" => ast::ReferenceKind::ArrayLen { ident },
+    // <ident:Ident> "." "length" => ast::ReferenceKind::ArrayLen { ident },
 };
 
 // --- special null cast ---
