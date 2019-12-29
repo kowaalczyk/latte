@@ -1,7 +1,8 @@
-use crate::util::env::{Env, FromKeyedVec};
+use crate::util::env::{Env, UniqueEnv, FromKeyedVec};
 use crate::error::FrontendError;
 use crate::util::visitor::AstVisitor;
 use crate::meta::Meta;
+use std::fmt::Debug;
 
 
 /// trait for marking ast items that can searched by key (in an environment)
@@ -17,13 +18,6 @@ impl<ItemT: Keyed, MetaT> Keyed for AstItem<ItemT, MetaT> {
     fn get_key(&self) -> &String {
         self.item.get_key()
     }
-}
-
-/// metadata type for location data (used by generated parser)
-#[derive(Debug, PartialEq, Clone)]
-pub struct LocationMeta {
-    /// byte offset from the beginning of source code
-    pub offset: usize,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -119,7 +113,7 @@ pub type DeclItem<MetaT> = AstItem<DeclItemKind<MetaT>, MetaT>;
 pub struct BlockItem<MetaT> {
     pub stmts: Vec<Box<Statement<MetaT>>>
 }
-pub type Block<MetaT> = AstItem<Block<MetaT>, MetaT>;
+pub type Block<MetaT> = AstItem<BlockItem<MetaT>, MetaT>;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum StatementKind<MetaT> {
@@ -172,12 +166,12 @@ pub struct FunctionItem<MetaT> {
 }
 pub type Function<MetaT> = AstItem<FunctionItem<MetaT>, MetaT>;
 
-impl FunctionItem<LocationMeta> {
+impl<MetaT: Clone> FunctionItem<MetaT> {
     pub fn new(
-        ret: Type, ident: String, args: Vec<Arg<LocationMeta>>, block: Block<LocationMeta>
-    ) -> Result<Self, FrontendError<LocationMeta>> {
+        ret: Type, ident: String, args: Vec<Arg<MetaT>>, block: Block<MetaT>
+    ) -> Result<Self, Vec<FrontendError<MetaT>>> {
         // check if there are no duplicate arguments
-        Env::from_vec(args.clone())?;
+        Env::<Arg<MetaT>>::from_vec(&mut args.clone())?;
 
         // insert actual vector into the Function to preserve order
         Ok(Self { ret, ident, args, block })
@@ -191,21 +185,22 @@ impl FunctionItem<LocationMeta> {
     }
 }
 
-impl<T> Keyed for FunctionItem<T> {
+impl<MetaT> Keyed for FunctionItem<MetaT> {
     fn get_key(&self) -> &String {
         &self.ident
     }
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct ClassVarItem<MetaT> {
+pub struct ClassVarItem {
     pub t: Type,
     pub ident: String,
-    pub default: Option<Box<Expression<MetaT>>>, // TODO: is this even used?
+// TODO: Not required but may be nice to add:
+//    pub default: Option<Box<Expression<MetaT>>>,
 }
-pub type ClassVar<MetaT> = AstItem<ClassVarItem<MetaT>, MetaT>;
+pub type ClassVar<MetaT> = AstItem<ClassVarItem, MetaT>;
 
-impl<T> Keyed for ClassVarItem<T> {
+impl Keyed for ClassVarItem {
     fn get_key(&self) -> &String {
         &self.ident
     }
@@ -220,10 +215,10 @@ pub struct ClassItem<MetaT> {
 }
 pub type Class<MetaT> = AstItem<ClassItem<MetaT>, MetaT>;
 
-impl ClassItem<LocationMeta> {
+impl<MetaT: Debug+Clone> ClassItem<MetaT> {
     pub fn new(
-        ident: String, var_vec: Vec<ClassVar<LocationMeta>>, method_vec: Vec<Function<LocationMeta>>
-    ) -> Result<Self, Vec<FrontendError<LocationMeta>>> {
+        ident: String, var_vec: &mut Vec<ClassVar<MetaT>>, method_vec: &mut Vec<Function<MetaT>>
+    ) -> Result<Self, Vec<FrontendError<MetaT>>> {
         let vars = Env::from_vec(var_vec)?;
         let methods = Env::from_vec(method_vec)?;
         let cls = Self { ident, vars, methods, parent: Option::None };
@@ -236,7 +231,7 @@ impl ClassItem<LocationMeta> {
     }
 }
 
-impl<T> Keyed for ClassItem<T> {
+impl<MetaT> Keyed for ClassItem<MetaT> {
     fn get_key(&self) -> &String {
         &self.ident
     }
@@ -255,4 +250,12 @@ pub type TopDef<MetaT> = AstItem<TopDefKind<MetaT>, MetaT>;
 pub struct Program<MetaT> {
     pub classes: Env<Class<MetaT>>,
     pub functions: Env<Function<MetaT>>,
+}
+
+impl<MetaT: Debug+Clone> Program<MetaT> {
+    pub fn new(classes: &mut Vec<Class<MetaT>>, functions: &mut Vec<Function<MetaT>>) -> Result<Self, Vec<FrontendError<MetaT>>> {
+        let classes = Env::<Class<MetaT>>::from_vec(classes)?;
+        let functions = Env::<Function<MetaT>>::from_vec(functions)?;
+        Ok(Self { classes, functions })
+    }
 }

@@ -1,17 +1,13 @@
 use std::collections::HashMap;
 use std::iter::{FromIterator, IntoIterator};
 
-use crate::parser::ast::{Block, Type, Class, Arg, FunctionItem, ClassItem};
+use crate::meta::{Meta, LocationMeta};
+use crate::parser::ast::{Block, Type, Class, Arg, FunctionItem, ClassItem, Function};
 use crate::util::env::Env;
-
-/// metadata used to store type information
-#[derive(Debug, PartialEq, Clone)]
-pub struct TypeMeta {
-    pub t: Type
-}
+use crate::error::FrontendError;
 
 /// get environment containing all builtin functions
-pub fn get_builtins<T>() -> Env<Type> {
+pub fn get_builtins() -> Env<Type> {
     let builtin_print_int = Type::Function {
         args: vec![Box::new(Type::Int)],
         ret: Box::new(Type::Void)
@@ -47,20 +43,21 @@ pub trait ToTypeEnv {
     fn to_type_env(&self) -> Env<Type>;
 }
 
-impl<T> ToTypeEnv for FunctionItem<T> {
+impl ToTypeEnv for Function<LocationMeta> {
     /// creates Env containing types of all function arguments
     fn to_type_env(&self) -> Env<Type> {
-        Env::from_iter(self.args.iter().map(
-            |arg|
-                { (arg.item.ident.clone(), arg.item.t.clone()) }
-        ))
+        // warning: this assumes var names are unique, it should already be checked by parser
+        Env::from_iter(self.item.args.iter().map(|arg| {
+            (arg.item.ident.clone(), arg.item.t.clone())
+        }))
     }
 }
 
-impl<T> ToTypeEnv for ClassItem<T> {
+impl ToTypeEnv for Class<LocationMeta> {
     /// creates Env containing types of all instance variables
     fn to_type_env(&self) -> Env<Type> {
-        Env::from_iter(self.vars.iter().map(
+        // warning: this assumes var names are unique, it should already be checked by parser
+        Env::from_iter(self.item.vars.iter().map(
             |(ident, var)|
                 { (ident.clone(), var.item.t.clone()) }
         ))

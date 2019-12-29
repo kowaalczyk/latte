@@ -4,6 +4,7 @@ use lalrpop_util::{ErrorRecovery, ParseError as LalrpopError};
 
 use crate::parser::ast;
 use crate::meta::Meta;
+use crate::meta::LocationMeta;
 
 
 #[derive(Debug, PartialEq, Clone)]
@@ -51,20 +52,20 @@ impl fmt::Display for FrontendErrorKind {
 /// standardized type to remember all frontend errors
 pub type FrontendError<LocationT> = Meta<FrontendErrorKind, LocationT>;
 
-impl<T: fmt::Debug, E: fmt::Debug> From<(ErrorRecovery<usize, T, E>)> for FrontendError<usize> {
+impl<T: fmt::Debug, E: fmt::Debug> From<(ErrorRecovery<usize, T, E>)> for FrontendError<LocationMeta> {
     fn from(err: ErrorRecovery<usize,T,E>) -> Self {
         let (location, message) = match &err.error {
             LalrpopError::InvalidToken { location } => {
-                (location.clone(), String::from("InvalidToken"))
+                (LocationMeta::from(*location), String::from("InvalidToken"))
             },
             LalrpopError::UnrecognizedEOF { location, expected: _ } => {
-                (location.clone(), String::from("Unexpected end of file"))
+                (LocationMeta::from(*location), String::from("Unexpected end of file"))
             },
             LalrpopError::ExtraToken { token } => {
-                (token.0.clone(), format!("ExtraToken: {:?}", token.1))
+                (LocationMeta::from(token.0), format!("ExtraToken: {:?}", token.1))
             },
             LalrpopError::UnrecognizedToken { token, expected: _ } => {
-                (token.0.clone(), format!("UnrecognizedToken: {:?}", token.1))
+                (LocationMeta::from(token.0), format!("UnrecognizedToken: {:?}", token.1))
             },
             LalrpopError::User { error } => {
                 panic!("Impossible: Undefined lalrpop user error: {:#?}", error)

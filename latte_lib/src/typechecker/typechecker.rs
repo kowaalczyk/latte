@@ -1,11 +1,10 @@
 use std::collections::HashSet;
 
-use crate::parser::ast::{Program, Type, Class, Reference, Function, LocationMeta};
+use crate::parser::ast::{Program, Type, Class, Reference, Function, Keyed};
 use crate::error::{FrontendErrorKind, FrontendError};
 use crate::util::env::{Env, UniqueEnv};
 use crate::util::visitor::AstVisitor;
-use std::io::empty;
-use std::any::Any;
+use crate::meta::{Meta, LocationMeta};
 
 #[derive(Debug, PartialEq)]
 pub struct TypeChecker<'prog> {
@@ -27,7 +26,7 @@ pub struct TypeChecker<'prog> {
 
 impl<'p> TypeChecker<'p> {
     /// typechecker is created with empty env, with lifetime same as the lifetime of passed program
-    pub fn new(program: &'p Program<LocationMeta>, builtins: &'p Env<Function<LocationMeta>>) -> Self {
+    pub fn new(program: &'p Program<LocationMeta>, builtins: &'p Env<Type>) -> Self {
         Self { program, builtins, local_env: Env::new(), current_class: Option::None }
     }
 
@@ -84,19 +83,14 @@ impl<'p> TypeChecker<'p> {
     pub fn check_assignment(&self, lvalue: &Type, rvalue: &Type) -> Result<(), FrontendErrorKind> {
         if lvalue == rvalue {
             Ok(())
+        } else if let Some(rvalue_t) = self.get_parent(&rvalue) {
+            self.check_assignment(&lvalue, &rvalue_t)
         } else {
-            match self.get_parent(&rvalue) {
-                None => {
-                    let kind = FrontendErrorKind::TypeError {
-                        expected: lvalue.clone(),
-                        actual: rvalue.clone()
-                    };
-                    Err(kind)
-                },
-                Some(rvalue_t) => {
-                    self.check_assignment(&lvalue, &rvalue_t)
-                },
-            }
+            let kind = FrontendErrorKind::TypeError {
+                expected: lvalue.clone(),
+                actual: rvalue.clone()
+            };
+            Err(kind)
         }
     }
 
@@ -132,7 +126,7 @@ impl<'p> TypeChecker<'p> {
     }
 
     /// get variable type from local environment
-    pub fn get_local_variable(&self, ident: &String, loc: &LocationMeta) -> Result<&Type, Vec<FrontendError<LocationMeta>>> {
+    pub fn get_local_variable(&self, ident: & String, loc: &LocationMeta) -> Result<&Type, Vec<FrontendError<LocationMeta>>> {
         if let Some(t) = self.local_env.get(ident) {
             Ok(t)
         } else {
@@ -144,7 +138,7 @@ impl<'p> TypeChecker<'p> {
     }
 
     /// get class object based on type if it is a Type::Class
-    pub fn get_class(&self, t: &Type, loc: &LocationMeta) -> Result<&Class<LocationMeta>, Vec<FrontendError<LocationMeta>>> {
+    pub fn get_class(&self, t: &Type, loc: &LocationMeta) -> Result<&'p Class<LocationMeta>, Vec<FrontendError<LocationMeta>>> {
         if let Type::Class { ident } = t {
             if let Some(cls) = self.program.classes.get(ident) {
                 Ok(&cls)
@@ -165,8 +159,8 @@ impl<'p> TypeChecker<'p> {
 
     /// get type of variable (field) for object of class cls or closest superclass
     pub fn get_instance_variable(
-        &self, cls: &Class<LocationMeta>, field: &String, loc: &LocationMeta
-    ) -> Result<&Type, Vec<FrontendError<LocationMeta>>> {
+        &self, cls: &'p Class<LocationMeta>, field: &String, loc: &LocationMeta
+    ) -> Result<&'p Type, Vec<FrontendError<LocationMeta>>> {
         if let Some(var) = cls.item.vars.get(field) {
             // get variable from class directly
             Ok(&var.item.t)
@@ -185,11 +179,11 @@ impl<'p> TypeChecker<'p> {
     }
 
     /// get a type of gloablly defined or bult-in function
-    pub fn get_func(&self, ident: &String, loc: &LocationMeta) -> Result<&Type, Vec<FrontendError<LocationMeta>>> {
+    pub fn get_func(&self, ident: &String, loc: &LocationMeta) -> Result<Type, Vec<FrontendError<LocationMeta>>> {
         if let Some(func) = self.program.functions.get(ident) {
-            Ok(&func.item.get_type())
+            Ok(func.item.get_type())
         } else if let Some(t) = self.builtins.get(ident) {
-            Ok(t)
+            Ok(t.clone())
         } else {
             let kind = FrontendErrorKind::EnvError {
                 message: format!("Undefined function: {}", ident)
@@ -200,11 +194,11 @@ impl<'p> TypeChecker<'p> {
 
     /// get type of a method matching given identifier from class or closest superclass
     pub fn get_method(
-        &self, cls: &Class<LocationMeta>, field: &String, loc: &LocationMeta
-    ) -> Result<&Type, Vec<FrontendError<LocationMeta>>> {
+        &self, cls: &'p Class<LocationMeta>, field: &String, loc: &LocationMeta
+    ) -> Result<Type, Vec<FrontendError<LocationMeta>>> {
         if let Some(func) = cls.item.methods.get(field) {
             // get method for current class
-            Ok(&func.item.get_type())
+            Ok(func.item.get_type())
         } else if let Some(superclass_name) = &cls.item.parent {
             // get method from superclass (recursively)
             let super_t = Type::Class { ident: superclass_name.clone() };

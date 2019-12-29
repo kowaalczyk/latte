@@ -2,15 +2,15 @@ use std::str::FromStr;
 use std::collections::HashMap;
 
 use crate::parser::ast;
-use crate::parser::ast::{Keyed, LocationMeta, AstItem};
-use crate::meta::Meta;
+use crate::parser::ast::{Keyed, AstItem};
+use crate::meta::{Meta, LocationMeta};
 use crate::util::env;
 use crate::util::env::UniqueEnv;
 use crate::error::FrontendError;
 
 use lalrpop_util::ErrorRecovery;
 
-grammar<'err>(errors: &'err mut Vec<FrontendError<usize>>);
+grammar<'err>(errors: &'err mut Vec<FrontendError<LocationMeta>>);
 
 // --- macros ---
 
@@ -43,101 +43,106 @@ Located<ItemT>: AstItem<ItemT, LocationMeta> = {
     }
 };
 
+/// wrap the item in a Box (useful to preserve Box vs Meta order in nested structures)
+Boxed<ItemT>: Box<ItemT> = {
+    <item:ItemT> => Box::new(item),
+};
+
 // --- top level ---
 
 pub Program: ast::Program<LocationMeta> = {
     <topdefs:TopDef+> => {
         let mut functions: env::Env<ast::Function<LocationMeta>> = env::Env::new();
-        let mut classes: env::Env<ast::Function<LocationMeta>> = env::Env::new();
+        let mut classes: env::Env<ast::Class<LocationMeta>> = env::Env::new();
         for topdef in topdefs {
             let location = topdef.get_meta();
-            match topdef.item {
-                ast::TopDef::Class { cls } => {
-                    classes.insert_unique(cls.get_key().clone(), cls)
+            match &topdef.item {
+                ast::TopDefKind::Class { cls } => {
+                    classes.insert_unique(cls.get_key().clone(), cls.clone())
                         .or_else(|e| { errors.push(e); Err(()) });
                 },
-                ast::TopDef::Function { func } => {
-                    functions.insert_unique(func.get_key().clone(), func)
+                ast::TopDefKind::Function { func } => {
+                    functions.insert_unique(func.get_key().clone(), func.clone())
                         .or_else(|e| { errors.push(e); Err(()) });
                 },
-                ast::TopDef::Error => (),
+                ast::TopDefKind::Error => (),
             };
         }
         ast::Program { functions, classes }
     },
 };
 
-TopDef: ast::TopDef<LocationMeta> = {
+TopDef = Located<TopDefKind>;
+TopDefKind: ast::TopDefKind<LocationMeta> = {
     <offset:@L> <ret:Type> <ident:Ident> "(" <arg_vec:Args> ")" <block:Block> => {
         match ast::FunctionItem::new(ret, ident, arg_vec, block) {
             Ok(func_item) => {
-                let func = ast::FunctionItem::new(ret, ident, arg_vec, block)?;
-                let meta = LocationMeta { offset };
-                ast::TopDef::Function::new(func, offset)
+                ast::TopDefKind::Function { func: ast::Function::new(func_item, LocationMeta::from(offset)) }
             },
-            Err(e) => {
-                errors.push(e);
-                ast::TopDef::Error
+            Err(mut e) => {
+                errors.append(&mut e);
+                ast::TopDefKind::Error
             }
         }
     },
     <offset:@L> "class" <ident:Ident> "{" <var_vec:ClassVar*> <method_vec:Method*> "}" => {
-        let mut method_env_errors: Vec<_> = method_vec.iter().filter_map(Result::err).collect();
-        let loc = LocationMeta { offset };
+        let mut method_env_errors: Vec<_> = method_vec.clone().into_iter().filter_map(Result::err).flatten().collect();
+        let mut var_vec = var_vec.clone();
         if method_env_errors.is_empty() {
-            let method_vec: Vec<_> = method_vec.into_iter().filter_map(Result::ok).collect();
-            match ast::ClassItem::new(ident, var_vec, method_vec) {
-                Ok(cls_item) => {
-                    let cls = ast::Class::new(cls_item, loc);
-                    ast::TopDef::Class { cls }
+            let mut method_vec: Vec<_> = method_vec.into_iter().filter_map(Result::ok).collect();
+            match ast::ClassItem::new(ident, &mut var_vec, &mut method_vec) {
+                Ok(mut cls_item) => {
+                    let cls = ast::Class::new(cls_item, LocationMeta::from(offset));
+                    ast::TopDefKind::Class { cls }
                 },
                 Err(mut e) => {
                     errors.append(&mut e);
-                    ast::TopDef::Error
+                    ast::TopDefKind::Error
                 }
             }
         } else {
             errors.append(&mut method_env_errors);
-            ast::TopDef::Error
+            ast::TopDefKind::Error
         }
     },
     <offset:@L> "class" <ident:Ident> "extends" <parent:Ident> "{" <var_vec:ClassVar*> <method_vec:Method*> "}" => {
-        let mut method_env_errors: Vec<_> = method_vec.iter().filter_map(Result::err).collect();
-        let loc = LocationMeta { offset };
+        let mut method_env_errors: Vec<_> = method_vec.clone().into_iter().filter_map(Result::err).flatten().collect();
+        let mut var_vec = var_vec.clone();
         if method_env_errors.is_empty() {
-            let method_vec: Vec<_> = method_vec.into_iter().filter_map(Result::ok).collect();
-            match ast::ClassItem::new(ident, var_vec, method_vec) {
+            let mut method_vec: Vec<_> = method_vec.into_iter().filter_map(Result::ok).collect();
+            match ast::ClassItem::new(ident, &mut var_vec, &mut method_vec) {
                 Ok(mut cls_item) => {
-                    let cls = ast::Class::new(cls_item.with_parent(&parent), loc);
-                    ast::TopDef::Class { cls }
+                    let cls = ast::Class::new(cls_item.with_parent(&parent), LocationMeta::from(offset));
+                    ast::TopDefKind::Class { cls }
                 },
                 Err(mut e) => {
                     errors.append(&mut e);
-                    ast::TopDef::Error
+                    ast::TopDefKind::Error
                 }
             }
         } else {
             errors.append(&mut method_env_errors);
-            ast::TopDef::Error
+            ast::TopDefKind::Error
         }
     },
     ! => {
         errors.push(FrontendError::from(<>));
-        ast::TopDef::Error
+        ast::TopDefKind::Error
     },
 };
 
 ClassVar = Located<ClassVarItem>;
-ClassVarItem: ast::ClassVarItem<LocationMeta> = {
+ClassVarItem: ast::ClassVarItem = {
     <t:Type> <ident:Ident> ";" => {
-        ast::ClassVarItem { t, ident, default: Option::None }
+        ast::ClassVarItem { t, ident }
     },
-    <t:Type> <ident:Ident> "=" <default:Expr0> ";" => {
-        ast::ClassVarItem { t, ident, default: Option::Some(default) }
-    },
+    // TODO: Not necessary, but may be nice:
+    // <t:Type> <ident:Ident> "=" <default:Expr0> ";" => {
+    //     ast::ClassVarItem { t, ident, default: Option::Some(default) }
+    // },
 };
 
-Method: Result<ast::Function<LocationMeta>, FrontendError<LocationMeta>> = {
+Method: Result<ast::Function<LocationMeta>, Vec<FrontendError<LocationMeta>>> = {
     <offset:@L> <ret:Type> <ident:Ident> "(" <args:Args> ")" <block:Block> => {
         // not to be confused with ast::TopDef::Function 
         let func = ast::FunctionItem::new(ret, ident, args, block)?;
@@ -164,53 +169,53 @@ BlockItem: ast::BlockItem<LocationMeta> = {
 // --- statements ---
 
 Statement = StatementADI<"I">;
-StatementADI<I> = Located<StatementKindADI<I>>;
+StatementADI<I> = Boxed<Located<StatementKindADI<I>>>;
 // StatementKind = StatementKindADI<"I">;
-StatementKindADI<I>: Box<ast::StatementKind<LocationMeta>> = {
+StatementKindADI<I>: ast::StatementKind<LocationMeta> = {
     <block:Block> => {
-        Box::new(ast::StatementKind::Block { block })
+        ast::StatementKind::Block { block }
     },
-    ";" => Box::new(ast::StatementKind::Empty),
+    ";" => ast::StatementKind::Empty,
     <t:Type> <items:DeclItems> ";" => {
-        Box::new(ast::StatementKind::Decl { t, items })
+        ast::StatementKind::Decl { t, items }
     },
     <r:Reference> "=" <expr:Expr0> ";" => {
-        Box::new(ast::StatementKind::Ass { r, expr })
+        ast::StatementKind::Ass { r, expr }
     },
     <r:Reference> "++" ";" => {
-        Box::new(ast::StatementKind::Mut { r, op: ast::StatementOp::Increment })
+        ast::StatementKind::Mut { r, op: ast::StatementOp::Increment }
     },
     <r:Reference> "--" ";" => {
-        Box::new(ast::StatementKind::Mut { r, op: ast::StatementOp::Decrement })
+        ast::StatementKind::Mut { r, op: ast::StatementOp::Decrement }
     },
     "return" <e:Expr0> ";" => {
-        Box::new(ast::StatementKind::Return { expr: Option::Some(e) })
+        ast::StatementKind::Return { expr: Option::Some(e) }
     },
     "return" ";" => {
-        Box::new(ast::StatementKind::Return { expr: Option::None })
+        ast::StatementKind::Return { expr: Option::None }
     },
     // we only allow dangling if when template parameter I != "" (I == "I")
     "if" "(" <expr:Expr0> ")" <stmt:StatementADI<"I">> if I != "" => {
-        Box::new(ast::StatementKind::Cond { expr, stmt })
+        ast::StatementKind::Cond { expr, stmt }
     },
     "if" "(" <expr:Expr0> ")" <stmt_true:StatementADI<"">> "else" <stmt_false:StatementADI<I>> => {
-        Box::new(ast::StatementKind::CondElse { expr, stmt_true, stmt_false })
+        ast::StatementKind::CondElse { expr, stmt_true, stmt_false }
     },
     "while" "(" <expr:Expr0> ")" <stmt:StatementADI<I>> => {
-        Box::new(ast::StatementKind::While { expr, stmt })
+        ast::StatementKind::While { expr, stmt }
     },
     "for" "(" <t:Type> <ident:Ident> ":" <arr:Expr0> ")" <stmt:StatementADI<I>> => {
-        Box::new(ast::StatementKind::For { t, ident, arr, stmt })
+        ast::StatementKind::For { t, ident, arr, stmt }
     },
-    <expr:Expr0> ";" => Box::new(ast::StatementKind::Expr { expr }),
+    <expr:Expr0> ";" => ast::StatementKind::Expr { expr },
     ! => {
         errors.push(FrontendError::from(<>));
-        Box::new(ast::StatementKind::Error)
+        ast::StatementKind::Error
     },
 };
 
 DeclItem = Located<DeclItemKind>;
-DeclItemKind: ast::DeclItem<LocationMeta> = {
+DeclItemKind: ast::DeclItemKind<LocationMeta> = {
     <ident:Ident> => ast::DeclItemKind::NoInit { ident },
     <ident:Ident> "=" <val:Expr0> => ast::DeclItemKind::Init { ident, val },
 };
@@ -232,26 +237,26 @@ Types = Separated<",", Type>;
 
 // --- expressions ---
 
-Expr0 = Located<Expr0Kind>;
-Expr0Kind: Box<ast::ExpressionKind<LocationMeta>> = {
+Expr0 = Boxed<Located<Expr0Kind>>;
+Expr0Kind: ast::ExpressionKind<LocationMeta> = {
     <l:Expr1> "||" <r:Expr0> => {
-        Box::new(ast::ExpressionKind::Binary { left: l, op: ast::BinaryOperator::Or, right: r })
+        ast::ExpressionKind::Binary { left: l, op: ast::BinaryOperator::Or, right: r }
     },
     <e:Expr1Kind> => (<>),
 };
 
-Expr1 = Located<Expr1Kind>;
-Expr1Kind: Box<ast::ExpressionKind<LocationMeta>> = {
+Expr1 = Boxed<Located<Expr1Kind>>;
+Expr1Kind: ast::ExpressionKind<LocationMeta> = {
     <l:Expr2> "&&" <r:Expr1> => {
-        Box::new(ast::ExpressionKind::Binary { left: l, op: ast::BinaryOperator::And, right: r })
+        ast::ExpressionKind::Binary { left: l, op: ast::BinaryOperator::And, right: r }
     },
     <e:Expr2Kind> => (<>),
 };
 
-Expr2 = Located<Expr2Kind>;
-Expr2Kind: Box<ast::ExpressionKind<LocationMeta>> = {
+Expr2 = Boxed<Located<Expr2Kind>>;
+Expr2Kind: ast::ExpressionKind<LocationMeta> = {
     <left:Expr2> <op:RelOp> <right:Expr3> => {
-        Box::new(ast::ExpressionKind::Binary { left, op, right })
+        ast::ExpressionKind::Binary { left, op, right }
     },
     <e:Expr3Kind> => (<>),
 };
@@ -265,10 +270,10 @@ RelOp: ast::BinaryOperator = {
     ">" => ast::BinaryOperator::Greater,
 };
 
-Expr3 = Located<Expr3Kind>;
-Expr3Kind: Box<ast::ExpressionKind<LocationMeta>> = {
+Expr3 = Boxed<Located<Expr3Kind>>;
+Expr3Kind: ast::ExpressionKind<LocationMeta> = {
     <l:Expr3> <op:AddOp> <r:Expr4> => {
-        Box::new(ast::ExpressionKind::Binary { left: l, op: op, right: r })
+        ast::ExpressionKind::Binary { left: l, op: op, right: r }
     },
     <e:Expr4Kind> => (<>),
 };
@@ -278,10 +283,10 @@ AddOp: ast::BinaryOperator = {
     "-" => ast::BinaryOperator::Minus,
 };
 
-Expr4 = Located<Expr4Kind>;
-Expr4Kind: Box<ast::ExpressionKind<LocationMeta>> = {
+Expr4 = Boxed<Located<Expr4Kind>>;
+Expr4Kind: ast::ExpressionKind<LocationMeta> = {
     <l:Expr4> <op:MulOp> <r:Expr5> => {
-        Box::new(ast::ExpressionKind::Binary { left: l, op: op, right: r })
+        ast::ExpressionKind::Binary { left: l, op: op, right: r }
     },
     <e:Expr5Kind> => (<>),
 };
@@ -292,40 +297,40 @@ MulOp: ast::BinaryOperator = {
     "%" => ast::BinaryOperator::Modulo,
 };
 
-Expr5 = Located<Expr5Kind>;
-Expr5Kind: Box<ast::ExpressionKind<LocationMeta>> = {
-    "-" <e:Expr6> => Box::new(ast::ExpressionKind::Unary { op: ast::UnaryOperator::Neg, arg: e }),
-    "!" <e:Expr6> => Box::new(ast::ExpressionKind::Unary { op: ast::UnaryOperator::Not, arg: e }),
+Expr5 = Boxed<Located<Expr5Kind>>;
+Expr5Kind: ast::ExpressionKind<LocationMeta> = {
+    "-" <e:Expr6> => ast::ExpressionKind::Unary { op: ast::UnaryOperator::Neg, arg: e },
+    "!" <e:Expr6> => ast::ExpressionKind::Unary { op: ast::UnaryOperator::Not, arg: e },
     <e:Expr6Kind> => (<>),
 };
 
-Expr6 = Located<Expr6Kind>;
-Expr6Kind: Box<ast::ExpressionKind<LocationMeta>> = {
+Expr6 = Boxed<Located<Expr6Kind>>;
+Expr6Kind: ast::ExpressionKind<LocationMeta> = {
     "new" <t:Type> => {
-        Box::new(ast::ExpressionKind::InitDefault { t })
+        ast::ExpressionKind::InitDefault { t }
     },
     "new" <item_t:Type> "[" <size:Expr0> "]" => {
-        Box::new(ast::ExpressionKind::InitArr { 
+        ast::ExpressionKind::InitArr {
             t: ast::Type::Array { item_t: Box::new(item_t) }, 
             size 
-        })
+        }
     },
     <r:Reference> "(" <args:Exprs> ")" => {
-        Box::new(ast::ExpressionKind::App { r, args })
+        ast::ExpressionKind::App { r, args }
     },
     <r:Reference> => {
-        Box::new(ast::ExpressionKind::Reference { r })
+        ast::ExpressionKind::Reference { r }
     },
-    <val:Num> => Box::new(ast::ExpressionKind::LitInt { val }),
-    "true" => Box::new(ast::ExpressionKind::LitBool { val: true }),
-    "false" => Box::new(ast::ExpressionKind::LitBool { val: false }),
-    "null" => Box::new(ast::ExpressionKind::LitNull),
+    <val:Num> => ast::ExpressionKind::LitInt { val },
+    "true" => ast::ExpressionKind::LitBool { val: true },
+    "false" => ast::ExpressionKind::LitBool { val: false },
+    "null" => ast::ExpressionKind::LitNull,
     // TODO: Unescape characters from the string (!!!)
-    r#""[^"]*""# => Box::new(ast::ExpressionKind::LitStr { val: String::from(<>) }),
+    r#""[^"]*""# => ast::ExpressionKind::LitStr { val: String::from(<>) },
     // nested expression conflicts with type cast, so we only implement the possibility of casting null
-    "(" <t:Type> <expr:NullCast> => Box::new(ast::ExpressionKind::Cast { t, expr }),
+    "(" <t:Type> <expr:NullCast> => ast::ExpressionKind::Cast { t, expr },
     // https://stackoverflow.com/questions/27448189/bison-reduce-reduce-conflict-with-casting-and-expression-parentheses
-    // "(" <t:Type> ")" <expr:Expr6> => Box::new(ast::Expression::Cast { t, expr }),
+    // "(" <t:Type> ")" <expr:Expr6> => ast::Expression::Cast { t, expr },
     "(" <e:Expr0Kind> ")" => (<>),
 };
 
@@ -344,9 +349,9 @@ ReferenceKind: ast::ReferenceKind<LocationMeta> = {
 
 // --- special null cast ---
 
-NullCast = Located<NullCastKind>;
-NullCastKind: Box<ast::ExpressionKind<LocationMeta>> = {
-    ")null" => Box::new(ast::ExpressionKind::LitNull),
+NullCast = Boxed<Located<NullCastKind>>;
+NullCastKind: ast::ExpressionKind<LocationMeta> = {
+    ")null" => ast::ExpressionKind::LitNull,
 };
 
 // --- literals ---

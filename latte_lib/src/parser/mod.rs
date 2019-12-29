@@ -4,9 +4,10 @@ pub mod ast;
 use self::ast::Program;
 use self::latte::ProgramParser;
 use crate::error::FrontendError;
+use crate::meta::LocationMeta;
 
 
-pub fn parse_program(source_code: String) -> Result<Program, Vec<FrontendError<usize>>> {
+pub fn parse_program(source_code: String) -> Result<Program<LocationMeta>, Vec<FrontendError<LocationMeta>>> {
     let mut errors = Vec::new();
     let parser = ProgramParser::new();
     match parser.parse(&mut errors, &source_code) {
@@ -36,10 +37,10 @@ mod tests {
             Err(errors) => {
                 match errors.get(0) {
                     Some(e) => {
-                        if e.get_location() == 0usize {
+                        if e.get_meta().offset == 0usize {
                             Ok(())
                         } else {
-                            Err(format!("Invalid error location, expected {} got P{}", 0, e.get_location()))
+                            Err(format!("Invalid error location, expected {} got {:?}", 0, e.get_meta()))
                         }
                     },
                     None => Err(String::from("Missing ParseError in parsing results"))
