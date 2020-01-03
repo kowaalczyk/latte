@@ -4,7 +4,7 @@ mod type_meta;
 use std::fmt::{Display, Formatter, Error};
 
 pub use location_meta::LocationMeta;
-pub use type_meta::TypeMeta;
+pub use type_meta::{TypeMeta, GetType};
 
 /// generic structure for attaching metadata to any other structure
 /// can be used in ast items (eg. for type) or errors (eg. for location)

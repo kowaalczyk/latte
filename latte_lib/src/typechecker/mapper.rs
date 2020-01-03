@@ -6,7 +6,7 @@ use crate::typechecker::typechecker::TypeChecker;
 use crate::typechecker::util::{ToTypeEnv};
 use crate::util::env::{Env, UniqueEnv};
 use crate::util::mapper::AstMapper;
-use crate::meta::{Meta, LocationMeta, TypeMeta};
+use crate::meta::{Meta, LocationMeta, TypeMeta, GetType};
 
 pub type TypeCheckResult<AstT> = Result<AstT, Vec<FrontendError<LocationMeta>>>;
 
@@ -224,13 +224,13 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     UnaryOperator::Not => Type::Bool,
                 };
                 let mapped_arg = self.map_expression(&arg)?;
-                let t = mapped_arg.get_meta().t.clone();
+                let t = mapped_arg.get_type();
                 if t == op_t {
                     Ok((ExpressionKind::Unary { op: op.clone(), arg: Box::new(mapped_arg) }, t))
                 } else {
                     let kind = FrontendErrorKind::TypeError {
                         expected: op_t,
-                        actual: mapped_arg.get_meta().t.clone()
+                        actual: mapped_arg.get_type()
                     };
                     Err(vec![FrontendError::new(kind, arg.get_meta().clone())])
                 }
@@ -241,7 +241,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 let mapped_r = self.map_expression(&right)?;
 
                 if mapped_l.get_meta() == mapped_r.get_meta() {
-                    let left_t = mapped_l.get_meta().t.clone();
+                    let left_t = mapped_l.get_type();
                     let op_result_t = match op {
                         BinaryOperator::Equal | BinaryOperator::NotEqual => {
                             Option::Some(Type::Bool)
@@ -288,15 +288,15 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     } else {
                         let kind = FrontendErrorKind::ArgumentError { message: format!(
                                 "Invalid argument type {:?} for operator {:?}",
-                                mapped_l.get_meta().t.clone(),
+                                mapped_l.get_type(),
                                 op
                         )};
                         Err(vec![FrontendError::new(kind, left.get_meta().clone())])
                     }
                 } else {
                     let kind = FrontendErrorKind::TypeError {
-                        expected: mapped_l.get_meta().t.clone(),
-                        actual: mapped_r.get_meta().t.clone()
+                        expected: mapped_l.get_type(),
+                        actual: mapped_r.get_type()
                     };
                     Err(vec![FrontendError::new(kind, right.get_meta().clone())])
                 }
@@ -313,14 +313,14 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 } else {
                     let kind = FrontendErrorKind::TypeError {
                         expected: Type::Int,
-                        actual: mapped_size.get_meta().t.clone()
+                        actual: mapped_size.get_type()
                     };
                     Err(vec![FrontendError::new(kind, size.get_meta().clone())])
                 }
             },
             ExpressionKind::Reference { r } => {
                 let mapped_ref = self.map_var_reference(r)?;
-                let t = mapped_ref.get_meta().t.clone();
+                let t = mapped_ref.get_type();
                 Ok((ExpressionKind::Reference { r: mapped_ref }, t))
             },
             ExpressionKind::Cast { t, expr } => {
@@ -332,7 +332,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     // for now we only allow the null type to be casted
                     let kind = FrontendErrorKind::TypeError {
                         expected: Type::Null,
-                        actual: mapped_expr.get_meta().t.clone()
+                        actual: mapped_expr.get_type()
                     };
                     Err(vec![FrontendError::new(kind, expr.get_meta().clone())])
                 }
@@ -458,7 +458,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     }
                     Some(expr) => {
                         let mapped_expr = self.map_expression(&expr)?;
-                        let t = mapped_expr.get_meta().t.clone();
+                        let t = mapped_expr.get_type();
                         let kind = StatementKind::Return { expr: Some(Box::new(mapped_expr)) };
                         let meta = TypeMeta { t };
                         Ok(Statement::new(kind, meta))
@@ -471,7 +471,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 match &mapped_expr.get_meta().t {
                     Type::Bool => {
                         let mapped_stmt = self.map_statement(&stmt)?;
-                        let t = mapped_stmt.get_meta().t.clone();
+                        let t = mapped_stmt.get_type();
                         let kind = StatementKind::Cond {
                             expr: Box::new(mapped_expr),
                             stmt: Box::new(mapped_stmt)
