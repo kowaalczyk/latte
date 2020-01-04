@@ -1,8 +1,8 @@
-use crate::parser::ast::{Program, Function, Type};
-use crate::typechecker::mapper::TypeCheckResult;
-use crate::error::{FrontendErrorKind, FrontendError};
-use crate::meta::{Meta, LocationMeta};
+use crate::frontend::ast::{Program, Type};
+use crate::frontend::error::{FrontendError, FrontendErrorKind};
+use crate::meta::LocationMeta;
 use crate::util::env::Env;
+
 
 /// checks if main function is defined and has a correct signature
 pub fn check_main(program: &Program<LocationMeta>) -> Result<(), Vec<FrontendError<LocationMeta>>> {

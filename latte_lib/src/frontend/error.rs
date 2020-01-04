@@ -2,7 +2,7 @@ use std::fmt;
 
 use lalrpop_util::{ErrorRecovery, ParseError as LalrpopError};
 
-use crate::parser::ast;
+use crate::frontend::ast;
 use crate::meta::Meta;
 use crate::meta::LocationMeta;
 

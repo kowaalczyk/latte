@@ -4,9 +4,10 @@
 /// array: pointer to array, passed by value
 /// object: pointer to struct, passed by value
 
-use crate::util::env::Env;
-use crate::parser::ast::{ClassVarItem, Type, UnaryOperator, BinaryOperator};
+use crate::frontend::ast::{Type, UnaryOperator, BinaryOperator};
 use crate::meta::Meta;
+use crate::util::env::Env;
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Entity {

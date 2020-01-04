@@ -1,9 +1,11 @@
-use crate::util::visitor::AstVisitor;
-use crate::compiler::compiler::Compiler;
-use crate::parser::ast::{Function, Expression, Statement, Class, UnaryOperator, Type, Reference, ExpressionKind, ReferenceKind, StatementKind, DeclItemKind, BinaryOperator, StatementOp};
-use crate::compiler::ir::{Instruction, Entity, BasicValue, InstructionKind, InstructionMeta};
-use crate::meta::{TypeMeta, GetType, Meta};
 use regex::internal::Inst;
+
+use crate::util::visitor::AstVisitor;
+use crate::meta::{TypeMeta, GetType, Meta};
+use crate::frontend::ast::*;
+use crate::backend::compiler::compiler::Compiler;
+use crate::backend::compiler::ir::{Instruction, Entity, BasicValue, InstructionKind, InstructionMeta};
+
 
 pub struct CompilationResult {
     /// a list of instructions that can be directly compiled to LLVM (without additional context)

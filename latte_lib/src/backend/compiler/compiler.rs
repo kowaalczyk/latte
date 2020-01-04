@@ -1,6 +1,6 @@
-use crate::parser::ast;
-use crate::compiler::ir::{Entity, Struct, Function};
 use crate::util::env::Env;
+use crate::backend::compiler::ir::{Entity, Function, Struct};
+
 
 #[derive(Clone)]
 pub struct Compiler {

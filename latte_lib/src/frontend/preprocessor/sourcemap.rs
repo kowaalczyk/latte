@@ -1,6 +1,7 @@
 use crate::meta::{MetaMapper};
 use crate::meta::LocationMeta;
 
+
 /// stores position of characters removed from original code (ie. comments)
 pub struct CharOffset {
     /// (offset start, length of this + previous offsets)

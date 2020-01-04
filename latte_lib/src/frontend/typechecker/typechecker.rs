@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
-use crate::parser::ast::{Program, Type, Class, Reference, Function, Keyed};
-use crate::error::{FrontendErrorKind, FrontendError};
-use crate::util::env::{Env, UniqueEnv};
-use crate::util::visitor::AstVisitor;
-use crate::meta::{Meta, LocationMeta};
+use crate::meta::LocationMeta;
+use crate::util::env::Env;
+use crate::frontend::ast::{Program, Type, Class, Keyed};
+use crate::frontend::error::{FrontendErrorKind, FrontendError};
+
 
 #[derive(Debug, PartialEq)]
 pub struct TypeChecker<'prog> {

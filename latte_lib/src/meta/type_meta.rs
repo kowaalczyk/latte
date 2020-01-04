@@ -1,4 +1,4 @@
-use crate::parser::ast::Type;
+use crate::frontend::ast::Type;
 use crate::meta::Meta;
 
 /// metadata used to store type information

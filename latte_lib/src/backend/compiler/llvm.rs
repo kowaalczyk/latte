@@ -1,8 +1,9 @@
 use itertools::Itertools;
 
-use crate::compiler::visitor::CompilationResult;
-use crate::compiler::ir::{InstructionKind, Instruction, Entity, BasicValue};
-use crate::parser::ast::{Type, UnaryOperator, BinaryOperator};
+use crate::frontend::ast::{Type, UnaryOperator, BinaryOperator};
+use crate::backend::compiler::ir::{Entity, BasicValue, Instruction, InstructionKind};
+use crate::backend::compiler::visitor::CompilationResult;
+
 
 pub trait ToLLVM {
     fn to_llvm(&self) -> String;

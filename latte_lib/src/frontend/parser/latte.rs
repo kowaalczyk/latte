@@ -1,13 +1,13 @@
 // auto-generated: "lalrpop 0.17.2"
-// sha256: fc184444805a5de6c675743b4c7fecf35a362a618588c4cbcb5ffaf16e7b36
+// sha256: c155469d21f97d778961743224f66bd9325147bb83d66ab90f9ba27ec63e2c5
 use std::str::FromStr;
 use std::collections::HashMap;
-use crate::parser::ast;
-use crate::parser::ast::{Keyed, AstItem};
+use crate::frontend::ast;
+use crate::frontend::ast::{Keyed, AstItem};
+use crate::frontend::error::FrontendError;
 use crate::meta::{Meta, LocationMeta};
 use crate::util::env;
 use crate::util::env::UniqueEnv;
-use crate::error::FrontendError;
 use lalrpop_util::ErrorRecovery;
 #[allow(unused_extern_crates)]
 extern crate lalrpop_util as __lalrpop_util;
@@ -20,12 +20,12 @@ mod __parse__Program {
 
     use std::str::FromStr;
     use std::collections::HashMap;
-    use crate::parser::ast;
-    use crate::parser::ast::{Keyed, AstItem};
+    use crate::frontend::ast;
+    use crate::frontend::ast::{Keyed, AstItem};
+    use crate::frontend::error::FrontendError;
     use crate::meta::{Meta, LocationMeta};
     use crate::util::env;
     use crate::util::env::UniqueEnv;
-    use crate::error::FrontendError;
     use lalrpop_util::ErrorRecovery;
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;
@@ -8726,12 +8726,12 @@ mod __intern_token {
     #![allow(unused_imports)]
     use std::str::FromStr;
     use std::collections::HashMap;
-    use crate::parser::ast;
-    use crate::parser::ast::{Keyed, AstItem};
+    use crate::frontend::ast;
+    use crate::frontend::ast::{Keyed, AstItem};
+    use crate::frontend::error::FrontendError;
     use crate::meta::{Meta, LocationMeta};
     use crate::util::env;
     use crate::util::env::UniqueEnv;
-    use crate::error::FrontendError;
     use lalrpop_util::ErrorRecovery;
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;

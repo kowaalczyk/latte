@@ -1,4 +1,5 @@
-use crate::parser::ast::{Statement, Expression, Class, Function, Block};
+use crate::frontend::ast::{Statement, Expression, Class, Function, Block};
+
 
 pub trait AstVisitor<MetaT, ResultT> {
     fn visit_expression(&mut self, expr: &Expression<MetaT>) -> ResultT;

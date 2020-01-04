@@ -1,10 +1,10 @@
-use crate::parser::ast::{Keyed, Type};
-use crate::error::{FrontendError, FrontendErrorKind};
+use crate::meta::Meta;
+use crate::frontend::ast::{Keyed, Type};
+use crate::frontend::error::{FrontendError, FrontendErrorKind};
 
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::ops::Deref;
-use crate::meta::Meta;
 
 
 /// alias, we use String as key everywhere in the project

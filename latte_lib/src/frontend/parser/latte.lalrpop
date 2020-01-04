@@ -1,12 +1,12 @@
 use std::str::FromStr;
 use std::collections::HashMap;
 
-use crate::parser::ast;
-use crate::parser::ast::{Keyed, AstItem};
+use crate::frontend::ast;
+use crate::frontend::ast::{Keyed, AstItem};
+use crate::frontend::error::FrontendError;
 use crate::meta::{Meta, LocationMeta};
 use crate::util::env;
 use crate::util::env::UniqueEnv;
-use crate::error::FrontendError;
 
 use lalrpop_util::ErrorRecovery;
 

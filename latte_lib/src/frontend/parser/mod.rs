@@ -1,10 +1,12 @@
 mod latte;
+
 pub mod ast;
 
+
 use self::ast::Program;
-use self::latte::ProgramParser;
-use crate::error::FrontendError;
 use crate::meta::LocationMeta;
+use self::latte::ProgramParser;
+use crate::frontend::error::FrontendError;
 
 
 pub fn parse_program(source_code: String) -> Result<Program<LocationMeta>, Vec<FrontendError<LocationMeta>>> {

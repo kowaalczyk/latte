@@ -1,5 +1,7 @@
-use crate::parser::ast::{Expression, Statement, Class, Function, Reference, Block, Program, ClassItem};
 use std::fmt::Debug;
+
+use crate::frontend::ast::{Expression, Statement, Class, Function, Reference, Block, Program, ClassItem};
+
 
 pub trait AstMapper<FromMeta, ToMeta, ErrT> {
     /// reference to a variable or object property

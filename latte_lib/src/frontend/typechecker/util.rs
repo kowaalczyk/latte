@@ -2,9 +2,10 @@ use std::collections::HashMap;
 use std::iter::{FromIterator, IntoIterator};
 
 use crate::meta::{Meta, LocationMeta};
-use crate::parser::ast::{Block, Type, Class, Arg, FunctionItem, ClassItem, Function};
+use crate::frontend::ast::{Block, Type, Class, Arg, FunctionItem, ClassItem, Function};
+use crate::frontend::error::FrontendError;
 use crate::util::env::Env;
-use crate::error::FrontendError;
+
 
 /// get environment containing all builtin functions
 pub fn get_builtins() -> Env<Type> {

@@ -1,15 +1,17 @@
-use itertools::Itertools;
-
-use crate::meta::TypeMeta;
-use crate::parser::ast::Program;
-use crate::compiler::compiler::Compiler;
-use crate::util::visitor::AstVisitor;
-use crate::compiler::llvm::ToLLVM;
-
 mod ir;
 mod compiler;
 mod visitor;
 mod llvm;
+
+
+use itertools::Itertools;
+
+use crate::meta::TypeMeta;
+use crate::util::visitor::AstVisitor;
+use crate::frontend::ast::Program;
+use crate::backend::compiler::compiler::Compiler;
+use crate::backend::compiler::llvm::ToLLVM;
+
 
 pub fn compile(program: Program<TypeMeta>) -> String {
     let mut compiler = Compiler::new();

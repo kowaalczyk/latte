@@ -1,7 +1,8 @@
 use crate::util::env::{Env, UniqueEnv, FromKeyedVec};
-use crate::error::FrontendError;
+use crate::frontend::error::FrontendError;
 use crate::util::visitor::AstVisitor;
 use crate::meta::Meta;
+
 use std::fmt::Debug;
 
 

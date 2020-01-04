@@ -1,12 +1,13 @@
 use std::iter::FromIterator;
 
-use crate::parser::ast::{Type, Expression, UnaryOperator, BinaryOperator, Statement, DeclItem, Class, Function, ExpressionKind, ReferenceKind, Reference, StatementKind, BlockItem, Block, DeclItemKind, ClassItem, Keyed, ClassVar, FunctionItem, Arg};
-use crate::error::{FrontendError, FrontendErrorKind};
-use crate::typechecker::typechecker::TypeChecker;
-use crate::typechecker::util::{ToTypeEnv};
-use crate::util::env::{Env, UniqueEnv};
+use crate::meta::{LocationMeta, TypeMeta, GetType};
 use crate::util::mapper::AstMapper;
-use crate::meta::{Meta, LocationMeta, TypeMeta, GetType};
+use crate::util::env::Env;
+use crate::frontend::error::{FrontendError, FrontendErrorKind};
+use crate::frontend::typechecker::typechecker::TypeChecker;
+use crate::frontend::typechecker::util::ToTypeEnv;
+use crate::frontend::ast::*;
+
 
 pub type TypeCheckResult<AstT> = Result<AstT, Vec<FrontendError<LocationMeta>>>;
 

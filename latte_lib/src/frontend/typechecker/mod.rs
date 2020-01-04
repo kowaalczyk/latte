@@ -3,13 +3,16 @@ mod mapper;
 mod env;
 mod typechecker;
 
-use crate::parser::ast::{Program, Type};
-use crate::typechecker::typechecker::TypeChecker;
-use crate::typechecker::mapper::TypeCheckResult;
-use crate::typechecker::util::{get_builtins};
-use crate::typechecker::env::{check_builtin_conflicts, check_main};
+
+use crate::frontend::ast::Program;
+use crate::meta::{LocationMeta, TypeMeta};
 use crate::util::mapper::AstMapper;
-use crate::meta::{Meta, LocationMeta, TypeMeta};
+
+use self::mapper::TypeCheckResult;
+use self::util::get_builtins;
+use self::env::check_builtin_conflicts;
+use self::typechecker::TypeChecker;
+
 
 /// main typechecker function: checks types of the entire program
 pub fn check_types(program: &Program<LocationMeta>) -> TypeCheckResult<Program<TypeMeta>> {
