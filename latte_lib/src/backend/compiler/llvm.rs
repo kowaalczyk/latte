@@ -33,7 +33,7 @@ impl ToLLVM for Entity {
             Entity::NamedRegister { n, t } => format!("%{}", n),
             Entity::Const { val } => {
                 match val {
-                    BasicValue::Bool { v } => v.to_string(),
+                    BasicValue::Bool { v } => (*v as i8).to_string(),
                     BasicValue::Int { v } => v.to_string(),
                 }
             },

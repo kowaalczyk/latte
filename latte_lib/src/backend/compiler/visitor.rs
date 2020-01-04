@@ -70,7 +70,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 }
 
                 let kind = InstructionKind::Call {
-                    func_name: func_name.clone(),
+                    func_name: self.get_function(func_name),
                     ret: expr.get_type(),
                     args: arg_ents
                 };
@@ -119,21 +119,31 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
 
                 // TODO: Check if type is string and call function instead (equality or concat)
                 if let (Some(left_ent), Some(right_ent)) = (left_result, right_result) {
-                    let result_reg = self.new_reg();
-                    let kind = InstructionKind::ApplyBinaryOp {
-                        op: op.clone(),
-                        left_ent,
-                        right_ent
+                    let mut instructions = Vec::new();
+                    instructions.append(&mut left_instructions);
+                    instructions.append(&mut right_instructions);
+
+                    let kind = if left.get_type() == Type::Str && *op == BinaryOperator::Plus {
+                        // string concatenation
+                        InstructionKind::Call {
+                            func_name: String::from("__builtin_method__str__concat__"),
+                            ret: expr.get_type(),
+                            args: vec![left_ent, right_ent]
+                        }
+                    } else {
+                        // integer addition
+                        InstructionKind::ApplyBinaryOp {
+                            op: op.clone(),
+                            left_ent,
+                            right_ent
+                        }
                     };
+                    let result_reg = self.new_reg();
                     let meta = InstructionMeta {
                         reg: result_reg,
                         t: expr.get_type()
                     };
                     let instr = Instruction::new(kind, Some(meta.clone()));
-
-                    let mut instructions = Vec::new();
-                    instructions.append(&mut left_instructions);
-                    instructions.append(&mut right_instructions);
                     instructions.push(instr);
 
                     CompilationResult {

@@ -67,6 +67,11 @@ impl Compiler {
 
     /// get mangled function name from its source code identifier
     pub fn get_function(&self, func_name: &String) -> String {
-        format!("__func__{}", func_name)
+        if func_name == "main" {
+            // main is the only non-mangled function
+            func_name.clone()
+        } else {
+            format!("__func__{}", func_name)
+        }
     }
 }
