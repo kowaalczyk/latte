@@ -1,6 +1,6 @@
 use std::iter::FromIterator;
 
-use crate::meta::{LocationMeta, TypeMeta, GetType};
+use crate::meta::{LocationMeta, GetLocation, TypeMeta, GetType};
 use crate::util::mapper::AstMapper;
 use crate::util::env::Env;
 use crate::frontend::error::{FrontendError, FrontendErrorKind};
@@ -182,7 +182,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                                     args.len()
                                 )
                             };
-                            errors.push(FrontendError::new(kind, r.get_meta().clone()));
+                            errors.push(FrontendError::new(kind, r.get_location()));
                         } else {
                             for (expected_arg_type, arg_expr) in exp_args.iter().zip(args.iter()) {
                                 match self.map_expression(&arg_expr) {
@@ -192,7 +192,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                                             &mapped_arg.get_meta().t
                                         );
                                         if let Err(kind) = assignment_check {
-                                            errors.push(FrontendError::new(kind, arg_expr.get_meta().clone()));
+                                            errors.push(FrontendError::new(kind, arg_expr.get_location()));
                                         } else {
                                             mapped_args.push(Box::new(mapped_arg));
                                         }
@@ -215,7 +215,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                             expected: Type::Function { args: vec![], ret: Box::new(Type::Any) },
                             actual: t.clone()
                         };
-                        Err(vec![FrontendError::new(kind, r.get_meta().clone())])
+                        Err(vec![FrontendError::new(kind, r.get_location())])
                     }
                 }
             },
@@ -233,7 +233,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                         expected: op_t,
                         actual: mapped_arg.get_type()
                     };
-                    Err(vec![FrontendError::new(kind, arg.get_meta().clone())])
+                    Err(vec![FrontendError::new(kind, arg.get_location())])
                 }
             },
             ExpressionKind::Binary { left, op, right } => {
@@ -292,14 +292,14 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                                 mapped_l.get_type(),
                                 op
                         )};
-                        Err(vec![FrontendError::new(kind, left.get_meta().clone())])
+                        Err(vec![FrontendError::new(kind, left.get_location())])
                     }
                 } else {
                     let kind = FrontendErrorKind::TypeError {
                         expected: mapped_l.get_type(),
                         actual: mapped_r.get_type()
                     };
-                    Err(vec![FrontendError::new(kind, right.get_meta().clone())])
+                    Err(vec![FrontendError::new(kind, right.get_location())])
                 }
             },
             ExpressionKind::InitDefault { t } => {
@@ -316,7 +316,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                         expected: Type::Int,
                         actual: mapped_size.get_type()
                     };
-                    Err(vec![FrontendError::new(kind, size.get_meta().clone())])
+                    Err(vec![FrontendError::new(kind, size.get_location())])
                 }
             },
             ExpressionKind::Reference { r } => {
@@ -335,7 +335,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                         expected: Type::Null,
                         actual: mapped_expr.get_type()
                     };
-                    Err(vec![FrontendError::new(kind, expr.get_meta().clone())])
+                    Err(vec![FrontendError::new(kind, expr.get_location())])
                 }
             },
             ExpressionKind::Error => {
@@ -374,7 +374,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                             mapped_declitems.push(DeclItem::new(kind, TypeMeta{ t: t.clone() }))
                         }
                         DeclItemKind::Init { ident, val } => {
-                            let loc = val.get_meta().clone();
+                            let loc = val.get_location();
                             match self.map_expression(&val) {
                                 Ok(mapped_expr) => {
                                     let expr_t = &mapped_expr.get_meta().t;
@@ -410,7 +410,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 }
             },
             StatementKind::Ass { r, expr } => {
-                let expr_loc = expr.get_meta().clone();
+                let expr_loc = expr.get_location();
                 // TODO: Collect errors from both expression and the reference
                 let mapped_expr = self.map_expression(&expr)?;
                 let mapped_ref = self.map_var_reference(&r)?;
@@ -445,7 +445,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                         let kind = FrontendErrorKind::TypeError {
                             expected: Type::Int, actual: t.clone()
                         };
-                        Err(vec![FrontendError::new(kind, r.get_meta().clone())])
+                        Err(vec![FrontendError::new(kind, r.get_location())])
                     },
                 }
             },
@@ -484,7 +484,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                             expected: Type::Bool,
                             actual: t.clone()
                         };
-                        Err(vec![FrontendError::new(kind, expr.get_meta().clone())])
+                        Err(vec![FrontendError::new(kind, expr.get_location())])
                     },
                 }
 
@@ -522,7 +522,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                                     expected: true_t.clone(),
                                     actual: false_t.clone()
                                 };
-                                Err(vec![FrontendError::new(kind, stmt_false.get_meta().clone())])
+                                Err(vec![FrontendError::new(kind, stmt_false.get_location())])
                             },
                         }
                     },
@@ -531,7 +531,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                             expected: Type::Bool,
                             actual: t.clone()
                         };
-                        Err(vec![FrontendError::new(kind, expr.get_meta().clone())])
+                        Err(vec![FrontendError::new(kind, expr.get_location())])
                     },
                 }
             },
@@ -569,7 +569,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                                 Ok(Statement::new(kind, TypeMeta { t: Type::Void }))
                             },
                             Err(kind) => {
-                                Err(vec![FrontendError::new(kind, arr.get_meta().clone())])
+                                Err(vec![FrontendError::new(kind, arr.get_location())])
                             },
                         }
                     },
@@ -578,7 +578,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                             expected: Type::Array { item_t: Box::new(t.clone()) },
                             actual: invalid_arr_t.clone()
                         };
-                        Err(vec![FrontendError::new(kind, arr.get_meta().clone())])
+                        Err(vec![FrontendError::new(kind, arr.get_location())])
                     },
                 }
             },
@@ -667,7 +667,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 }
             },
             Err(kind) => {
-                Err(vec![FrontendError::new(kind, function.get_meta().clone())])
+                Err(vec![FrontendError::new(kind, function.get_location())])
             },
         }
     }

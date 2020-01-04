@@ -1,4 +1,4 @@
-use crate::meta::Meta;
+use crate::meta::{Meta, GetLocation};
 use crate::frontend::ast::{Keyed, Type};
 use crate::frontend::error::{FrontendError, FrontendErrorKind};
 

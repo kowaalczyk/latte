@@ -3,7 +3,7 @@ mod type_meta;
 
 use std::fmt::{Display, Formatter, Error};
 
-pub use location_meta::LocationMeta;
+pub use location_meta::{LocationMeta, GetLocation};
 pub use type_meta::{TypeMeta, GetType};
 
 /// generic structure for attaching metadata to any other structure

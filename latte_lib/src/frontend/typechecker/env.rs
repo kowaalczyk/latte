@@ -1,6 +1,6 @@
 use crate::frontend::ast::{Program, Type};
 use crate::frontend::error::{FrontendError, FrontendErrorKind};
-use crate::meta::LocationMeta;
+use crate::meta::{LocationMeta, GetLocation};
 use crate::util::env::Env;
 
 
@@ -15,13 +15,13 @@ pub fn check_main(program: &Program<LocationMeta>) -> Result<(), Vec<FrontendErr
                     expected: Type::Int,
                     actual: func.item.ret.clone()
                 };
-                Err(vec![FrontendError::new(kind, func.get_meta().clone())])
+                Err(vec![FrontendError::new(kind, func.get_location())])
             }
         } else {
             let kind = FrontendErrorKind::EnvError {
                 message: String::from("Function 'main' cannot take any arguments")
             };
-            Err(vec![FrontendError::new(kind, func.get_meta().clone())])
+            Err(vec![FrontendError::new(kind, func.get_location())])
         }
     } else {
         let kind = FrontendErrorKind::EnvError {
@@ -49,7 +49,7 @@ pub fn check_builtin_conflicts(
                 };
                 FrontendError::new(
                     kind,
-                    program.functions.get(f.clone()).unwrap().get_meta().clone()
+                    program.functions.get(f.clone()).unwrap().get_location()
                 )
             })
             .collect();
