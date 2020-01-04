@@ -67,7 +67,11 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                     arg_instructions.append(&mut compiled_arg.instructions)
                 }
 
-                let kind = InstructionKind::Call { func_name: func_name.clone(), args: arg_ents };
+                let kind = InstructionKind::Call {
+                    func_name: func_name.clone(),
+                    ret: expr.get_type(),
+                    args: arg_ents
+                };
                 let result_reg = self.new_reg();
                 let meta = InstructionMeta {
                     reg: result_reg,
@@ -146,7 +150,11 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 if let Type::Class { ident } = t {
                     let reg = self.new_reg();
                     let init = self.get_init(ident);
-                    let kind = InstructionKind::Call { func_name: init, args: vec![] };
+                    let kind = InstructionKind::Call {
+                        func_name: init,
+                        ret: t.clone(),
+                        args: vec![]
+                    };
                     let meta = InstructionMeta { reg, t: expr.get_type() };
                     let instr = Instruction::new(kind, Some(meta.clone()));
                     CompilationResult {
@@ -164,14 +172,14 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
             ExpressionKind::Reference { r } => {
                 match &r.item {
                     ReferenceKind::Ident { ident } => {
-                        let result_reg = self.new_reg();
-                        let ptr = self.get_ptr(ident);
-                        let kind = InstructionKind::Load { ptr };
-                        let meta = InstructionMeta { reg: result_reg, t: expr.get_type() };
-                        let instr = Instruction::new(kind, Some(meta.clone()));
+                        // TODO: Load instruction for complex types
+//                        let result_reg = self.new_reg();
+//                        let ptr = self.get_ptr(ident);
+//                        let kind = InstructionKind::Load { ptr };
+//                        let instr = Instruction::new(kind, Some(meta.clone()));
                         CompilationResult {
-                            instructions: vec![instr],
-                            result: Some(Entity::from(meta))
+                            instructions: vec![],
+                            result: Some(self.get_ptr(ident).clone())
                         }
                     },
                     ReferenceKind::Object { .. } => {
@@ -213,7 +221,17 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
     fn visit_statement(&mut self, stmt: &Statement<TypeMeta>) -> CompilationResult {
         match &stmt.item {
             StatementKind::Block { block } => {
-                unimplemented!() // TODO
+                let mut compiler = self.clone();
+                let mut instructions = Vec::new();
+                for stmt in block.item.stmts.iter() {
+                    let mut res = compiler.visit_statement(&stmt);
+                    instructions.append(&mut res.instructions);
+                }
+                self.match_available_reg(&compiler);
+                CompilationResult {
+                    instructions,
+                    result: None
+                }
             },
             StatementKind::Empty => {
                 CompilationResult { instructions: vec![], result: None }
@@ -239,11 +257,13 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                             (entity, ident)
                         },
                     };
-                    let kind = InstructionKind::Store {
-                        val: entity,
-                        ptr: self.get_ptr(ident),
-                    };
-                    instructions.push(Instruction::from(kind));
+                    self.set_ptr(&ident, &entity);
+                    // TODO: Store is only necessary for complex types:
+//                    let kind = InstructionKind::Store {
+//                        val: entity,
+//                        ptr: ptr_entity,
+//                    };
+//                    instructions.push(Instruction::from(kind));
                 }
                 CompilationResult {
                     instructions,
@@ -251,20 +271,16 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 }
             },
             StatementKind::Ass { r, expr } => {
-                let mut compiled_expr = self.visit_expression(expr);
+                let compiled_expr = self.visit_expression(expr);
 
                 if let Some(val) = compiled_expr.result {
-                    let ptr = match &r.item {
-                        ReferenceKind::Ident { ident } => self.get_ptr(ident),
-                        t => unimplemented!(), // TODO
+                    let var_ident = match &r.item {
+                        ReferenceKind::Ident { ident } => ident,
+                        t => unimplemented!() // TODO
                     };
-                    let kind = InstructionKind::Store { val, ptr };
-
-                    let mut instructions = Vec::new();
-                    instructions.append(&mut compiled_expr.instructions);
-                    instructions.push(Instruction::from(kind));
+                    self.set_ptr(var_ident, &val);  // TODO: Store for complex types
                     CompilationResult {
-                        instructions,
+                        instructions: compiled_expr.instructions,
                         result: None
                     }
                 } else {
@@ -272,55 +288,30 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 }
             },
             StatementKind::Mut { r, op } => {
-                let mut instructions = Vec::new();
+                match &r.item {
+                    ReferenceKind::Ident { ident } => {
+                        let var_ent = self.get_ptr(ident).clone();
 
-                let ptr = match &r.item {
-                    ReferenceKind::Ident { ident } => self.get_ptr(ident),
-                    t => unimplemented!(), // TODO
-                };
+                        // perform the op on the extracted value
+                        let op_reg = self.new_reg();
+                        let binary_op = match op {
+                            StatementOp::Increment => BinaryOperator::Plus,
+                            StatementOp::Decrement => BinaryOperator::Minus,
+                        };
+                        let kind = InstructionKind::ApplyBinaryOp {
+                            op: binary_op,
+                            left_ent: var_ent,
+                            right_ent: Entity::Const { val: BasicValue::Int { v: 1 } }
+                        };
 
-                // load the value of variable to the register
-                let load_reg = self.new_reg();
-                let kind = InstructionKind::Load { ptr: ptr.clone() };
-                let meta = InstructionMeta {
-                    reg: load_reg.clone(),
-                    t: Type::Int
-                };
-                let load = Instruction::new(
-                    load_kind,
-                    Some(meta)
-                );
-                instructions.push(load);
-
-                // perform the op on the extracted value
-                let op_reg = self.new_reg();
-                let binary_op = match op {
-                    StatementOp::Increment => BinaryOperator::Plus,
-                    StatementOp::Decrement => BinaryOperator::Minus,
-                };
-                let kind = InstructionKind::ApplyBinaryOp {
-                    op: binary_op,
-                    left_ent: Entity::Register { n: load_reg, t: Type::Int },
-                    right_ent: Entity::Const { val: BasicValue::Int { v: 1 } }
-                };
-                let meta = InstructionMeta {
-                    reg: op_reg.clone(),
-                    t: Type::Int
-                };
-                let add = Instruction::new(kind, Some(meta))
-                instructions.push(add);
-
-                // store mutated value at the location of the variable
-                let kind = InstructionKind::Store {
-                    ptr,
-                    val: Entity::Register { n: op_reg, t: Type::Int }
-                };
-                let store = Instruction::from(kind);
-                instructions.push(store);
-
-                CompilationResult {
-                    instructions,
-                    result: None
+                        // store the updated register
+                        self.set_ptr(ident, &Entity::Register { n: op_reg, t: Type::Int });
+                        CompilationResult {
+                            instructions: vec![Instruction::from(kind)],
+                            result: None
+                        }
+                    },
+                    t => unimplemented!(),  // TODO
                 }
             },
             StatementKind::Return { expr } => {
@@ -504,10 +495,13 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 } else {
                     panic!("Expression {:?} didn't return a compilation result", expr)
                 }
-
             },
             StatementKind::For { t, ident, arr, stmt } => {
-                unimplemented!() // TODO
+                unimplemented!(); // TODO
+                CompilationResult {
+                    instructions: vec![],
+                    result: None
+                }
             },
             StatementKind::Expr { expr } => {
                 let compiled_expr = self.visit_expression(expr);
@@ -527,6 +521,43 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
     }
 
     fn visit_function(&mut self, function: &Function<TypeMeta>) -> CompilationResult {
-        unimplemented!()
+        let mut compiler = self.clone();
+        let mut raw_args = Vec::new();
+
+        // add args to the env of nested compiler
+        for arg in function.item.args.iter() {
+            let arg_ent = Entity::NamedRegister {
+                n: arg.item.ident.clone(),
+                t: arg.get_type()
+            };
+            compiler.set_ptr(&arg.item.ident, &arg_ent);
+            raw_args.push(arg_ent);
+        }
+
+        // compile function instructions using the nested compiler
+        let mut instructions = Vec::new();
+        for stmt in function.item.block.item.stmts.iter() {
+            let mut res = compiler.visit_statement(&stmt);
+            let mut mapped_instr: Vec<_> = res.instructions
+                .drain(..)
+                .map(|ir| {
+                    Box::new(Instruction::from(ir.item))
+                })
+                .collect();
+            instructions.append(&mut mapped_instr);
+        }
+        self.match_available_reg(&compiler);
+
+        let func_name = self.get_function(&function.item.ident);
+        let compiled_func = InstructionKind::FuncDef {
+            ret: function.item.ret.clone(),
+            name: func_name,
+            args: raw_args,
+            instructions
+        };
+        CompilationResult {
+            instructions: vec![Instruction::from(compiled_func)],
+            result: None
+        }
     }
 }

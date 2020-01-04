@@ -16,9 +16,28 @@ pub enum Entity {
     /// registers store intermediate computation results
     Register { n: usize, t: Type },
 
+    /// some register (ie. function arguments) are named instead of numbered
+    NamedRegister { n: String, t: Type },
+
     /// constant (literal) values are preserved whenever types are compatible with LLVM
     /// and represented as constant pointers when they are not (ie. for objects)
     Const { val: BasicValue },
+}
+
+impl Entity {
+    pub fn get_type(&self) -> Type {
+        match self {
+            Entity::Null => panic!("null does not have a type"),
+            Entity::Register { n, t } => t.clone(),
+            Entity::NamedRegister { n, t } => t.clone(),
+            Entity::Const { val } => {
+                match val {
+                    BasicValue::Bool { .. } => Type::Bool,
+                    BasicValue::Int { .. } => Type::Int,
+                }
+            },
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Copy)]
@@ -27,7 +46,7 @@ pub enum BasicValue {
     Int { v: i32 },
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum InstructionKind {
     /// allocate constant string value on heap memory
     StrAlloc {
@@ -48,20 +67,21 @@ pub enum InstructionKind {
         right_ent: Entity,  // TODO: Remember about lazy evaluation
     },
 
-    /// load value from memory to register
-    Load {
-        ptr: String,
-    },
+//    /// load value from memory to register
+//    Load {
+//        ptr: Entity,
+//    },
 
-    /// store value to memory / variable
-    Store {
-        ptr: String,
-        val: Entity,
-    },
+//    /// store value to memory / variable
+//    Store {
+//        ptr: Entity,
+//        val: Entity,
+//    },
 
     /// call a function or method
     Call {
         func_name: String,
+        ret: Type,
         args: Vec<Entity>,
     },
 
@@ -90,6 +110,13 @@ pub enum InstructionKind {
         val: String,
     },
 
+    /// function definition
+    FuncDef {
+        ret: Type,
+        name: String,
+        args: Vec<Entity>,
+        instructions: Vec<Box<Instruction>>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]

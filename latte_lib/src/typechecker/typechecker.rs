@@ -21,7 +21,7 @@ pub struct TypeChecker<'prog> {
     /// public to allow easy override during declaration
     pub local_env: Env<Type>,
 
-    // TODO: Linked list of envs to check for re-declaration of variables within one (not-nested) block (!!!)
+    // TODO: HashSet of variables declared in current block to prevent re-declaration within a block
 }
 
 impl<'p> TypeChecker<'p> {

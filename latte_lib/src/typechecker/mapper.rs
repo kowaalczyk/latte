@@ -408,7 +408,6 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     Err(errors)
                 }
             },
-            // TODO: Finish from here (!!!)
             StatementKind::Ass { r, expr } => {
                 let expr_loc = expr.get_meta().clone();
                 // TODO: Collect errors from both expression and the reference
