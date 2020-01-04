@@ -93,6 +93,12 @@ pub enum Type {
     Object,
 }
 
+impl Default for Type {
+    fn default() -> Self {
+        Type::Void
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum ReferenceKind<MetaT> {
     Ident { ident: String },

@@ -21,7 +21,10 @@ use std::ops::Add;
 use std::sync::Arc;
 
 
-pub fn process_code(file_name: &String, source_code: &String) -> Result<ast::Program<TypeMeta>, Vec<FrontendError<String>>> {
+pub type CheckedProgram = ast::Program<TypeMeta>;
+pub type Error = FrontendError<String>;
+
+pub fn process_code(file_name: &String, source_code: &String) -> Result<CheckedProgram, Vec<Error>> {
     // setup codemap for mapping byte offset to (file, line, column)
     let mut codemap = CodeMap::new();
     let codemap_file = codemap.add_file(
@@ -54,7 +57,7 @@ impl MetaMapper<Pos, String> for CodeMap {
     }
 }
 
-pub fn process_file(path: &String) -> Result<ast::Program<TypeMeta>, Vec<FrontendError<String>>> {
+pub fn process_file(path: &String) -> Result<CheckedProgram, Vec<Error>> {
     let source_code = match fs::read_to_string(path) {
         Ok(source_code) => source_code,
         Err(e) => {

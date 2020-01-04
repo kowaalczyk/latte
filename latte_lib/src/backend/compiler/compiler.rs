@@ -23,8 +23,8 @@ pub struct Compiler {
 impl Compiler {
     pub fn new() -> Self {
         Self {
-            available_reg: 0,
-            available_label: 0,
+            available_reg: 1,
+            available_label: 1,
             local_env: Env::new(),
             structs: Env::new(),
             functions: Env::new()

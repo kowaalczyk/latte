@@ -347,47 +347,57 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 }
             },
             StatementKind::Cond { expr, stmt } => {
-                let mut instructions = Vec::new();
-
-                let mut expr_result = self.visit_expression(&expr);
-                instructions.append(&mut expr_result.instructions);
-
-                let suffix = self.get_label_suffix();
-                let true_label = format!("__branch_true__{}", suffix);
-                let end_label = format!("__branch_end__{}", suffix);
-
-                if let Some(expr_ent) = expr_result.result {
-                    // conditional jump
-                    let cond_kind = InstructionKind::JumpCond {
-                        cond: expr_ent,
-                        true_label: true_label.clone(),
-                        false_label: end_label.clone()
-                    };
-                    instructions.push(Instruction::from(cond_kind));
-
-                    // start true branch
-                    let true_kind = InstructionKind::Label {
-                        val: true_label
-                    };
-                    instructions.push(Instruction::from(true_kind));
-
-                    // add all true branch instructions
-                    let mut compiled_stmt = self.visit_statement(stmt);
-                    instructions.append(&mut compiled_stmt.instructions);
-
-                    // add end label after all instructions from true branch
-                    let end_kind = InstructionKind::Label {
-                        val: end_label
-                    };
-                    instructions.push(Instruction::from(end_kind));
-
-                    CompilationResult {
-                        instructions,
-                        result: None
-                    }
-                } else {
-                    panic!("Expression {:?} didn't return a compilation result", expr)
-                }
+                let empty_stmt = Box::new(Statement::from(StatementKind::Empty));
+                let cond_with_empty_false = Statement::new(
+                    StatementKind::CondElse {
+                        expr: expr.clone(),
+                        stmt_true: stmt.clone(),
+                        stmt_false: empty_stmt
+                    },
+                    stmt.get_meta().clone()
+                );
+                self.visit_statement(&cond_with_empty_false)
+//                let mut instructions = Vec::new();
+//
+//                let mut expr_result = self.visit_expression(&expr);
+//                instructions.append(&mut expr_result.instructions);
+//
+//                let suffix = self.get_label_suffix();
+//                let true_label = format!("__branch_true__{}", suffix);
+//                let end_label = format!("__branch_end__{}", suffix);
+//
+//                if let Some(expr_ent) = expr_result.result {
+//                    // conditional jump
+//                    let cond_kind = InstructionKind::JumpCond {
+//                        cond: expr_ent,
+//                        true_label: true_label.clone(),
+//                        false_label: end_label.clone()
+//                    };
+//                    instructions.push(Instruction::from(cond_kind));
+//
+//                    // start true branch
+//                    let true_kind = InstructionKind::Label {
+//                        val: true_label
+//                    };
+//                    instructions.push(Instruction::from(true_kind));
+//
+//                    // add all true branch instructions
+//                    let mut compiled_stmt = self.visit_statement(stmt);
+//                    instructions.append(&mut compiled_stmt.instructions);
+//
+//                    // add end label after all instructions from true branch
+//                    let end_kind = InstructionKind::Label {
+//                        val: end_label
+//                    };
+//                    instructions.push(Instruction::from(end_kind));
+//
+//                    CompilationResult {
+//                        instructions,
+//                        result: None
+//                    }
+//                } else {
+//                    panic!("Expression {:?} didn't return a compilation result", expr)
+//                }
             },
             StatementKind::CondElse { expr, stmt_true, stmt_false } => {
                 let mut instructions = Vec::new();
@@ -423,7 +433,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                     let end_kind = InstructionKind::Jump {
                         label: end_label.clone()
                     };
-                    instructions.push(Instruction::from(end_kind));
+                    instructions.push(Instruction::from(end_kind.clone()));
 
                     // start false branch
                     let false_kind = InstructionKind::Label {
@@ -435,7 +445,10 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                     let mut compiled_stmt = self.visit_statement(stmt_false);
                     instructions.append(&mut compiled_stmt.instructions);
 
-                    // add end label, no need to jump after false instructions
+                    // jump to end label at the end of false branch
+                    instructions.push(Instruction::from(end_kind));
+
+                    // add end label
                     let end_kind = InstructionKind::Label {
                         val: end_label
                     };
@@ -542,9 +555,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
             let mut res = compiler.visit_statement(&stmt);
             let mut mapped_instr: Vec<_> = res.instructions
                 .drain(..)
-                .map(|ir| {
-                    Box::new(Instruction::from(ir.item))
-                })
+                .map(Box::new)
                 .collect();
             instructions.append(&mut mapped_instr);
         }

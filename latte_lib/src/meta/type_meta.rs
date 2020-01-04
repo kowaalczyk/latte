@@ -2,7 +2,7 @@ use crate::frontend::ast::Type;
 use crate::meta::Meta;
 
 /// metadata used to store type information
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct TypeMeta {
     pub t: Type
 }

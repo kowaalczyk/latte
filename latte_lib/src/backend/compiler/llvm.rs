@@ -49,12 +49,13 @@ impl ToLLVM for Instruction {
             },
             InstructionKind::ApplyUnaryOp { op, arg_ent } => {
                 if let Some(meta) = self.get_meta() {
+                    let result_reg = Entity::from(meta.clone());
                     match op {
                         UnaryOperator::Neg => {
-                            format!("\tsub i32 0, {}", arg_ent.to_llvm())
+                            format!("\t{} = sub i32 0, {}", result_reg.to_llvm(), arg_ent.to_llvm())
                         },
                         UnaryOperator::Not => {
-                            format!("\tadd i1 {}, 1", arg_ent.to_llvm())
+                            format!("\t{} = add i1 {}, 1", result_reg.to_llvm(), arg_ent.to_llvm())
                         },
                     }
                 } else {
@@ -77,23 +78,50 @@ impl ToLLVM for Instruction {
                     BinaryOperator::And => String::from("and i1"),
                     BinaryOperator::Or => String::from("or i1"),
                 };
-                format!("\t{} {}, {}", llvm_op, left_ent.to_llvm(), right_ent.to_llvm())
+                if let Some(meta) = self.get_meta() {
+                    let result_reg = Entity::from(meta.clone());
+                    format!(
+                        "\t{} = {} {}, {}",
+                        result_reg.to_llvm(),
+                        llvm_op,
+                        left_ent.to_llvm(),
+                        right_ent.to_llvm()
+                    )
+                } else {
+                    panic!("insufficient metadata for instruction: {:?}", self)
+                }
             },
             InstructionKind::Call { func_name, ret, args } => {
-                let formatted_args = args.iter()
-                    .map(|arg| format!("{} {}", arg.get_type().to_llvm(), arg.to_llvm()))
-                    .join(",");
-                format!("\tcall {} @{} ({})", ret.to_llvm(), func_name, formatted_args)
+                if let Some(meta) = self.get_meta() {
+                    let result_reg = Entity::from(meta.clone());
+                    let formatted_args = args.iter()
+                        .map(|arg| format!("{} {}", arg.get_type().to_llvm(), arg.to_llvm()))
+                        .join(",");
+                    let result_fmt = if let Type::Void = ret {
+                        String::new()
+                    } else {
+                        format!("{} = ", result_reg.to_llvm())
+                    };
+                    format!(
+                        "\t{}call {} @{} ({})",
+                        result_fmt,
+                        ret.to_llvm(),
+                        func_name,
+                        formatted_args
+                    )
+                } else {
+                    panic!("insufficient metadata for instruction: {:?}", self)
+                }
             },
             InstructionKind::ReturnEnt { val } => {
                 format!("\tret {} {}", val.get_type().to_llvm(), val.to_llvm())
             },
             InstructionKind::ReturnVoid => String::from("ret void"),
             InstructionKind::JumpCond { cond, true_label, false_label } => {
-                format!("\tbr i1 {}, label {}, label {}", cond.to_llvm(), true_label, false_label)
+                format!("\tbr i1 {}, label %{}, label %{}", cond.to_llvm(), true_label, false_label)
             },
             InstructionKind::Jump { label } => {
-                format!("\tbr label {}", label)
+                format!("\tbr label %{}", label)
             },
             InstructionKind::Label { val } => {
                 format!("{}:", val)
