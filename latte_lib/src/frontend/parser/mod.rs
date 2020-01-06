@@ -9,7 +9,11 @@ use self::latte::ProgramParser;
 use crate::frontend::error::FrontendError;
 
 
-pub fn parse_program(source_code: String) -> Result<Program<LocationMeta>, Vec<FrontendError<LocationMeta>>> {
+pub type ParsedProgram = Program<LocationMeta>;
+pub type ParserErrors = Vec<FrontendError<LocationMeta>>;
+
+
+pub fn parse_program(source_code: String) -> Result<ParsedProgram, ParserErrors> {
     let mut errors = Vec::new();
     let parser = ProgramParser::new();
     match parser.parse(&mut errors, &source_code) {

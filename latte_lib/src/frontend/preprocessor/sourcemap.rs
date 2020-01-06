@@ -63,7 +63,7 @@ impl MetaMapper<LocationMeta, LocationMeta> for CharOffset {
 }
 
 /// remove comments from source_code and remember position mapping in CharOffset
-pub fn clean_comments(source_code: &String) -> (String, CharOffset) {
+pub fn clean_comments(source_code: String) -> (String, CharOffset) {
     // containers for the results
     let mut clean_code = String::from("");
     let mut char_offset = CharOffset::new();
@@ -85,7 +85,7 @@ pub fn clean_comments(source_code: &String) -> (String, CharOffset) {
                     in_str = true;
                 },
                 (false, true, _) => {
-                    panic!("Impossible: comment filter in escaped state outside of a string");
+                    unreachable!();
                 }
                 (true, false, '"') => {
                     // exiting string
@@ -198,7 +198,7 @@ mod tests {
         }
         "#;
         let input = String::from(source_code);
-        let (actual_result, _) = clean_comments(&input);
+        let (actual_result, _) = clean_comments(input);
         assert_eq!(actual_result.trim(), String::from(expected_result).trim())
     }
 }

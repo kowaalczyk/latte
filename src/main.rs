@@ -89,7 +89,7 @@ fn main() {
         Path::new(&input_filename).with_extension("bc").to_str().unwrap()
     );
 
-    match process_file(&input_filename) {
+    match process_file(input_filename) {
         Ok(prog) => {
             eprintln!("OK");
             compile_llvm_file(&prog, &llvm_output_filename);

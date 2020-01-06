@@ -34,6 +34,31 @@ fn combine_instructions(r: CompilationResult, instructions: &mut Vec<LLVM>) -> E
     }
 }
 
+fn empty_result(r: &CompilationResult) -> bool {
+    if let CompilationResult::LLVM { llvm } = r {
+        if llvm.is_empty() {
+            true
+        } else {
+            false
+        }
+    } else {
+        true
+    }
+}
+
+fn last_instruction_returns(llvm: &Vec<LLVM>) -> bool {
+    match llvm.last() {
+        Some(LLVM::Instruction { instruction }) => {
+            match &instruction.item {
+                InstructionKind::RetVoid => true,
+                InstructionKind::RetVal { .. } => true,
+                _ => false,
+            }
+        },
+        _ => false,
+    }
+}
+
 impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
     fn visit_expression(&mut self, expr: &Expression<TypeMeta>) -> CompilationResult {
         match &expr.item {
@@ -387,7 +412,6 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 match expr {
                     None => {
                         let ret = InstructionKind::RetVoid;
-                        self.new_reg();  // for unnamed basic block
                         CompilationResult::LLVM { llvm: vec![ret.without_result()] }
                     },
                     Some(e) => {
@@ -401,8 +425,6 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                         // return the value from register containing expression result
                         let ret = InstructionKind::RetVal { val: result_ent };
                         instructions.push(ret.without_result());
-
-                        self.new_reg();  // for unnamed basic block
 
                         CompilationResult::LLVM { llvm: instructions }
                     },
@@ -432,9 +454,23 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
 
                 // create labels and the conditional jump instruction
                 let suffix = self.get_label_suffix();
-                let true_label = format!("__branch_true__{}", suffix);
-                let false_label = format!("__branch_false__{}", suffix);
                 let end_label = format!("__branch_end__{}", suffix);
+
+                // evaluate true and false branches to correctly define the conditional jump
+                let mut true_llvm = self.visit_statement(&stmt_true);
+                let true_label = if empty_result(&true_llvm) {
+                    end_label.clone()
+                } else {
+                    format!("__branch_true__{}", suffix)
+                };
+                let mut false_llvm = self.visit_statement(&stmt_false);
+                let false_label = if empty_result(&false_llvm) {
+                    end_label.clone()
+                } else {
+                    format!("__branch_false__{}", suffix)
+                };
+
+                // add cond instruction
                 let cond = InstructionKind::JumpCond {
                     cond: expr_ent,
                     true_label: true_label.clone(),
@@ -442,25 +478,49 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 };
                 llvm.push(cond.without_result());
 
-                // true branch
-                llvm.push(LLVM::Label { name: true_label });
-                if let CompilationResult::LLVM { llvm: mut stmt_llvm } = self.visit_statement(&stmt_true) {
-                    llvm.append(&mut stmt_llvm);
-                }
+                // prepare jump-to-end instruction that can be used at the end of a branch
+                let mut add_jump_to_end = true;
                 let jump_to_end = InstructionKind::Jump {
                     label: end_label.clone()
                 };
-                llvm.push(jump_to_end.clone().without_result());
+
+                // true branch
+                if !empty_result(&true_llvm) {
+                    llvm.push(LLVM::Label { name: true_label });
+
+                    if let CompilationResult::LLVM { llvm: mut stmt_llvm } = true_llvm {
+                        if last_instruction_returns(&stmt_llvm) {
+                            add_jump_to_end = false;
+                        }
+
+                        llvm.append(&mut stmt_llvm);
+                    } else {
+                        unreachable!();
+                    }
+                    if add_jump_to_end {
+                        llvm.push(jump_to_end.clone().without_result());
+                    }
+                }
 
                 // false branch
-                llvm.push(LLVM::Label { name: false_label });
-                if let CompilationResult::LLVM { llvm: mut stmt_llvm } = self.visit_statement(&stmt_false) {
-                    llvm.append(&mut stmt_llvm);
-                }
-                llvm.push(jump_to_end.without_result());
+                if !empty_result(&false_llvm) {
+                    llvm.push(LLVM::Label { name: false_label });
 
-                // end
-                llvm.push(LLVM::Label { name: end_label });
+                    if let CompilationResult::LLVM { llvm: mut stmt_llvm } = false_llvm {
+                        llvm.append(&mut stmt_llvm);
+                    } else {
+                        unreachable!();
+                    }
+                    if add_jump_to_end {
+                        // either both or none of the branches return => no need to re-check the last value
+                        llvm.push(jump_to_end.clone().without_result());
+                    }
+                }
+
+                // add end label only if branches need it
+                if add_jump_to_end {
+                    llvm.push(LLVM::Label { name: end_label });
+                }
                 CompilationResult::LLVM { llvm }
             },
             StatementKind::While { expr, stmt } => {
@@ -472,7 +532,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 let loop_label = format!("__loop_begin__{}", suffix);
                 let end_label = format!("__loop_end__{}", suffix);
 
-                // mark beginning of condition evaluation sequence with cond label
+                // jump to condition evaluation sequence
                 let begin_jump = InstructionKind::Jump {
                     label: cond_label.clone()
                 };

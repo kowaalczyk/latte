@@ -15,12 +15,12 @@ use self::typechecker::TypeChecker;
 
 
 /// main typechecker function: checks types of the entire program
-pub fn check_types(program: &Program<LocationMeta>) -> TypeCheckResult<Program<TypeMeta>> {
+pub fn check_types(program: Program<LocationMeta>) -> TypeCheckResult<Program<TypeMeta>> {
     // get builtin functions and check for duplicate declarations
     let buitlins = get_builtins();
     check_builtin_conflicts(&program, &buitlins)?;  // TODO: Move to preprocessor
 
     // create typechecker and iterate over entire program (classes & functions)
-    let mut typechecker = TypeChecker::new(program, &buitlins);
-    typechecker.map_program(program)
+    let mut typechecker = TypeChecker::new(&program, &buitlins);
+    typechecker.map_program(&program)
 }
