@@ -267,7 +267,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                                 Type::Str => {
                                     let default_init = InstructionKind::Call {
                                         func: String::from("__builtin_method__str__init__"),
-                                        args: vec![]
+                                        args: vec![Entity::Int { v: 0 }]
                                     };
                                     let call_ret_ent = Entity::Register {
                                         n: self.new_reg(),

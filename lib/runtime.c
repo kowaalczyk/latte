@@ -21,20 +21,6 @@ char* __builtin_method__str__init__(int size) {
 }
 
 /**
- * allocate heap memory for a constant string
- * @param str - constant string to allocate on the heap
- * @return string
- */
-char* __builtin_method__str_const__(const char* str) {
-    size_t len = strlen(str);
-
-    char* s = __builtin_method__str__init__(len);
-    memcpy(s, str, len);
-
-    return s;
-}
-
-/**
  * concatenate strings (operator +)
  * @param left - string
  * @param right - string

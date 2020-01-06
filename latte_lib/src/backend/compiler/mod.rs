@@ -19,7 +19,6 @@ use crate::backend::compiler::ir::LLVM;
 pub fn compile(program: &Program<TypeMeta>) -> String {
     let builtins = vec![
         LLVM::FuncDecl { decl: String::from("declare i8* @__builtin_method__str__init__(i32)") },
-        LLVM::FuncDecl { decl: String::from("declare i8* @__builtin_method__str_const__(i8*)") },
         LLVM::FuncDecl { decl: String::from("declare i8* @__builtin_method__str__concat__(i8*, i8*)") },
         LLVM::FuncDecl { decl: String::from("declare void @__func__printInt(i32)") },
         LLVM::FuncDecl { decl: String::from("declare void @__func__printString(i8*)") },
