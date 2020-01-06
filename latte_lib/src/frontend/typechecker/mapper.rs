@@ -356,8 +356,9 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
             StatementKind::Block { block } => {
                 let mut typechecker = self.with_nested_env(Env::new());
                 let mapped_block = typechecker.map_block(&block)?;
+                let meta = mapped_block.get_meta().clone();
                 let kind = StatementKind::Block { block: mapped_block };
-                Ok(Statement::new(kind,  TypeMeta { t: Type::Void }))
+                Ok(Statement::new(kind, meta))
             },
             StatementKind::Empty => {
                 Ok(Statement::new(StatementKind::Empty, TypeMeta{ t: Type::Void }))
