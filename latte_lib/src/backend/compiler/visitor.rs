@@ -444,6 +444,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 self.visit_statement(&cond_with_empty_false)
             },
             StatementKind::CondElse { expr, stmt_true, stmt_false } => {
+                // TODO: This part really needs refactoring, but implemtn PHI & SSA first
                 let mut llvm = Vec::new();
 
                 // first, add instructions from the expr
@@ -479,7 +480,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 llvm.push(cond.without_result());
 
                 // prepare jump-to-end instruction that can be used at the end of a branch
-                let mut add_jump_to_end = true;
+                let mut end_jump_used = true_label == end_label || false_label == end_label;
                 let jump_to_end = InstructionKind::Jump {
                     label: end_label.clone()
                 };
@@ -488,6 +489,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 if !empty_result(&true_llvm) {
                     llvm.push(LLVM::Label { name: true_label });
 
+                    let mut add_jump_to_end = true;
                     if let CompilationResult::LLVM { llvm: mut stmt_llvm } = true_llvm {
                         if last_instruction_returns(&stmt_llvm) {
                             add_jump_to_end = false;
@@ -499,6 +501,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                     }
                     if add_jump_to_end {
                         llvm.push(jump_to_end.clone().without_result());
+                        end_jump_used = true;
                     }
                 }
 
@@ -506,19 +509,24 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 if !empty_result(&false_llvm) {
                     llvm.push(LLVM::Label { name: false_label });
 
+                    let mut add_jump_to_end = true;
                     if let CompilationResult::LLVM { llvm: mut stmt_llvm } = false_llvm {
+                        if last_instruction_returns(&stmt_llvm) {
+                            add_jump_to_end = false;
+                        }
+
                         llvm.append(&mut stmt_llvm);
                     } else {
                         unreachable!();
                     }
                     if add_jump_to_end {
-                        // either both or none of the branches return => no need to re-check the last value
                         llvm.push(jump_to_end.clone().without_result());
+                        end_jump_used = true;
                     }
                 }
 
                 // add end label only if branches need it
-                if add_jump_to_end {
+                if end_jump_used {
                     llvm.push(LLVM::Label { name: end_label });
                 }
                 CompilationResult::LLVM { llvm }

@@ -58,7 +58,6 @@ pub enum ExpressionKind<MetaT> {
         right: Box<Expression<MetaT>>
     },
     InitDefault { t: Type },
-    // InitFields { }  // TODO (not necessary, but nice)
     InitArr { t: Type, size: Box<Expression<MetaT>> },
     Reference { r: Reference<MetaT> },
     // edge case: expr in Cast is always null so we don't need to locate it:
@@ -205,8 +204,6 @@ impl<MetaT> Keyed for FunctionItem<MetaT> {
 pub struct ClassVarItem {
     pub t: Type,
     pub ident: String,
-// TODO: Not required but may be nice to add:
-//    pub default: Option<Box<Expression<MetaT>>>,
 }
 pub type ClassVar<MetaT> = AstItem<ClassVarItem, MetaT>;
 

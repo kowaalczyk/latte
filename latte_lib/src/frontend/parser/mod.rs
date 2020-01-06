@@ -54,37 +54,4 @@ mod tests {
             }
         }
     }
-
-    // TODO: Needs to be re-implemented to account for locations
-    // #[test]
-    // fn simple_main_parses() -> Result<(), Vec<FrontendError<usize>>> {
-    //     let code = r#"
-    //     int main() {
-    //         return 0;
-    //     }
-    //     "#;
-    //     let code_str = String::from(code);
-    //     let main_block = ast::Block {
-    //         stmts: vec![
-    //             Box::new(ast::Statement::Return { 
-    //                 expr: Some(Box::new(ast::Expression::LitInt { val: 0 }))
-    //             })
-    //         ]
-    //     };
-    //     let main_fn = ast::TopDef::Function { func: ast::Function {
-    //         ret: ast::Type::Int,
-    //         ident: String::from("main"),
-    //         args: Env::new(),
-    //         block: main_block,
-    //     }};
-    //     let fenv = Env::new();
-    //     fenv.insert_unique(main_fn, )?;
-    //     let expected_ast = ast::Program {
-    //         classes: Env::new(),
-    //         functions: fenv
-    //     };
-    //     let actual_ast = parse_program(code_str.trim())?;
-    //     assert_eq!(expected_ast, actual_ast);
-    //     Ok(())
-    // }
 }

@@ -142,7 +142,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
             }
         }
         if errors.is_empty() {
-            // return type is determined by last statement TODO: implement return checker
+            // return type is always determined by last statement thanks to the BlockOrganizer
             let return_t = match mapped_stmts.last() {
                 Some(stmt) => stmt.get_meta().clone(),
                 None => TypeMeta { t: Type::Void },
@@ -412,7 +412,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
             },
             StatementKind::Ass { r, expr } => {
                 let expr_loc = expr.get_location();
-                // TODO: Collect errors from both expression and the reference
+                // TODO: Collect errors from both expression and the reference before failing
                 let mapped_expr = self.map_expression(&expr)?;
                 let mapped_ref = self.map_var_reference(&r)?;
 
@@ -494,7 +494,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 let mapped_expr = self.map_expression(&expr)?;
                 match &mapped_expr.get_meta().t {
                     Type::Bool => {
-                        // TODO: Collect errors from both statements
+                        // TODO: Collect errors from both statements before failing
                         let mapped_true = self.map_statement(&stmt_true)?;
                         let mapped_false = self.map_statement(&stmt_false)?;
 
@@ -589,7 +589,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 Ok(Statement::new(kind, TypeMeta { t: Type::Void }))
             },
             StatementKind::Error => {
-                unreachable!() // TODO: make sure it really is
+                unreachable!()
             },
         }
     }

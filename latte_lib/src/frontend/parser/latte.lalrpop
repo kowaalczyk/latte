@@ -136,10 +136,6 @@ ClassVarItem: ast::ClassVarItem = {
     <t:Type> <ident:Ident> ";" => {
         ast::ClassVarItem { t, ident }
     },
-    // TODO: Not necessary, but may be nice:
-    // <t:Type> <ident:Ident> "=" <default:Expr0> ";" => {
-    //     ast::ClassVarItem { t, ident, default: Option::Some(default) }
-    // },
 };
 
 Method: Result<ast::Function<LocationMeta>, Vec<FrontendError<LocationMeta>>> = {
@@ -325,7 +321,7 @@ Expr6Kind: ast::ExpressionKind<LocationMeta> = {
     "true" => ast::ExpressionKind::LitBool { val: true },
     "false" => ast::ExpressionKind::LitBool { val: false },
     "null" => ast::ExpressionKind::LitNull,
-    // TODO: Unescape characters from the string (!!!)
+    // TODO: Unescape characters from the string, use wider regex so that quote can also be included (!!!)
     r#""[^"]*""# => ast::ExpressionKind::LitStr { val: String::from(<>) },
     // nested expression conflicts with type cast, so we only implement the possibility of casting null
     "(" <t:Type> <expr:NullCast> => ast::ExpressionKind::Cast { t, expr },
