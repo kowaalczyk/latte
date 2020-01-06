@@ -12,6 +12,7 @@ cp target/debug/latc_llvm ./
 
 for test_in in tests/good/*.lat; do
   logfile="${test_in%.lat}.log"
+  infile="${test_in%.lat}.input"
   compiled="${test_in%.lat}.bc"
   realout="${test_in%.lat}.realout"
   expout="${test_in%.lat}.output"
@@ -31,9 +32,12 @@ for test_in in tests/good/*.lat; do
   echo " --- EXECUTION STDERR --- " >> "$logfile"
 
   # execute compiled program
-  # TODO: Pipe input file if exists (!!!)
   set +e
-  out=$(lli "$compiled" > "$realout" 2>> "$logfile")
+  if [[ -e "$infile" ]]; then
+    out=$(lli "$compiled" < "$infile" > "$realout" 2>> "$logfile")
+  else
+    out=$(lli "$compiled" > "$realout" 2>> "$logfile")
+  fi
   retval=$?
   set -e
 

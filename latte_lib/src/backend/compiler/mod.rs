@@ -3,6 +3,7 @@ mod compiler;
 mod visitor;
 mod display;
 
+
 use std::string::ToString;
 
 use itertools::Itertools;
@@ -14,22 +15,20 @@ use crate::backend::compiler::compiler::Compiler;
 use crate::backend::compiler::visitor::CompilationResult;
 use crate::backend::compiler::ir::LLVM;
 
-const BUILTINS: &str = r"
-
-declare i8* @__builtin_method__str__init__(i32)
-declare i8* @__builtin_method__str_const__(i8*)
-declare i8* @__builtin_method__str__concat__(i8*, i8*)
-
-declare void @__func__printInt(i32)
-declare void @__func__printString(i8*)
-declare void @__func__error()
-declare i32 @__func__readInt()
-declare i8* @__func__readString()
-
-";
 
 pub fn compile(program: &Program<TypeMeta>) -> String {
-    let mut compiler = Compiler::new();
+    let builtins = vec![
+        LLVM::FuncDecl { decl: String::from("declare i8* @__builtin_method__str__init__(i32)") },
+        LLVM::FuncDecl { decl: String::from("declare i8* @__builtin_method__str_const__(i8*)") },
+        LLVM::FuncDecl { decl: String::from("declare i8* @__builtin_method__str__concat__(i8*, i8*)") },
+        LLVM::FuncDecl { decl: String::from("declare void @__func__printInt(i32)") },
+        LLVM::FuncDecl { decl: String::from("declare void @__func__printString(i8*)") },
+        LLVM::FuncDecl { decl: String::from("declare void @__func__error()") },
+        LLVM::FuncDecl { decl: String::from("declare i32 @__func__readInt()") },
+        LLVM::FuncDecl { decl: String::from("declare i8* @__func__readString()") },
+    ];
+    let mut compiler = Compiler::with_declarations(builtins);
+
     let compiled_program = program.functions.values()
         .map(|func| {
             compiler.visit_function(func)
@@ -38,5 +37,8 @@ pub fn compile(program: &Program<TypeMeta>) -> String {
         .flatten()
         .map(|i| i.to_string())
         .join("\n");
-    String::from(BUILTINS) + &compiled_program + "\n"
+    let compiled_declarations = compiler.get_declarations().iter()
+        .map(|i| i.to_string())
+        .join("\n");
+    compiled_declarations + "\n" + &compiled_program + "\n"
 }

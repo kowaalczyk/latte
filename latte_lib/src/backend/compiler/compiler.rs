@@ -1,5 +1,5 @@
 use crate::util::env::Env;
-use crate::backend::compiler::ir::{Entity, Function, Struct};
+use crate::backend::compiler::ir::{Entity, LLVM};
 
 
 #[derive(Clone)]
@@ -10,14 +10,14 @@ pub struct Compiler {
     /// unique identifier for a next set of labels (if or loop branches)
     available_label: usize,
 
+    /// next free name for const string literal
+    available_const: usize,
+
     /// local variable environment
     local_env: Env<Entity>,
 
-    /// compiled representation of structs and class properties
-    structs: Env<Struct>,
-
-    /// compiled representation of of functions and class methods
-    functions: Env<Function>,
+    /// declarations of functions, global constants, etc
+    declarations: Vec<LLVM>,
 }
 
 impl Compiler {
@@ -25,10 +25,17 @@ impl Compiler {
         Self {
             available_reg: 1,
             available_label: 1,
+            available_const: 1,
             local_env: Env::new(),
-            structs: Env::new(),
-            functions: Env::new()
+            declarations: Vec::new(),
         }
+    }
+
+    /// construct a compiler with a pre-defined vector of declarations
+    pub fn with_declarations(declarations: Vec<LLVM>) -> Self {
+        let mut compiler = Self::new();
+        compiler.declarations = declarations;
+        compiler
     }
 
     /// creates a compiler with higher inital available_reg
@@ -48,6 +55,28 @@ impl Compiler {
     /// matches available register from the other compiler
     pub fn match_available_reg(&mut self, other: &Self) {
         self.available_reg = other.available_reg;
+    }
+
+    /// get new name for a const string literal
+    pub fn new_const(&mut self) -> String {
+        let ord = self.available_const;
+        self.available_const += 1;
+        format!(".str.{}", ord)  // same convention as clang uses for C strings
+    }
+
+    /// add new declaration to the list
+    pub fn add_decl(&mut self, decl: LLVM) {
+        self.declarations.push(decl);
+    }
+
+    /// combine constants with ones from the other compiler
+    pub fn combine_declarations(&mut self, other: &mut Self) {
+        self.declarations.append(&mut other.declarations);
+    }
+
+    /// get all declarations
+    pub fn get_declarations(self) -> Vec<LLVM> {
+        self.declarations
     }
 
     /// get new unique suffix for a label

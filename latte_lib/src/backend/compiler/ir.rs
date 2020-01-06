@@ -47,7 +47,7 @@ pub enum InstructionKind {
     Alloc { t: Type },
     Load { ptr: Entity },
     Store { val: Entity, ptr: Entity },
-    LoadConst { name: String },
+    LoadConst { name: String, len: usize },
     UnaryOp { op: UnaryOperator, arg: Entity },
     BinaryOp { op: BinaryOperator, l: Entity, r: Entity },
     Call { func: String, args: Vec<Entity> },
@@ -100,8 +100,9 @@ impl GetType for Instruction {
 #[derive(Debug, Clone)]
 pub enum LLVM {
     Instruction { instruction: Instruction },
-//    Entity { entity: Entity },
     Label { name: String },
+    ConstStrDecl { name: String, val: String, len: usize },
+    FuncDecl { decl: String },
     Function { name: String, ret_type: Type, arg_types: Vec<Type>, llvm: Vec<Box<LLVM>> },
 }
 
@@ -134,33 +135,33 @@ impl From<Instruction> for LLVM {
         LLVM::Instruction { instruction }
     }
 }
-
-
-// TODO: Add lifetime specifiers to IR structures to make compilation more memory-efficient
-#[derive(Debug, Clone)]
-pub struct Struct {
-    /// to know which function to call, we have to remember the mapping method_name -> vtable entry
-    /// each subclass preserves order of superclass methods in vtable
-    /// when an existing method is overwritten in subclass, we use the vtable hashmap to update appropriate value
-    pub vtable: Env<usize>,
-
-    /// type casts will be necessary, to know how to cast during assignment to a class variable
-    pub vars: Env<Type>,
-}
-
-// object initialization:
-// 1. copy entire vtable (only contains array of pointers, should be quite lightweight)
-// 2. allocate memory for all member variables
-// 3. assign default values to all member variables
-// TODO: Add reference counting to the objects, check reference counts after block exits
-
-// method call:
-// 1. get vtable entry by name
-// 2. cast arguments to void pointer type - TODO: is this really necessary? possibly not
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Function {
-    /// when arguments are passed during function call, structs will have to be cast to
-    /// appropriate objects (ie, subclass to superclass)
-    pub vars: Env<Type>,
-}
+//
+//
+//// TODO: Add lifetime specifiers to IR structures to make compilation more memory-efficient
+//#[derive(Debug, Clone)]
+//pub struct Struct {
+//    /// to know which function to call, we have to remember the mapping method_name -> vtable entry
+//    /// each subclass preserves order of superclass methods in vtable
+//    /// when an existing method is overwritten in subclass, we use the vtable hashmap to update appropriate value
+//    pub vtable: Env<usize>,
+//
+//    /// type casts will be necessary, to know how to cast during assignment to a class variable
+//    pub vars: Env<Type>,
+//}
+//
+//// object initialization:
+//// 1. copy entire vtable (only contains array of pointers, should be quite lightweight)
+//// 2. allocate memory for all member variables
+//// 3. assign default values to all member variables
+//// TODO: Add reference counting to the objects, check reference counts after block exits
+//
+//// method call:
+//// 1. get vtable entry by name
+//// 2. cast arguments to void pointer type - TODO: is this really necessary? possibly not
+//
+//#[derive(Debug, Clone, PartialEq)]
+//pub struct Function {
+//    /// when arguments are passed during function call, structs will have to be cast to
+//    /// appropriate objects (ie, subclass to superclass)
+//    pub vars: Env<Type>,
+//}

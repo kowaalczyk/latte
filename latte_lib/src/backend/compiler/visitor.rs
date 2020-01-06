@@ -44,7 +44,28 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 CompilationResult::Entity { entity: Entity::from(*val) }
             },
             ExpressionKind::LitStr { val } => {
-                unimplemented!()
+                // register new global constant value
+                // TODO: Optimization: re-use constant if already defined
+                let const_name = self.new_const();
+                let const_str = LLVM::ConstStrDecl {
+                    name: const_name.clone(),
+                    val: val.clone(),
+                    len: val.len() - 1 // -2 for brackets, +1 for null terminator
+                };
+                self.add_decl(const_str);
+
+                // load the defined constant
+                let instr = InstructionKind::LoadConst {
+                    name: const_name,
+                    len: val.len() - 1 // -2 for brackets, +1 for null terminator
+                };
+                let result_reg = Entity::Register {
+                    n: self.new_reg(),
+                    t: expr.get_type()
+                };
+                CompilationResult::LLVM {
+                    llvm: vec![instr.with_result(result_reg)]
+                }
             },
             ExpressionKind::LitNull => {
                 CompilationResult::Entity { entity: Entity::Null }
@@ -126,8 +147,8 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
             ExpressionKind::Binary { left, op, right } => {
                 // compile arguments
                 let mut instructions = Vec::new();
-                let left_ent = combine_instructions(self.visit_expression(left), &mut instructions);
-                let right_ent = combine_instructions(self.visit_expression(right), &mut instructions);
+                let left_ent = combine_instructions(self.visit_expression(&left), &mut instructions);
+                let right_ent = combine_instructions(self.visit_expression(&right), &mut instructions);
 
                 // for strings, use concatenation function instead of llvm operator
                 let instr = if left.get_type() == Type::Str && *op == BinaryOperator::Plus {
@@ -227,6 +248,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                     }
                 }
                 self.match_available_reg(&compiler);
+                self.combine_declarations(&mut compiler);
 
                 CompilationResult::LLVM { llvm: instructions }
             },
@@ -242,6 +264,20 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                             let entity = match t {
                                 Type::Int => Entity::Int { v: 0 },
                                 Type::Bool => Entity::Bool { v: false },
+                                Type::Str => {
+                                    let default_init = InstructionKind::Call {
+                                        func: String::from("__builtin_method__str__init__"),
+                                        args: vec![]
+                                    };
+                                    let call_ret_ent = Entity::Register {
+                                        n: self.new_reg(),
+                                        t: Type::Str
+                                    };
+                                    instructions.push(
+                                        default_init.with_result(call_ret_ent.clone())
+                                    );
+                                    call_ret_ent
+                                }
                                 _ => unimplemented!(),
                             };
                             (entity, ident)
@@ -404,7 +440,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
 
                 // true branch
                 llvm.push(LLVM::Label { name: true_label });
-                if let CompilationResult::LLVM { llvm: mut stmt_llvm } = self.visit_statement(&stmt) {
+                if let CompilationResult::LLVM { llvm: mut stmt_llvm } = self.visit_statement(&stmt_true) {
                     llvm.append(&mut stmt_llvm);
                 }
                 let jump_to_end = InstructionKind::Jump {
@@ -414,7 +450,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
 
                 // false branch
                 llvm.push(LLVM::Label { name: false_label });
-                if let CompilationResult::LLVM { llvm: mut stmt_llvm } = self.visit_statement(&stmt) {
+                if let CompilationResult::LLVM { llvm: mut stmt_llvm } = self.visit_statement(&stmt_false) {
                     llvm.append(&mut stmt_llvm);
                 }
                 llvm.push(jump_to_end.without_result());
@@ -539,6 +575,9 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 instructions.append(&mut llvm);
             }
         }
+
+        // no need to align registers, but we have to combine declarations
+        self.combine_declarations(&mut compiler);
 
         // build the LLVM function
         let func = LLVM::Function {
