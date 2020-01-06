@@ -1,5 +1,6 @@
 use crate::util::env::Env;
 use crate::backend::compiler::ir::{Entity, LLVM};
+use std::cmp::max;
 
 
 #[derive(Clone)]
@@ -38,10 +39,18 @@ impl Compiler {
         compiler
     }
 
-    /// creates a compiler with higher inital available_reg
-    pub fn with_starting_reg(reg: usize) -> Self {
-        let mut compiler = Self::new();
-        compiler.available_reg = reg;
+    /// construct a nested compiler for function compilation
+    pub fn nested_for_function(&self, starting_reg: usize) -> Self {
+        let mut compiler = self.clone();
+        compiler.declarations.clear();
+        compiler.available_reg = starting_reg;
+        compiler
+    }
+
+    /// construct a nested compiler for a block (without re-setting register numbers)
+    pub fn nested_for_block(&self) -> Self {
+        let mut compiler = self.clone();
+        compiler.declarations.clear();
         compiler
     }
 
@@ -71,6 +80,7 @@ impl Compiler {
 
     /// combine constants with ones from the other compiler
     pub fn combine_declarations(&mut self, other: &mut Self) {
+        self.available_const = max(self.available_const, other.available_const);
         self.declarations.append(&mut other.declarations);
     }
 

@@ -238,10 +238,10 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
     fn visit_statement(&mut self, stmt: &Statement<TypeMeta>) -> CompilationResult {
         match &stmt.item {
             StatementKind::Block { block } => {
-                let mut compiler = self.clone();
                 let mut instructions = Vec::new();
 
                 // use nested compiler to visit all statements in block, combine llvm results
+                let mut compiler = self.nested_for_block();
                 for stmt in block.item.stmts.iter() {
                     if let CompilationResult::LLVM { mut llvm } = compiler.visit_statement(&stmt) {
                         instructions.append(&mut llvm);
@@ -387,6 +387,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 match expr {
                     None => {
                         let ret = InstructionKind::RetVoid;
+                        self.new_reg();  // for unnamed basic block
                         CompilationResult::LLVM { llvm: vec![ret.without_result()] }
                     },
                     Some(e) => {
@@ -400,6 +401,9 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                         // return the value from register containing expression result
                         let ret = InstructionKind::RetVal { val: result_ent };
                         instructions.push(ret.without_result());
+
+                        self.new_reg();  // for unnamed basic block
+
                         CompilationResult::LLVM { llvm: instructions }
                     },
                 }
@@ -460,54 +464,45 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 CompilationResult::LLVM { llvm }
             },
             StatementKind::While { expr, stmt } => {
-                unimplemented!()  // TODO: Duplicated registers during assignment problem
-//                let mut instructions = Vec::new();
-//
-//                let suffix = self.get_label_suffix();
-//                let cond_label = format!("__loop_cond__{}", suffix);
-//                let loop_label = format!("__loop_begin__{}", suffix);
-//                let end_label = format!("__loop_end__{}", suffix);
-//
-//                // mark beginning of condition evaluation sequence with cond label
-//                let cond_label_kind = InstructionKind::Label { val: cond_label.clone() };
-//                instructions.push(Instruction::from(cond_label_kind));
-//
-//                // compile conditional expression
-//                let mut expr_result = self.visit_expression(&expr);
-//                instructions.append(&mut expr_result.instructions);
-//
-//                if let Some(expr_ent) = expr_result.result {
-//                    // perform a jump based on result of conditional expression
-//                    let cond_kind = InstructionKind::JumpCond {
-//                        cond: expr_ent,
-//                        true_label: loop_label.clone(),
-//                        false_label: end_label.clone()
-//                    };
-//                    instructions.push(Instruction::from(cond_kind));
-//
-//                    // start loop
-//                    let loop_kind = InstructionKind::Label { val: loop_label.clone() };
-//                    instructions.push(Instruction::from(loop_kind));
-//
-//                    // compile the statement
-//                    let mut compiled_stmt = self.visit_statement(&stmt);
-//                    instructions.append(&mut compiled_stmt.instructions);
-//
-//                    // end loop with a jump to conditional statement
-//                    let jump_kind = InstructionKind::Jump { label: cond_label };
-//                    instructions.push(Instruction::from(jump_kind));
-//
-//                    // mark end of loop statements with end label
-//                    let end_kind = InstructionKind::Label { val: end_label };
-//                    instructions.push(Instruction::from(end_kind));
-//
-//                    CompilationResult {
-//                        instructions,
-//                        result: None
-//                    }
-//                } else {
-//                    panic!("Expression {:?} didn't return a compilation result", expr)
-//                }
+                let mut llvm = Vec::new();
+
+                // get labels with unique suffix
+                let suffix = self.get_label_suffix();
+                let cond_label = format!("__loop_cond__{}", suffix);
+                let loop_label = format!("__loop_begin__{}", suffix);
+                let end_label = format!("__loop_end__{}", suffix);
+
+                // mark beginning of condition evaluation sequence with cond label
+                let begin_jump = InstructionKind::Jump {
+                    label: cond_label.clone()
+                };
+                llvm.push(begin_jump.without_result());
+                llvm.push(LLVM::Label { name: cond_label.clone() });
+                let expr_result = combine_instructions(
+                    self.visit_expression(&expr),
+                    &mut llvm
+                );
+                let cond_jump = InstructionKind::JumpCond {
+                    cond: expr_result,
+                    true_label: loop_label.clone(),
+                    false_label: end_label.clone()
+                };
+                llvm.push(cond_jump.without_result());
+
+                // add loop body with labels and jump back to conditional instruction
+                llvm.push(LLVM::Label { name: loop_label });
+                if let CompilationResult::LLVM { llvm: mut stmt_llvm } = self.visit_statement(&stmt) {
+                    llvm.append(&mut stmt_llvm)
+                }
+                let end_jump = InstructionKind::Jump {
+                    label: cond_label
+                };
+                llvm.push(end_jump.without_result());
+
+                // mark loop end
+                llvm.push(LLVM::Label { name: end_label });
+
+                CompilationResult::LLVM { llvm }
             },
             StatementKind::For { t, ident, arr, stmt } => {
                 unimplemented!();
@@ -535,7 +530,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
 
         // add args to the env of nested compiler
         let n_args = function.item.args.len();
-        let mut compiler = Compiler::with_starting_reg(n_args + 1);
+        let mut compiler = self.nested_for_function(n_args+1);
         for (arg_reg, arg) in function.item.args.iter().enumerate() {
             // collect variable types in case the caller needs to cast the passed arguments later
             // TODO: This is not necessary at the moment, re-visit before implementing method calls

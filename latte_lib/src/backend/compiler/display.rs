@@ -31,7 +31,7 @@ impl Display for BinaryOperator {
             BinaryOperator::Plus => write!(f, "add"),
             BinaryOperator::Minus => write!(f, "sub"),
             BinaryOperator::Times => write!(f, "mul"),
-            BinaryOperator::Divide => write!(f, "div"),
+            BinaryOperator::Divide => write!(f, "sdiv"),
             BinaryOperator::Modulo => write!(f, "srem"), // TODO: Make sure it's ok
             BinaryOperator::Less => write!(f, "icmp slt"),
             BinaryOperator::LessEqual => write!(f, "icmp sle"),
@@ -51,7 +51,7 @@ impl Display for Entity {
             Entity::Null => write!(f, "null"),
             Entity::Register { n, t } => write!(f, "%{}", n),
             Entity::Int { v } => write!(f, "{}", v),
-            Entity::Bool { v } => write!(f, "{}", *v as u8),
+            Entity::Bool { v } => write!(f, "{}", v),
         }
     }
 }
