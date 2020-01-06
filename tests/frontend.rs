@@ -14,11 +14,6 @@ fn parse_good_dir(dir: Dir, failed_cases: &mut Vec<String>) {
             let source_code = dir
                 .get_file(file_name).unwrap()
                 .contents_utf8().unwrap();
-            // TODO: This will only be necessary for the backend:
-//            let result_file = file.path().with_extension("output");
-//            let expected_result = good_dir
-//                .get_file(result_file.to_str().unwrap()).unwrap()
-//                .contents_utf8().unwrap();
             let file_name = String::from(file_name);
             let source_code = String::from(source_code);
             match process_code(&file_name, &source_code) {

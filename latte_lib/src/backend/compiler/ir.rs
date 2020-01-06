@@ -5,139 +5,136 @@
 /// object: pointer to struct, passed by value
 
 use crate::frontend::ast::{Type, UnaryOperator, BinaryOperator};
-use crate::meta::Meta;
+use crate::meta::{Meta, GetType};
 use crate::util::env::Env;
+use std::fmt::{Display, Formatter, Error};
+use regex::internal::Inst;
 
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum Entity {
-    /// special pointer to null value
     Null,
-
-    /// registers store intermediate computation results
+    Int { v: i32 },
+    Bool { v: bool },
     Register { n: usize, t: Type },
-
-    /// some register (ie. function arguments) are named instead of numbered
-    NamedRegister { n: String, t: Type },
-
-    /// constant (literal) values are preserved whenever types are compatible with LLVM
-    /// and represented as constant pointers when they are not (ie. for objects)
-    Const { val: BasicValue },
 }
 
-impl Entity {
-    pub fn get_type(&self) -> Type {
+impl GetType for Entity {
+    fn get_type(&self) -> Type {
         match self {
-            Entity::Null => panic!("null does not have a type"),
-            Entity::Register { n, t } => t.clone(),
-            Entity::NamedRegister { n, t } => t.clone(),
-            Entity::Const { val } => {
-                match val {
-                    BasicValue::Bool { .. } => Type::Bool,
-                    BasicValue::Int { .. } => Type::Int,
-                }
-            },
+            Entity::Null => Type::Null,
+            Entity::Int { .. } => Type::Int,
+            Entity::Bool { .. } => Type::Bool,
+            Entity::Register { n: _, t } => t.clone(),
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Copy)]
-pub enum BasicValue {
-    Bool { v: bool },
-    Int { v: i32 },
+impl From<i32> for Entity {
+    fn from(i: i32) -> Self {
+        Entity::Int { v: i }
+    }
+}
+
+impl From<bool> for Entity {
+    fn from(b: bool) -> Self {
+        Entity::Bool { v: b }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub enum InstructionKind {
-    /// allocate constant string value on heap memory
-    StrAlloc {
-        /// constant value which will be stored in memory
-        val: String,
-    },
-
-    /// %result_reg = op op_type arg_ent
-    ApplyUnaryOp {
-        op: UnaryOperator,
-        arg_ent: Entity,
-    },
-
-    /// %result_reg = op op_type left_ent, right_ent
-    ApplyBinaryOp {
-        op: BinaryOperator,
-        left_ent: Entity,
-        right_ent: Entity,  // TODO: Remember about lazy evaluation
-    },
-
-//    /// load value from memory to register
-//    Load {
-//        ptr: Entity,
-//    },
-
-//    /// store value to memory / variable
-//    Store {
-//        ptr: Entity,
-//        val: Entity,
-//    },
-
-    /// call a function or method
-    Call {
-        func_name: String,
-        ret: Type,
-        args: Vec<Entity>,
-    },
-
-    /// return an entity
-    ReturnEnt {
-        val: Entity,
-    },
-
-    /// return void
-    ReturnVoid,
-
-    /// conditional jump to true / false label
-    JumpCond {
-        cond: Entity,
-        true_label: String,
-        false_label: String,
-    },
-
-    /// unconditional jump to label
-    Jump {
-        label: String,
-    },
-
-    /// label definition
-    Label {
-        val: String,
-    },
-
-    /// function definition
-    FuncDef {
-        ret: Type,
-        name: String,
-        args: Vec<Entity>,
-        instructions: Vec<Box<Instruction>>,
-    },
+    Alloc { t: Type },
+    Load { ptr: Entity },
+    Store { val: Entity, ptr: Entity },
+    LoadConst { name: String },
+    UnaryOp { op: UnaryOperator, arg: Entity },
+    BinaryOp { op: BinaryOperator, l: Entity, r: Entity },
+    Call { func: String, args: Vec<Entity> },
+    RetVal { val: Entity },
+    RetVoid,
+    JumpCond { cond: Entity, true_label: String, false_label: String },
+    Jump { label: String },
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct InstructionMeta {
-    /// registry where result is stored
-    pub reg: usize,
+impl InstructionKind {
+    pub fn without_result(self) -> LLVM {
+        LLVM::from(Instruction::from(self))
+    }
 
-    /// type of result
-    pub t: Type,
+    pub fn with_result(self, result: Entity) -> LLVM {
+        LLVM::from(Instruction::new(self, Some(result)))
+    }
 }
-pub type Instruction = Meta<InstructionKind, Option<InstructionMeta>>;
+pub type Instruction = Meta<InstructionKind, Option<Entity>>;
 
-impl From<InstructionMeta> for Entity {
-    fn from(meta: InstructionMeta) -> Self {
-        Entity::Register {
-            n: meta.reg,
-            t: meta.t
+pub trait GetEntity {
+    fn get_entity(&self) -> Entity;
+    fn has_result_entity(&self) -> bool;
+}
+
+impl GetEntity for Instruction {
+    fn get_entity(&self) -> Entity {
+        if let Some(entity) = self.get_meta() {
+            entity.clone()
+        } else {
+            panic!("missing result entity information for {:?}", self)
+        }
+    }
+
+    fn has_result_entity(&self) -> bool {
+        if let Option::Some(_) = self.get_meta() {
+            true
+        } else {
+            false
         }
     }
 }
+
+impl GetType for Instruction {
+    fn get_type(&self) -> Type {
+        self.get_entity().get_type()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum LLVM {
+    Instruction { instruction: Instruction },
+//    Entity { entity: Entity },
+    Label { name: String },
+    Function { name: String, ret_type: Type, arg_types: Vec<Type>, llvm: Vec<Box<LLVM>> },
+}
+
+impl GetEntity for LLVM {
+    fn get_entity(&self) -> Entity {
+        if let LLVM::Instruction { instruction } = self {
+            instruction.get_entity()
+        } else {
+            panic!("no entity value for LLVM structure: {:?}", self)
+        }
+    }
+
+    fn has_result_entity(&self) -> bool {
+        if let LLVM::Instruction { instruction } = self {
+            instruction.has_result_entity()
+        } else {
+            false
+        }
+    }
+}
+
+impl GetType for LLVM {
+    fn get_type(&self) -> Type {
+        self.get_entity().get_type()
+    }
+}
+
+impl From<Instruction> for LLVM {
+    fn from(instruction: Instruction) -> Self {
+        LLVM::Instruction { instruction }
+    }
+}
+
 
 // TODO: Add lifetime specifiers to IR structures to make compilation more memory-efficient
 #[derive(Debug, Clone)]

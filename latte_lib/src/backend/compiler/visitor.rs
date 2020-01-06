@@ -1,52 +1,58 @@
 use regex::internal::Inst;
 
-use crate::util::visitor::AstVisitor;
 use crate::meta::{TypeMeta, GetType, Meta};
-use crate::frontend::ast::*;
+use crate::util::visitor::AstVisitor;
 use crate::backend::compiler::compiler::Compiler;
-use crate::backend::compiler::ir::{Instruction, Entity, BasicValue, InstructionKind, InstructionMeta};
+use crate::backend::compiler::ir::{Instruction, InstructionKind, Entity, GetEntity, LLVM};
+use crate::frontend::ast::*;
 
 
-pub struct CompilationResult {
-    /// a list of instructions that can be directly compiled to LLVM (without additional context)
-    pub instructions: Vec<Instruction>,
+pub enum CompilationResult {
+    Entity { entity: Entity },
+    LLVM { llvm: Vec<LLVM> },
+}
 
-    /// result of the compiled code (ie. where the function return value will be stored)
-    pub result: Option<Entity>,
+impl CompilationResult {
+    pub fn llvm(self) -> Option<Vec<LLVM>> {
+        if let CompilationResult::LLVM {llvm} = self {
+            Option::Some(llvm)
+        } else {
+            Option::None
+        }
+    }
+}
+
+fn combine_instructions(r: CompilationResult, instructions: &mut Vec<LLVM>) -> Entity {
+    match r {
+        CompilationResult::Entity { entity } => entity,
+        CompilationResult::LLVM { mut llvm } => {
+            // append all instructions before getting the last entity (argument value)
+            let last_ent = llvm.last().unwrap().get_entity();
+            instructions.append(&mut llvm);
+            last_ent
+        },
+    }
 }
 
 impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
     fn visit_expression(&mut self, expr: &Expression<TypeMeta>) -> CompilationResult {
         match &expr.item {
             ExpressionKind::LitInt { val } => {
-                let val = BasicValue::Int { v: *val };
-                CompilationResult { instructions: vec![], result: Some(Entity::Const { val }) }
+                CompilationResult::Entity { entity: Entity::from(*val) }
             },
             ExpressionKind::LitBool { val } => {
-                let val = BasicValue::Bool { v: *val };
-                CompilationResult { instructions: vec![], result: Some(Entity::Const { val }) }
+                CompilationResult::Entity { entity: Entity::from(*val) }
             },
             ExpressionKind::LitStr { val } => {
-                let result_reg = self.new_reg();
-                let kind = InstructionKind::StrAlloc {
-                    val: val.clone()
-                };
-                let meta = InstructionMeta {
-                    reg: result_reg,
-                    t: Type::Str
-                };
-                let instr = Instruction::new(kind, Some(meta.clone()));
-                CompilationResult {
-                    instructions: vec![instr],
-                    result: Some(Entity::from(meta))
-                }
+                unimplemented!()
             },
             ExpressionKind::LitNull => {
-                CompilationResult { instructions: vec![], result: Some(Entity::Null) }
+                CompilationResult::Entity { entity: Entity::Null }
             },
             ExpressionKind::App { r, args } => {
+                // get name of the function / method, mapped by compiler
                 let func_name = match &r.item {
-                    ReferenceKind::Ident { ident } => ident,
+                    ReferenceKind::Ident { ident } => self.get_function(ident),
                     ReferenceKind::Object { obj, field } => {
                         unimplemented!();  // TODO: virtual method call
                     },
@@ -58,140 +64,125 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                     }
                 };
 
+                // compile argument expressions
                 let mut compiled_args: Vec<CompilationResult> = args.iter()
                     .map(|a| self.visit_expression(&a))
                     .collect();
 
+                // collect argument entities and llvm instructions necessary to compute them
                 let mut arg_ents = Vec::new();
-                let mut arg_instructions = Vec::new();
+                let mut instructions = Vec::new();
                 for mut compiled_arg in compiled_args.drain(..) {
-                    arg_ents.push(compiled_arg.result.unwrap());
-                    arg_instructions.append(&mut compiled_arg.instructions)
+                    let arg_ent = combine_instructions(compiled_arg, &mut instructions);
+                    arg_ents.push(arg_ent);
                 }
 
-                let kind = InstructionKind::Call {
-                    func_name: self.get_function(func_name),
-                    ret: expr.get_type(),
+                // compile actual call instruction
+                let instr = InstructionKind::Call {
+                    func: func_name,
                     args: arg_ents
                 };
-                let result_reg = self.new_reg();
-                let meta = InstructionMeta {
-                    reg: result_reg,
-                    t: expr.get_type()
-                };
-                let instr = Instruction::new(kind, Some(meta.clone()));
-                CompilationResult {
-                    instructions: vec![instr],
-                    result: Some(Entity::from(meta))
+                // function return type determines whether we store or forget the return value
+                if let Type::Function { args: _, ret } = r.get_type() {
+                    let compiled_call = match *ret {
+                        Type::Void => {
+                            instr.without_result()
+                        },
+                        t => {
+                            let result_ent = Entity::Register {
+                                n: self.new_reg(),
+                                t
+                            };
+                            instr.with_result(result_ent)
+                        }
+                    };
+
+                    // combine with argument instructions and return the result
+                    instructions.push(compiled_call);
+                    CompilationResult::LLVM {
+                        llvm: instructions
+                    }
+                } else {
+                    panic!("invalid function type in compiler: {:?}", expr)
                 }
             },
             ExpressionKind::Unary { op, arg } => {
-                let CompilationResult { mut instructions, result } = self.visit_expression(&arg);
-                if let Some(result_entity) = result {
-                    let result_reg = self.new_reg();
-                    let kind = InstructionKind::ApplyUnaryOp {
-                        op: op.clone(),
-                        arg_ent: result_entity,
-                    };
-                    let meta = InstructionMeta {
-                        reg: result_reg,
-                        t: expr.get_type()
-                    };
-                    let instr = Instruction::new(kind, Some(meta.clone()));
-                    instructions.push(instr);
-                    CompilationResult {
-                        instructions,
-                        result: Some(Entity::from(meta))
-                    }
-                } else {
-                    panic!("Compilation of {:?} didn't return a result to apply unary operator to!", arg)
-                }
+                // compile argument instructions and get the result entity
+                let mut instructions = Vec::new();
+                let arg_ent = combine_instructions(
+                    self.visit_expression(&arg),
+                    &mut instructions
+                );
+
+                // compile the operation and return the combined instructions
+                let instr = InstructionKind::UnaryOp { op: op.clone(), arg: arg_ent };
+                let result_ent = Entity::Register {
+                    n: self.new_reg(),
+                    t: expr.get_type()
+                };
+                instructions.push(instr.with_result(result_ent));
+                CompilationResult::LLVM { llvm: instructions }
             },
             ExpressionKind::Binary { left, op, right } => {
-                let CompilationResult {
-                    instructions: mut left_instructions,
-                    result: left_result
-                } = self.visit_expression(&left);
-                let CompilationResult {
-                    instructions: mut right_instructions,
-                    result: right_result
-                } = self.visit_expression(&right);
+                // compile arguments
+                let mut instructions = Vec::new();
+                let left_ent = combine_instructions(self.visit_expression(left), &mut instructions);
+                let right_ent = combine_instructions(self.visit_expression(right), &mut instructions);
 
-                // TODO: Check if type is string and call function instead (equality or concat)
-                if let (Some(left_ent), Some(right_ent)) = (left_result, right_result) {
-                    let mut instructions = Vec::new();
-                    instructions.append(&mut left_instructions);
-                    instructions.append(&mut right_instructions);
-
-                    let kind = if left.get_type() == Type::Str && *op == BinaryOperator::Plus {
-                        // string concatenation
-                        InstructionKind::Call {
-                            func_name: String::from("__builtin_method__str__concat__"),
-                            ret: expr.get_type(),
-                            args: vec![left_ent, right_ent]
-                        }
-                    } else {
-                        // integer addition
-                        InstructionKind::ApplyBinaryOp {
-                            op: op.clone(),
-                            left_ent,
-                            right_ent
-                        }
-                    };
-                    let result_reg = self.new_reg();
-                    let meta = InstructionMeta {
-                        reg: result_reg,
-                        t: expr.get_type()
-                    };
-                    let instr = Instruction::new(kind, Some(meta.clone()));
-                    instructions.push(instr);
-
-                    CompilationResult {
-                        instructions,
-                        result: Some(Entity::from(meta))
+                // for strings, use concatenation function instead of llvm operator
+                let instr = if left.get_type() == Type::Str && *op == BinaryOperator::Plus {
+                    InstructionKind::Call {
+                        func: String::from("__builtin_method__str__concat__"),
+                        args: vec![left_ent, right_ent]
                     }
                 } else {
-                    panic!(
-                        "One of expressions: {:?} or {:?} didn't return a result to apply binary to!",
-                        left,
-                        right
-                    )
-                }
+                    InstructionKind::BinaryOp {
+                        op: op.clone(),
+                        l: left_ent,
+                        r: right_ent
+                    }
+                };
+                let result_ent = Entity::Register {
+                    n: self.new_reg(),
+                    t: expr.get_type()
+                };
+                instructions.push(instr.with_result(result_ent));
+
+                CompilationResult::LLVM { llvm: instructions }
             },
             ExpressionKind::InitDefault { t } => {
                 if let Type::Class { ident } = t {
-                    let reg = self.new_reg();
-                    let init = self.get_init(ident);
-                    let kind = InstructionKind::Call {
-                        func_name: init,
-                        ret: t.clone(),
+                    let instr = InstructionKind::Call {
+                        func: self.get_init(ident),
                         args: vec![]
                     };
-                    let meta = InstructionMeta { reg, t: expr.get_type() };
-                    let instr = Instruction::new(kind, Some(meta.clone()));
-                    CompilationResult {
-                        instructions: vec![instr],
-                        result: Some(Entity::from(meta))
+                    let result_ent = Entity::Register {
+                        n: self.new_reg(),
+                        t: t.clone()
+                    };
+
+                    CompilationResult::LLVM {
+                        llvm: vec![instr.with_result(result_ent)]
                     }
                 } else {
                     panic!("Invalid type {:?} for Expression::InitDefault", t)
                 }
             },
             ExpressionKind::InitArr { t, size } => {
-                unimplemented!(); // TODO
-                CompilationResult { instructions: vec![], result: None }
+                unimplemented!()
             },
             ExpressionKind::Reference { r } => {
                 match &r.item {
                     ReferenceKind::Ident { ident } => {
-                        // TODO: Load instruction for complex types
-//                        let result_reg = self.new_reg();
-//                        let ptr = self.get_ptr(ident);
-//                        let kind = InstructionKind::Load { ptr };
-//                        let instr = Instruction::new(kind, Some(meta.clone()));
-                        CompilationResult {
-                            instructions: vec![],
-                            result: Some(self.get_ptr(ident).clone())
+                        let instr = InstructionKind::Load {
+                            ptr: self.get_ptr(ident)
+                        };
+                        let result_ent = Entity::Register {
+                            n: self.new_reg(),
+                            t: expr.get_type()
+                        };
+                        CompilationResult::LLVM {
+                            llvm: vec![instr.with_result(result_ent)]
                         }
                     },
                     ReferenceKind::Object { .. } => {
@@ -199,33 +190,26 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                         // 2. getelementptr to the struct field
                         // 3. load that struct field, assign type from local env
                         unimplemented!();  // TODO
-                        CompilationResult { instructions: vec![], result: None }
                     },
                     ReferenceKind::Array { .. } => {
                         // 1. load by pointer, assign type from local env
                         // 2. getelementptr to the struct field
                         // 3. load the desired index, assign type from local env (based on array type)
                         unimplemented!();  // TODO
-                        CompilationResult { instructions: vec![], result: None }
                     },
                     ReferenceKind::ObjectSelf { field: _ } => {
                         unimplemented!();  // TODO
-                        CompilationResult { instructions: vec![], result: None }
                     },
                     ReferenceKind::ArrayLen { ident: _ } => {
                         unimplemented!();  // TODO
-                        CompilationResult { instructions: vec![], result: None }
                     }
                 }
             },
             ExpressionKind::Cast { t, expr } => {
-                unimplemented!();
-                // 1. compile expression
-                // 2. use bitcast to cast null (expr will always be null) to the desired type (pointer)
-                CompilationResult { instructions: vec![], result: None } // TODO: use skeleton above
+                unimplemented!()
             },
             ExpressionKind::Error => {
-                unreachable!();
+                unreachable!()
             },
         }
     }
@@ -235,128 +219,157 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
             StatementKind::Block { block } => {
                 let mut compiler = self.clone();
                 let mut instructions = Vec::new();
+
+                // use nested compiler to visit all statements in block, combine llvm results
                 for stmt in block.item.stmts.iter() {
-                    let mut res = compiler.visit_statement(&stmt);
-                    instructions.append(&mut res.instructions);
+                    if let CompilationResult::LLVM { mut llvm } = compiler.visit_statement(&stmt) {
+                        instructions.append(&mut llvm);
+                    }
                 }
                 self.match_available_reg(&compiler);
-                CompilationResult {
-                    instructions,
-                    result: None
-                }
+
+                CompilationResult::LLVM { llvm: instructions }
             },
             StatementKind::Empty => {
-                CompilationResult { instructions: vec![], result: None }
+                CompilationResult::LLVM { llvm: vec![] }
             },
             StatementKind::Decl { t, items } => {
                 let mut instructions = Vec::new();
                 for item in items {
+                    // get identifier and entity representing the value (const with default if not provided)
                     let (entity, ident) = match &item.item {
                         DeclItemKind::NoInit { ident } => {
                             let entity = match t {
-                                Type::Int => Entity::Const { val: BasicValue::Int { v: 0 } },
-                                Type::Bool => Entity::Const { val: BasicValue::Bool { v: false } },
-                                // TODO: Type::Str (function call to allocate memory)
-                                t => {
-                                    panic!("Unable to create default entity for type {:?}", t)
-                                }
+                                Type::Int => Entity::Int { v: 0 },
+                                Type::Bool => Entity::Bool { v: false },
+                                _ => unimplemented!(),
                             };
                             (entity, ident)
                         },
                         DeclItemKind::Init { ident, val } => {
-                            let compiled_val = self.visit_expression(&val);
-                            let entity = compiled_val.result.unwrap();
+                            let entity = combine_instructions(
+                                self.visit_expression(&val),
+                                &mut instructions
+                            );
                             (entity, ident)
                         },
                     };
-                    self.set_ptr(&ident, &entity);
-                    // TODO: Store is only necessary for complex types:
-//                    let kind = InstructionKind::Store {
-//                        val: entity,
-//                        ptr: ptr_entity,
-//                    };
-//                    instructions.push(Instruction::from(kind));
+
+                    // allocate memory for the new variable
+                    let alloc = InstructionKind::Alloc { t: t.clone() };
+                    let alloc_ent = Entity::Register {
+                        n: self.new_reg(),
+                        t: Type::Reference { t: Box::new(t.clone()) }
+                    };
+                    let alloc_instr = alloc.with_result(alloc_ent.clone());
+
+                    // store entity with value at the allocated memory location
+                    let store = InstructionKind::Store {
+                        val: entity,
+                        ptr: alloc_instr.get_entity()
+                    };
+                    let store_instr = store.without_result();
+
+                    // use compiler environment to remember where the variable is stored
+                    self.set_ptr(&ident, &alloc_ent);
+
+                    instructions.push(alloc_instr);
+                    instructions.push(store_instr);
                 }
-                CompilationResult {
-                    instructions,
-                    result: None
-                }
+                CompilationResult::LLVM { llvm: instructions }
             },
             StatementKind::Ass { r, expr } => {
-                let compiled_expr = self.visit_expression(expr);
+                // collect instructions from the expression
+                let mut instructions = Vec::new();
+                let entity = combine_instructions(
+                    self.visit_expression(&expr),
+                    &mut instructions
+                );
 
-                if let Some(val) = compiled_expr.result {
-                    let var_ident = match &r.item {
-                        ReferenceKind::Ident { ident } => ident,
-                        t => unimplemented!() // TODO
-                    };
-                    self.set_ptr(var_ident, &val);  // TODO: Store for complex types
-                    CompilationResult {
-                        instructions: compiled_expr.instructions,
-                        result: None
-                    }
-                } else {
-                    panic!("Expression {:?} didn't return a result", expr)
-                }
+                // get entity with a pointer to the referenced variable
+                let var_ident = match &r.item {
+                    ReferenceKind::Ident { ident } => ident,
+                    t => unimplemented!()
+                };
+                let ptr = self.get_ptr(var_ident);
+
+                // store the entity at the location pointed to by the variable pointer
+                let store = InstructionKind::Store {
+                    val: entity,
+                    ptr
+                };
+                instructions.push(store.without_result());
+
+                CompilationResult::LLVM { llvm: instructions }
             },
             StatementKind::Mut { r, op } => {
-                match &r.item {
-                    ReferenceKind::Ident { ident } => {
-                        let var_ent = self.get_ptr(ident).clone();
+                let mut instructions = Vec::new();
 
-                        // perform the op on the extracted value
-                        let op_reg = self.new_reg();
-                        let binary_op = match op {
-                            StatementOp::Increment => BinaryOperator::Plus,
-                            StatementOp::Decrement => BinaryOperator::Minus,
-                        };
-                        let kind = InstructionKind::ApplyBinaryOp {
-                            op: binary_op,
-                            left_ent: var_ent,
-                            right_ent: Entity::Const { val: BasicValue::Int { v: 1 } }
-                        };
+                // get entity with a pointer to the referenced variable
+                let var_ident = match &r.item {
+                    ReferenceKind::Ident { ident } => ident,
+                    t => unimplemented!(),
+                };
+                let ptr_ent = self.get_ptr(var_ident);
 
-                        // store the updated register
-                        self.set_ptr(ident, &Entity::Register { n: op_reg, t: Type::Int });
-                        CompilationResult {
-                            instructions: vec![Instruction::from(kind)],
-                            result: None
-                        }
-                    },
-                    t => unimplemented!(),  // TODO
-                }
+                // load the value of a variable to a register
+                let load = InstructionKind::Load {
+                    ptr: ptr_ent.clone()
+                };
+                let load_ent = Entity::Register {
+                    n: self.new_reg(),
+                    t: Type::Int
+                };
+                instructions.push(load.with_result(load_ent.clone()));
+
+                // perform the op on the extracted value
+                let binary_op = match op {
+                    StatementOp::Increment => BinaryOperator::Plus,
+                    StatementOp::Decrement => BinaryOperator::Minus,
+                };
+                let mut_op = InstructionKind::BinaryOp {
+                    op: binary_op,
+                    l: load_ent,
+                    r: Entity::Int { v: 1 }
+                };
+                let mut_result_ent = Entity::Register {
+                    n: self.new_reg(),
+                    t: Type::Int
+                };
+                instructions.push(mut_op.with_result(mut_result_ent.clone()));
+
+                // store the result back to the original location
+                let store = InstructionKind::Store {
+                    val: mut_result_ent,
+                    ptr: ptr_ent
+                };
+                instructions.push(store.without_result());
+
+                CompilationResult::LLVM { llvm: instructions }
             },
             StatementKind::Return { expr } => {
                 match expr {
                     None => {
-                        let kind = InstructionKind::ReturnVoid;
-                        let instructions = vec![Instruction::from(kind)];
-                        CompilationResult {
-                            instructions,
-                            result: None
-                        }
+                        let ret = InstructionKind::RetVoid;
+                        CompilationResult::LLVM { llvm: vec![ret.without_result()] }
                     },
                     Some(e) => {
                         // compile expression
-                        let mut expr_result = self.visit_expression(&e);
                         let mut instructions = Vec::new();
-                        instructions.append(&mut expr_result.instructions);
+                        let result_ent = combine_instructions(
+                            self.visit_expression(&e),
+                            &mut instructions
+                        );
 
                         // return the value from register containing expression result
-                        if let Some(entity) = expr_result.result {
-                            let kind = InstructionKind::ReturnEnt { val: entity };
-                            instructions.push(Instruction::from(kind));
-                            CompilationResult {
-                                instructions,
-                                result: None
-                            }
-                        } else {
-                            panic!("Expression {:?} didn't return a compilation result", expr)
-                        }
+                        let ret = InstructionKind::RetVal { val: result_ent };
+                        instructions.push(ret.without_result());
+                        CompilationResult::LLVM { llvm: instructions }
                     },
                 }
             },
             StatementKind::Cond { expr, stmt } => {
+                // TODO: This should probably be performed in preprocessor
                 let empty_stmt = Box::new(Statement::from(StatementKind::Empty));
                 let cond_with_empty_false = Statement::new(
                     StatementKind::CondElse {
@@ -367,38 +380,89 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                     stmt.get_meta().clone()
                 );
                 self.visit_statement(&cond_with_empty_false)
+            },
+            StatementKind::CondElse { expr, stmt_true, stmt_false } => {
+                let mut llvm = Vec::new();
+
+                // first, add instructions from the expr
+                let expr_ent = combine_instructions(
+                    self.visit_expression(&expr),
+                    &mut llvm
+                );
+
+                // create labels and the conditional jump instruction
+                let suffix = self.get_label_suffix();
+                let true_label = format!("__branch_true__{}", suffix);
+                let false_label = format!("__branch_false__{}", suffix);
+                let end_label = format!("__branch_end__{}", suffix);
+                let cond = InstructionKind::JumpCond {
+                    cond: expr_ent,
+                    true_label: true_label.clone(),
+                    false_label: false_label.clone()
+                };
+                llvm.push(cond.without_result());
+
+                // true branch
+                llvm.push(LLVM::Label { name: true_label });
+                if let CompilationResult::LLVM { llvm: mut stmt_llvm } = self.visit_statement(&stmt) {
+                    llvm.append(&mut stmt_llvm);
+                }
+                let jump_to_end = InstructionKind::Jump {
+                    label: end_label.clone()
+                };
+                llvm.push(jump_to_end.clone().without_result());
+
+                // false branch
+                llvm.push(LLVM::Label { name: false_label });
+                if let CompilationResult::LLVM { llvm: mut stmt_llvm } = self.visit_statement(&stmt) {
+                    llvm.append(&mut stmt_llvm);
+                }
+                llvm.push(jump_to_end.without_result());
+
+                // end
+                llvm.push(LLVM::Label { name: end_label });
+                CompilationResult::LLVM { llvm }
+            },
+            StatementKind::While { expr, stmt } => {
+                unimplemented!()  // TODO: Duplicated registers during assignment problem
 //                let mut instructions = Vec::new();
 //
+//                let suffix = self.get_label_suffix();
+//                let cond_label = format!("__loop_cond__{}", suffix);
+//                let loop_label = format!("__loop_begin__{}", suffix);
+//                let end_label = format!("__loop_end__{}", suffix);
+//
+//                // mark beginning of condition evaluation sequence with cond label
+//                let cond_label_kind = InstructionKind::Label { val: cond_label.clone() };
+//                instructions.push(Instruction::from(cond_label_kind));
+//
+//                // compile conditional expression
 //                let mut expr_result = self.visit_expression(&expr);
 //                instructions.append(&mut expr_result.instructions);
 //
-//                let suffix = self.get_label_suffix();
-//                let true_label = format!("__branch_true__{}", suffix);
-//                let end_label = format!("__branch_end__{}", suffix);
-//
 //                if let Some(expr_ent) = expr_result.result {
-//                    // conditional jump
+//                    // perform a jump based on result of conditional expression
 //                    let cond_kind = InstructionKind::JumpCond {
 //                        cond: expr_ent,
-//                        true_label: true_label.clone(),
+//                        true_label: loop_label.clone(),
 //                        false_label: end_label.clone()
 //                    };
 //                    instructions.push(Instruction::from(cond_kind));
 //
-//                    // start true branch
-//                    let true_kind = InstructionKind::Label {
-//                        val: true_label
-//                    };
-//                    instructions.push(Instruction::from(true_kind));
+//                    // start loop
+//                    let loop_kind = InstructionKind::Label { val: loop_label.clone() };
+//                    instructions.push(Instruction::from(loop_kind));
 //
-//                    // add all true branch instructions
-//                    let mut compiled_stmt = self.visit_statement(stmt);
+//                    // compile the statement
+//                    let mut compiled_stmt = self.visit_statement(&stmt);
 //                    instructions.append(&mut compiled_stmt.instructions);
 //
-//                    // add end label after all instructions from true branch
-//                    let end_kind = InstructionKind::Label {
-//                        val: end_label
-//                    };
+//                    // end loop with a jump to conditional statement
+//                    let jump_kind = InstructionKind::Jump { label: cond_label };
+//                    instructions.push(Instruction::from(jump_kind));
+//
+//                    // mark end of loop statements with end label
+//                    let end_kind = InstructionKind::Label { val: end_label };
 //                    instructions.push(Instruction::from(end_kind));
 //
 //                    CompilationResult {
@@ -409,130 +473,14 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
 //                    panic!("Expression {:?} didn't return a compilation result", expr)
 //                }
             },
-            StatementKind::CondElse { expr, stmt_true, stmt_false } => {
-                let mut instructions = Vec::new();
-
-                let mut expr_result = self.visit_expression(&expr);
-                instructions.append(&mut expr_result.instructions);
-
-                let suffix = self.get_label_suffix();
-                let true_label = format!("__branch_true__{}", suffix);
-                let false_label = format!("__branch_false__{}", suffix);
-                let end_label = format!("__branch_end__{}", suffix);
-
-                if let Some(expr_ent) = expr_result.result {
-                    // conditional jump
-                    let cond_kind = InstructionKind::JumpCond {
-                        cond: expr_ent,
-                        true_label: true_label.clone(),
-                        false_label: false_label.clone()
-                    };
-                    instructions.push(Instruction::from(cond_kind));
-
-                    // start true branch
-                    let true_kind = InstructionKind::Label {
-                        val: true_label
-                    };
-                    instructions.push(Instruction::from(true_kind));
-
-                    // add all true branch instructions
-                    let mut compiled_stmt = self.visit_statement(stmt_true);
-                    instructions.append(&mut compiled_stmt.instructions);
-
-                    // jump to end label at the end of true branch
-                    let end_kind = InstructionKind::Jump {
-                        label: end_label.clone()
-                    };
-                    instructions.push(Instruction::from(end_kind.clone()));
-
-                    // start false branch
-                    let false_kind = InstructionKind::Label {
-                        val: false_label
-                    };
-                    instructions.push(Instruction::from(false_kind));
-
-                    // add all false branch instructions
-                    let mut compiled_stmt = self.visit_statement(stmt_false);
-                    instructions.append(&mut compiled_stmt.instructions);
-
-                    // jump to end label at the end of false branch
-                    instructions.push(Instruction::from(end_kind));
-
-                    // add end label
-                    let end_kind = InstructionKind::Label {
-                        val: end_label
-                    };
-                    instructions.push(Instruction::from(end_kind));
-
-                    CompilationResult {
-                        instructions,
-                        result: None
-                    }
-                } else {
-                    panic!("Expression {:?} didn't return a compilation result", expr)
-                }
-            },
-            StatementKind::While { expr, stmt } => {
-                let mut instructions = Vec::new();
-
-                let suffix = self.get_label_suffix();
-                let cond_label = format!("__loop_cond__{}", suffix);
-                let loop_label = format!("__loop_begin__{}", suffix);
-                let end_label = format!("__loop_end__{}", suffix);
-
-                // mark beginning of condition evaluation sequence with cond label
-                let cond_label_kind = InstructionKind::Label { val: cond_label.clone() };
-                instructions.push(Instruction::from(cond_label_kind));
-
-                // compile conditional expression
-                let mut expr_result = self.visit_expression(&expr);
-                instructions.append(&mut expr_result.instructions);
-
-                if let Some(expr_ent) = expr_result.result {
-                    // perform a jump based on result of conditional expression
-                    let cond_kind = InstructionKind::JumpCond {
-                        cond: expr_ent,
-                        true_label: loop_label.clone(),
-                        false_label: end_label.clone()
-                    };
-                    instructions.push(Instruction::from(cond_kind));
-
-                    // start loop
-                    let loop_kind = InstructionKind::Label { val: loop_label.clone() };
-                    instructions.push(Instruction::from(loop_kind));
-
-                    // compile the statement
-                    let mut compiled_stmt = self.visit_statement(&stmt);
-                    instructions.append(&mut compiled_stmt.instructions);
-
-                    // end loop with a jump to conditional statement
-                    let jump_kind = InstructionKind::Jump { label: cond_label };
-                    instructions.push(Instruction::from(jump_kind));
-
-                    // mark end of loop statements with end label
-                    let end_kind = InstructionKind::Label { val: end_label };
-                    instructions.push(Instruction::from(end_kind));
-
-                    CompilationResult {
-                        instructions,
-                        result: None
-                    }
-                } else {
-                    panic!("Expression {:?} didn't return a compilation result", expr)
-                }
-            },
             StatementKind::For { t, ident, arr, stmt } => {
-                unimplemented!(); // TODO
-                CompilationResult {
-                    instructions: vec![],
-                    result: None
-                }
+                unimplemented!();
             },
             StatementKind::Expr { expr } => {
-                let compiled_expr = self.visit_expression(expr);
-                CompilationResult {
-                    instructions: compiled_expr.instructions,
-                    result: None
+                if let CompilationResult::LLVM { llvm } = self.visit_expression(&expr) {
+                    CompilationResult::LLVM { llvm }
+                } else {
+                    CompilationResult::LLVM { llvm: vec![] }
                 }
             },
             StatementKind::Error => {
@@ -546,41 +494,61 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
     }
 
     fn visit_function(&mut self, function: &Function<TypeMeta>) -> CompilationResult {
-        let mut compiler = self.clone();
-        let mut raw_args = Vec::new();
+        let mut arg_types = Vec::new();
+        let mut instructions = Vec::new();
 
         // add args to the env of nested compiler
-        for arg in function.item.args.iter() {
-            let arg_ent = Entity::NamedRegister {
-                n: arg.item.ident.clone(),
+        let n_args = function.item.args.len();
+        let mut compiler = Compiler::with_starting_reg(n_args + 1);
+        for (arg_reg, arg) in function.item.args.iter().enumerate() {
+            // collect variable types in case the caller needs to cast the passed arguments later
+            // TODO: This is not necessary at the moment, re-visit before implementing method calls
+            arg_types.push(arg.get_type());
+
+            // for consistent way of accessing variables (via self.get_ptr()),
+            // function stores the value of every variable before executing instructions
+
+            // allocate memory for the variable
+            let alloc = InstructionKind::Alloc {
                 t: arg.get_type()
             };
-            compiler.set_ptr(&arg.item.ident, &arg_ent);
-            raw_args.push(arg_ent);
+            let var_ptr_ent = Entity::Register {
+                n: compiler.new_reg(),
+                t: Type::Reference { t: Box::new(arg.get_type()) }
+            };
+
+            // load passed argument value to memory allocated for variable
+            let arg_val_ent = Entity::Register {
+                n: arg_reg,
+                t: arg.get_type()
+            };
+            let store = InstructionKind::Store {
+                val: arg_val_ent,
+                ptr: var_ptr_ent.clone()
+            };
+
+            // append instructions and set the nested compiler's env accordingly
+            instructions.push(alloc.with_result(var_ptr_ent.clone()));
+            instructions.push(store.without_result());
+            compiler.set_ptr(&arg.item.ident, &var_ptr_ent);
         }
 
         // compile function instructions using the nested compiler
-        let mut instructions = Vec::new();
         for stmt in function.item.block.item.stmts.iter() {
-            let mut res = compiler.visit_statement(&stmt);
-            let mut mapped_instr: Vec<_> = res.instructions
-                .drain(..)
-                .map(Box::new)
-                .collect();
-            instructions.append(&mut mapped_instr);
+            if let CompilationResult::LLVM { mut llvm } = compiler.visit_statement(&stmt) {
+                instructions.append(&mut llvm);
+            }
         }
-        self.match_available_reg(&compiler);
 
-        let func_name = self.get_function(&function.item.ident);
-        let compiled_func = InstructionKind::FuncDef {
-            ret: function.item.ret.clone(),
-            name: func_name,
-            args: raw_args,
-            instructions
+        // build the LLVM function
+        let func = LLVM::Function {
+            name: self.get_function(&function.item.ident),
+            ret_type: function.item.ret.clone(),
+            arg_types,
+            llvm: instructions.into_iter().map(Box::new).collect()
         };
-        CompilationResult {
-            instructions: vec![Instruction::from(compiled_func)],
-            result: None
+        CompilationResult::LLVM {
+            llvm: vec![func]
         }
     }
 }

@@ -2,5 +2,11 @@
 **/*.rs.bk
 .idea
 
+# test and compilation outputs
 *.bc
 *.ll
+*.log
+*.realout
+
+# executables
+latc_llvm

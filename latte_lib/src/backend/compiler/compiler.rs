@@ -31,6 +31,13 @@ impl Compiler {
         }
     }
 
+    /// creates a compiler with higher inital available_reg
+    pub fn with_starting_reg(reg: usize) -> Self {
+        let mut compiler = Self::new();
+        compiler.available_reg = reg;
+        compiler
+    }
+
     /// get new (unused) register name for a temporary variable
     pub fn new_reg(&mut self) -> usize {
         let reg = self.available_reg;
@@ -51,8 +58,8 @@ impl Compiler {
     }
 
     /// get entity representing a pointer to a variable with given identifier
-    pub fn get_ptr(&self, ident: &String) -> &Entity {
-        self.local_env.get(ident).unwrap()
+    pub fn get_ptr(&self, ident: &String) -> Entity {
+        self.local_env.get(ident).unwrap().clone()
     }
 
     /// set pointer to a variable in a local environment, given an entity that represents it

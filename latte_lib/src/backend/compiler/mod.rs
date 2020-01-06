@@ -1,8 +1,9 @@
 mod ir;
 mod compiler;
 mod visitor;
-mod llvm;
+mod display;
 
+use std::string::ToString;
 
 use itertools::Itertools;
 
@@ -10,9 +11,10 @@ use crate::meta::TypeMeta;
 use crate::util::visitor::AstVisitor;
 use crate::frontend::ast::Program;
 use crate::backend::compiler::compiler::Compiler;
-use crate::backend::compiler::llvm::ToLLVM;
+use crate::backend::compiler::visitor::CompilationResult;
+use crate::backend::compiler::ir::LLVM;
 
-const builtins: &str = r"
+const BUILTINS: &str = r"
 
 declare i8* @__builtin_method__str__init__(i32)
 declare i8* @__builtin_method__str_const__(i8*)
@@ -30,13 +32,11 @@ pub fn compile(program: &Program<TypeMeta>) -> String {
     let mut compiler = Compiler::new();
     let compiled_program = program.functions.values()
         .map(|func| {
-            compiler.visit_function(func).to_llvm()
+            compiler.visit_function(func)
         })
-        // TODO: Remove print below (used only for debugging)
-        .map(|i| {
-            eprintln!("{}", i);
-            i
-        })
+        .filter_map(CompilationResult::llvm)
+        .flatten()
+        .map(|i| i.to_string())
         .join("\n");
-    String::from(builtins) + &compiled_program
+    String::from(BUILTINS) + &compiled_program + "\n"
 }

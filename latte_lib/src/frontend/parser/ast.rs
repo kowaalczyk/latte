@@ -91,6 +91,9 @@ pub enum Type {
 
     /// represents any object (instance of any class), used to report member access errors
     Object,
+
+    /// represents a reference to any other type
+    Reference { t: Box<Type> },
 }
 
 impl Default for Type {
