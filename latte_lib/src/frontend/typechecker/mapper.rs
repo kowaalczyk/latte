@@ -370,12 +370,34 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     // TODO: Refactor to separate function: map declitem?
                     match &declitem.item {
                         DeclItemKind::NoInit { ident } => {
-                            self.local_env.insert(ident.clone(), t.clone());
-                            let kind = DeclItemKind::NoInit { ident: ident.clone() };
-                            mapped_declitems.push(DeclItem::new(kind, TypeMeta{ t: t.clone() }))
+                            // check for duplicate variable declaration
+                            if self.local_decl.contains(ident) {
+                                let err = FrontendErrorKind::EnvError {
+                                    message: format!("Duplicated declaration of {}", ident)
+                                };
+                                errors.push(FrontendError::new(err, declitem.get_location()));
+                            } else {
+                                // define the variable
+                                self.local_env.insert(ident.clone(), t.clone());
+                                self.local_decl.insert(ident.clone());
+
+                                let kind = DeclItemKind::NoInit { ident: ident.clone() };
+                                mapped_declitems.push(DeclItem::new(kind, TypeMeta{ t: t.clone() }))
+                            }
                         }
                         DeclItemKind::Init { ident, val } => {
                             let loc = val.get_location();
+
+                            // check for duplicate variable declaration
+                            if self.local_decl.contains(ident) {
+                                let err = FrontendErrorKind::EnvError {
+                                    message: format!("Duplicated declaration of {}", ident)
+                                };
+                                errors.push(FrontendError::new(err, declitem.get_location()));
+                                continue;
+                            }
+
+                            // check expression and define the variable
                             match self.map_expression(&val) {
                                 Ok(mapped_expr) => {
                                     let expr_t = &mapped_expr.get_meta().t;

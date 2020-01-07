@@ -21,13 +21,20 @@ pub struct TypeChecker<'prog> {
     /// public to allow easy override during declaration
     pub local_env: Env<Type>,
 
-    // TODO: HashSet of variables declared in current block to prevent re-declaration within a block
+    /// set of variables declared in current block, necessary to prevent re-declaration
+    pub local_decl: HashSet<String>,
 }
 
 impl<'p> TypeChecker<'p> {
     /// typechecker is created with empty env, with lifetime same as the lifetime of passed program
     pub fn new(program: &'p Program<LocationMeta>, builtins: &'p Env<Type>) -> Self {
-        Self { program, builtins, local_env: Env::new(), current_class: Option::None }
+        Self {
+            program,
+            builtins,
+            local_env: Env::new(),
+            local_decl: HashSet::new(),
+            current_class: Option::None
+        }
     }
 
     /// creates TypeChecker for the same program, but fresh environment
@@ -37,16 +44,25 @@ impl<'p> TypeChecker<'p> {
 
     /// creates TypeChecker for the same program, but specified environment
     pub fn with_env(&self, env: Env<Type>) -> Self {
-        Self { program: self.program, local_env: env, builtins: self.builtins, current_class: self.current_class }
+        Self {
+            program: self.program,
+            local_env: env,
+            local_decl: HashSet::new(),
+            builtins: self.builtins,
+            current_class: self.current_class
+        }
     }
 
     /// creates TypeChecker for same program and copy of current environment
     /// extended to contain all values from nested_env
     pub fn with_nested_env(&self, nested_env: Env<Type>) -> Self {
         let mut new_self = self.clone();
+
+        new_self.local_decl.clear();
         for (k, v) in nested_env.iter() {
             new_self.local_env.insert(k.clone(), v.clone());
         }
+
         new_self
     }
 
@@ -221,6 +237,7 @@ impl Clone for TypeChecker<'_> {
             program: self.program,
             builtins: self.builtins,
             local_env: self.local_env.clone(),
+            local_decl: self.local_decl.clone(),
             current_class: self.current_class,
         }
     }
@@ -229,6 +246,7 @@ impl Clone for TypeChecker<'_> {
         self.program = source.program;
         self.builtins = source.builtins;
         self.local_env = source.local_env.clone();
+        self.local_decl = source.local_decl.clone();
         self.current_class = source.current_class;
     }
 }
