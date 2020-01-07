@@ -154,7 +154,7 @@ Frontend module handles most of the heavy tasks, and because no backend optimiza
 the `backend` module consists of the single `backend::compiler` submodule.
 
 The [compiler structure](latte_lib/src/backend/compiler/compiler.rs) implements a `AstVisitor` pattern
-(trait implementation for compiler is defined [here](latte_lib/src/backend/compiler/compiler.rs)) 
+(trait implementation for compiler is defined [here](latte_lib/src/backend/compiler/visitor.rs)) 
 that walks the abstract syntax tree and assembles the program into a list of LLVM statements. 
 These statements are a part of the compiler internal representation format (defined [here](latte_lib/src/backend/compiler/ir.rs)), 
 and implement the `Display` trait (implementation defined [here](latte_lib/src/backend/compiler/display.rs)) 
