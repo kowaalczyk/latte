@@ -16,6 +16,8 @@ use crate::backend::compiler::visitor::CompilationResult;
 use crate::backend::compiler::ir::LLVM;
 
 
+/// compiles the given program, assuming it meets all the necessary criteria (is checked by frontend)
+/// into a string containing its LLVM intermediate representation
 pub fn compile(program: &Program<TypeMeta>) -> String {
     let builtins = vec![
         LLVM::FuncDecl { decl: String::from("declare i8* @__builtin_method__str__init__(i32)") },

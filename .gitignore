@@ -9,4 +9,5 @@
 *.realout
 
 # executables
+latc
 latc_llvm

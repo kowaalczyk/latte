@@ -1,4 +1,4 @@
-mod sourcemap;
+mod char_offset;
 mod ast_optimizer;
 mod block_organizer;
 
@@ -10,7 +10,7 @@ use crate::frontend::parser::{ParsedProgram, ParserErrors};
 use crate::frontend::preprocessor::ast_optimizer::AstOptimizer;
 use crate::util::mapper::AstMapper;
 
-pub use self::sourcemap::{clean_comments, CharOffset};
+pub use self::char_offset::{clean_comments, CharOffset};
 use crate::frontend::preprocessor::block_organizer::BlockOrganizer;
 
 

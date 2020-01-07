@@ -3,6 +3,8 @@ use crate::backend::compiler::ir::{Entity, LLVM};
 use std::cmp::max;
 
 
+// TODO: Get rid of this, use inkwell instead: https://github.com/TheDan64/inkwell
+
 #[derive(Clone)]
 pub struct Compiler {
     /// next available register

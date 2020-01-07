@@ -172,28 +172,92 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
             ExpressionKind::Binary { left, op, right } => {
                 // compile arguments
                 let mut instructions = Vec::new();
-                let left_ent = combine_instructions(self.visit_expression(&left), &mut instructions);
-                let right_ent = combine_instructions(self.visit_expression(&right), &mut instructions);
 
-                // for strings, use concatenation function instead of llvm operator
-                let instr = if left.get_type() == Type::Str && *op == BinaryOperator::Plus {
-                    InstructionKind::Call {
-                        func: String::from("__builtin_method__str__concat__"),
-                        args: vec![left_ent, right_ent]
-                    }
-                } else {
-                    InstructionKind::BinaryOp {
-                        op: op.clone(),
+                if *op == BinaryOperator::Or || *op == BinaryOperator::And {
+                    // perform lazy evaluation by storing the result in allocated memory
+                    let alloc = InstructionKind::Alloc { t: Type::Bool };
+                    let result_reg = Entity::Register {
+                        n: self.new_reg(),
+                        t: Type::Reference { t: Box::new(Type::Bool) }
+                    };
+                    instructions.push(alloc.with_result(result_reg.clone()));
+
+                    // generate labels for conditional jump
+                    let suffix = self.get_label_suffix();
+                    let cond_label = format!("__lazy_cond__{}", suffix);
+                    let false_label = format!("__lazy_false__{}", suffix);
+                    let end_label = format!("__lazy_end__{}", suffix);
+
+                    // evaluate left expression, store the result and jump to true value check
+                    let left_ent = combine_instructions(self.visit_expression(&left), &mut instructions);
+                    let store = InstructionKind::Store { val: left_ent.clone(), ptr: result_reg.clone() };
+                    instructions.push(store.without_result());
+                    let jump = InstructionKind::Jump { label: cond_label.clone() };
+                    instructions.push(jump.without_result());
+
+                    // check if left result is enough to determine the entire expression result
+                    let ending_value = if let BinaryOperator::Or = op {
+                        // for OR, if left expression was true, entire expression is also true
+                        Entity::Bool { v: true }
+                    } else {
+                        // for AND, if left expression was false, entire expression is also false
+                        Entity::Bool { v: false }
+                    };
+                    instructions.push(LLVM::Label { name: cond_label });
+                    let cmp = InstructionKind::BinaryOp {
+                        op: BinaryOperator::Equal,
                         l: left_ent,
-                        r: right_ent
-                    }
-                };
-                let result_ent = Entity::Register {
-                    n: self.new_reg(),
-                    t: expr.get_type()
-                };
-                instructions.push(instr.with_result(result_ent));
+                        r: ending_value
+                    };
+                    let cmp_result = Entity::Register {
+                        n: self.new_reg(),
+                        t: Type::Bool
+                    };
+                    instructions.push(cmp.with_result(cmp_result.clone()));
+                    let cond_jump = InstructionKind::JumpCond {
+                        cond: cmp_result,
+                        true_label: end_label.clone(),
+                        false_label: false_label.clone()
+                    };
+                    instructions.push(cond_jump.without_result());
 
+                    // if the left branch was was not enough, evaluate right branch and store result
+                    instructions.push(LLVM::Label { name: false_label });
+                    let right_ent = combine_instructions(self.visit_expression(&right), &mut instructions);
+                    let store = InstructionKind::Store { val: right_ent, ptr: result_reg.clone() };
+                    instructions.push(store.without_result());
+                    let jump = InstructionKind::Jump { label: end_label.clone() };
+                    instructions.push(jump.without_result());
+
+                    // at the end, load the value of the result back to a register
+                    instructions.push(LLVM::Label { name: end_label });
+                    let load = InstructionKind::Load { ptr: result_reg };
+                    let load_reg = Entity::Register { n: self.new_reg(), t: Type::Bool };
+                    instructions.push(load.with_result(load_reg));
+                } else {
+                    // evaluate both sides of expression before performing the operation
+                    let left_ent = combine_instructions(self.visit_expression(&left), &mut instructions);
+                    let right_ent = combine_instructions(self.visit_expression(&right), &mut instructions);
+
+                    // for strings, use concatenation function instead of llvm operator
+                    let instr = if left.get_type() == Type::Str && *op == BinaryOperator::Plus {
+                        InstructionKind::Call {
+                            func: String::from("__builtin_method__str__concat__"),
+                            args: vec![left_ent, right_ent]
+                        }
+                    } else {
+                        InstructionKind::BinaryOp {
+                            op: op.clone(),
+                            l: left_ent,
+                            r: right_ent
+                        }
+                    };
+                    let result_ent = Entity::Register {
+                        n: self.new_reg(),
+                        t: expr.get_type()
+                    };
+                    instructions.push(instr.with_result(result_ent));
+                }
                 CompilationResult::LLVM { llvm: instructions }
             },
             ExpressionKind::InitDefault { t } => {

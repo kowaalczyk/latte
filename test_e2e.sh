@@ -2,17 +2,19 @@ set -euo pipefail
 IFS=$'\n\t'
 
 
-export LLVM_ASSEMBLER=/usr/local/opt/llvm/bin/llvm-as
-export LLVM_LINKER=/usr/local/opt/llvm/bin/llvm-link
-export LLVM_INTERPRETER=/usr/local/opt/llvm/bin/lli
-
 # compile the compiler
 cargo build --package latc_llvm --bin latc_llvm
 cp target/debug/latc_llvm ./
+chmod +x latc_llvm
+
+# TODO: Repeat for extension folders when implemented
+
+failed_cases=0
 
 for test_in in tests/good/*.lat; do
   logfile="${test_in%.lat}.log"
   infile="${test_in%.lat}.input"
+  llfile="${test_in%.lat}.ll"
   compiled="${test_in%.lat}.bc"
   realout="${test_in%.lat}.realout"
   expout="${test_in%.lat}.output"
@@ -25,6 +27,7 @@ for test_in in tests/good/*.lat; do
 
   if [[ $retval -ne 0 ]]; then
     echo "COMPILATION ERROR $test_in"
+    failed_cases=$((failed_cases + 1))
     continue
   fi
 
@@ -43,6 +46,7 @@ for test_in in tests/good/*.lat; do
 
   if [[ $retval -ne 0 ]]; then
     echo "RUNTIME ERROR $test_in"
+    failed_cases=$((failed_cases + 1))
     continue
   fi
 
@@ -54,9 +58,24 @@ for test_in in tests/good/*.lat; do
 
   if [[ $retval -ne 0 ]]; then
     echo "OUTPUT ERROR $test_in"
+    failed_cases=$((failed_cases + 1))
     continue
   fi
 
-  rm "$logfile"
+  # mark test as passed to indicate progress
   echo "."
+
+  # clean generated files for test cases that passed
+  rm "$logfile"
+  rm "$realout"
+  rm "$compiled"
+  rm "$llfile"
 done
+
+if [[ $failed_cases -gt 0 ]]; then
+  echo "Failed $failed_cases tests"
+else
+  echo "All tests passed"
+fi
+
+exit $failed_cases

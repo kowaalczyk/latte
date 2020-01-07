@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
@@ -52,7 +54,7 @@ void __func__printString(const char* str) {
 /// latte standard library
 int __func__readInt() {
     int i;
-    scanf("%d", &i);
+    scanf("%d\n", &i);
     return i;
 }
 
@@ -63,6 +65,9 @@ char* __func__readString() {
     size_t n = 0;
     ssize_t r = getline(&c, &n, stdin);
     if (r < 0) __func__error();
+
+    // getline returns a '\n' unless the EOF was reached before it, we need to clear that from the string
+    if (c[r-1] == '\n') c[r-1] = (char)0;
     return c;
 }
 
