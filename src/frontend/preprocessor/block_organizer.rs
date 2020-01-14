@@ -96,7 +96,10 @@ impl AstMapper<LocationMeta, LocationMeta, FrontendError<LocationMeta>> for Bloc
     }
 
     fn map_class(&mut self, class: &Meta<ClassItem<LocationMeta>, LocationMeta>) -> Result<Meta<ClassItem<LocationMeta>, LocationMeta>, Vec<Meta<FrontendErrorKind, LocationMeta>>> {
-        unimplemented!()
+        let mut mapped_class = class.clone();
+        mapped_class.item.methods = class.item.methods.iter()
+            .map(|(k, v)| (k.clone(), self.map_function(v).unwrap())).collect();
+        Ok(mapped_class)
     }
 
     fn map_function(&mut self, function: &Meta<FunctionItem<LocationMeta>, LocationMeta>) -> Result<Meta<FunctionItem<LocationMeta>, LocationMeta>, Vec<Meta<FrontendErrorKind, LocationMeta>>> {
