@@ -1,7 +1,7 @@
-use crate::util::env::Env;
-use crate::backend::compiler::ir::{Entity, LLVM};
 use std::cmp::max;
 
+use crate::backend::compiler::ir::{Entity, LLVM};
+use crate::util::env::Env;
 
 // TODO: Get rid of this, use inkwell instead: https://github.com/TheDan64/inkwell
 

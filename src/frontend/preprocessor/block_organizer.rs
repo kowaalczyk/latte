@@ -1,8 +1,7 @@
-use crate::util::mapper::AstMapper;
-use crate::meta::{LocationMeta, Meta};
+use crate::frontend::ast::{Block, BlockItem, Class, ClassItem, Expression, ExpressionKind, Function, FunctionItem, Reference, ReferenceKind, Statement, StatementKind};
 use crate::frontend::error::{FrontendError, FrontendErrorKind};
-use crate::frontend::ast::{Statement, Block, Expression, ClassItem, ExpressionKind, ReferenceKind, StatementKind, FunctionItem, BlockItem, Class, Function, Reference};
-
+use crate::meta::{LocationMeta, Meta};
+use crate::util::mapper::AstMapper;
 
 pub struct BlockOrganizer;
 
@@ -25,7 +24,7 @@ impl AstMapper<LocationMeta, LocationMeta, FrontendError<LocationMeta>> for Bloc
         for stmt in block.item.stmts.iter() {
             if let StatementKind::Return { expr: _ } = stmt.item {
                 filtered_stmts.push(stmt.clone());
-                break
+                break;
             } else {
                 filtered_stmts.push(stmt.clone());
             }
@@ -39,7 +38,7 @@ impl AstMapper<LocationMeta, LocationMeta, FrontendError<LocationMeta>> for Bloc
             // add void return to an empty block
             let void_ret = Statement::new(
                 StatementKind::Return { expr: None },
-                block.get_meta().clone()
+                block.get_meta().clone(),
             );
             filtered_stmts.push(Box::new(void_ret));
         }
@@ -63,22 +62,22 @@ impl AstMapper<LocationMeta, LocationMeta, FrontendError<LocationMeta>> for Bloc
                 let kind = StatementKind::CondElse {
                     expr: expr.clone(),
                     stmt_true: Box::new(mapped_true),
-                    stmt_false: Box::new(mapped_false)
+                    stmt_false: Box::new(mapped_false),
                 };
                 Ok(Statement::new(kind, stmt.get_meta().clone()))
-            },
+            }
             StatementKind::Block { block } => {
                 let mapped_block = StatementKind::Block {
                     block: self.map_block(&block)?
                 };
                 Ok(Statement::new(mapped_block, stmt.get_meta().clone()))
-            },
+            }
             s => {
                 // if the last statement is neither return, conditional nor block,
                 // we convert it to a block with itself and `return void` statement
                 let void_ret = Statement::new(
                     StatementKind::Return { expr: None },
-                    stmt.get_meta().clone() // using same location as original statement
+                    stmt.get_meta().clone(), // using same location as original statement
                 );
                 let stmts = vec![
                     Box::new(stmt.clone()),
@@ -86,11 +85,11 @@ impl AstMapper<LocationMeta, LocationMeta, FrontendError<LocationMeta>> for Bloc
                 ];
                 let block = Block::new(
                     BlockItem { stmts },
-                    stmt.get_meta().clone()
+                    stmt.get_meta().clone(),
                 );
                 let block_stmt = Statement::new(
                     StatementKind::Block { block },
-                    stmt.get_meta().clone()
+                    stmt.get_meta().clone(),
                 );
                 Ok(block_stmt)
             }

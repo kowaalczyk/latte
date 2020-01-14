@@ -1,12 +1,12 @@
+use crate::frontend::error::FrontendError;
+use crate::meta::LocationMeta;
+
+use self::ast::Program;
+use self::latte::ProgramParser;
+
 mod latte;
 
 pub mod ast;
-
-
-use self::ast::Program;
-use crate::meta::LocationMeta;
-use self::latte::ProgramParser;
-use crate::frontend::error::FrontendError;
 
 
 pub type ParsedProgram = Program<LocationMeta>;
@@ -23,7 +23,7 @@ pub fn parse_program(source_code: String) -> Result<ParsedProgram, ParserErrors>
             } else {
                 Err(errors)
             }
-        },
+        }
         Err(_) => {
             Err(errors)
         }
@@ -33,7 +33,8 @@ pub fn parse_program(source_code: String) -> Result<ParsedProgram, ParserErrors>
 #[cfg(test)]
 mod tests {
     use super::*;
-    // use crate::ast;
+
+// use crate::ast;
 
     #[test]
     fn empty_program_fails() -> Result<(), String> {
@@ -48,7 +49,7 @@ mod tests {
                         } else {
                             Err(format!("Invalid error location, expected {} got {:?}", 0, e.get_meta()))
                         }
-                    },
+                    }
                     None => Err(String::from("Missing ParseError in parsing results"))
                 }
             }

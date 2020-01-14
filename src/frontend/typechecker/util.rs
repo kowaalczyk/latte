@@ -1,33 +1,32 @@
 use std::collections::HashMap;
 use std::iter::{FromIterator, IntoIterator};
 
-use crate::meta::{Meta, LocationMeta};
-use crate::frontend::ast::{Block, Type, Class, Arg, FunctionItem, ClassItem, Function};
+use crate::frontend::ast::{Arg, Block, Class, ClassItem, Function, FunctionItem, Type};
 use crate::frontend::error::FrontendError;
+use crate::meta::{LocationMeta, Meta};
 use crate::util::env::Env;
-
 
 /// get environment containing all builtin functions
 pub fn get_builtins() -> Env<Type> {
     let builtin_print_int = Type::Function {
         args: vec![Box::new(Type::Int)],
-        ret: Box::new(Type::Void)
+        ret: Box::new(Type::Void),
     };
     let builtin_print_string = Type::Function {
         args: vec![Box::new(Type::Str)],
-        ret: Box::new(Type::Void)
+        ret: Box::new(Type::Void),
     };
     let builtin_read_int = Type::Function {
         args: vec![],
-        ret: Box::new(Type::Int)
+        ret: Box::new(Type::Int),
     };
     let builtin_read_string = Type::Function {
         args: vec![],
-        ret: Box::new(Type::Str)
+        ret: Box::new(Type::Str),
     };
     let builtin_error = Type::Function {
         args: vec![],
-        ret: Box::new(Type::Void)
+        ret: Box::new(Type::Void),
     };
     let builtin_vec: Vec<(String, Type)> = vec![
         (String::from("printInt"), builtin_print_int),

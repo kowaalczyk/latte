@@ -1,6 +1,5 @@
-use crate::meta::{MetaMapper};
 use crate::meta::LocationMeta;
-
+use crate::meta::MetaMapper;
 
 /// stores position of characters removed from original code (ie. comments)
 pub struct CharOffset {
@@ -17,7 +16,7 @@ impl CharOffset {
     fn add_offset(&mut self, source_pos: usize) {
         let offset_to_apply = match self.offsets.len() {
             0 => 0,
-            n => self.offsets[n-1].1
+            n => self.offsets[n - 1].1
         };
         let pos_without_offset = source_pos - (offset_to_apply as usize);
         self.offsets.push((pos_without_offset, 0));
@@ -28,8 +27,8 @@ impl CharOffset {
         match self.offsets.len() {
             0 => panic!("Impossible: trying to increase non-existing offset"),
             n => {
-                self.offsets[n-1] = (self.offsets[n-1].0, self.offsets[n-1].1 + 1);
-            },
+                self.offsets[n - 1] = (self.offsets[n - 1].0, self.offsets[n - 1].1 + 1);
+            }
         }
     }
 
@@ -40,15 +39,15 @@ impl CharOffset {
             Ok(idx) => {
                 // apply offset of all comments before and at offset_pos
                 self.offsets[idx].1
-            },
+            }
             Err(idx) => {
                 // apply offset of all comments before offset_pos
                 if idx > 0 {
-                    self.offsets[idx-1].1
+                    self.offsets[idx - 1].1
                 } else {
                     0
                 }
-            },
+            }
         };
         offset_pos + (offset_to_apply as usize)
     }
@@ -75,7 +74,7 @@ pub fn clean_comments(source_code: String) -> (String, CharOffset) {
     let mut multiline = false;
     let mut push_prev_char = false;
     let mut previous_char = '\0';
-    
+
     for (idx, current_char) in source_code.chars().enumerate() {
         if !erasing {
             // handle string traversal and escaped letters
@@ -83,22 +82,22 @@ pub fn clean_comments(source_code: String) -> (String, CharOffset) {
                 (false, false, '"') => {
                     // entering string
                     in_str = true;
-                },
+                }
                 (false, true, _) => {
                     unreachable!();
                 }
                 (true, false, '"') => {
                     // exiting string
                     in_str = false;
-                },
+                }
                 (true, false, '\\') => {
                     // next character will be escaped
                     escaped = true;
-                },
+                }
                 (true, true, _) => {
                     // current character is escaped
                     escaped = false;
-                },
+                }
                 _ => (), // ignore other cases
             };
             // handle comment begin and clean code propagation
@@ -113,23 +112,23 @@ pub fn clean_comments(source_code: String) -> (String, CharOffset) {
                         if push_prev_char {
                             clean_code.push(previous_char);
                         }
-                    },
+                    }
                     ('/', '/') => {
                         erasing = true;
-                        char_offset.add_offset(idx-1);
+                        char_offset.add_offset(idx - 1);
                         char_offset.increase_offset(); // erase 1st slash
-                    },
+                    }
                     ('/', '*') => {
                         erasing = true;
                         multiline = true;
-                        char_offset.add_offset(idx-1);
+                        char_offset.add_offset(idx - 1);
                         char_offset.increase_offset(); // erase slash
-                    },
+                    }
                     _ => {
                         if push_prev_char {
                             clean_code.push(previous_char);
                         }
-                    },
+                    }
                 };
             };
             // handle edge case: one char after finishing the multline comment

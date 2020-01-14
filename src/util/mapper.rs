@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 
-use crate::frontend::ast::{Expression, Statement, Class, Function, Reference, Block, Program, ClassItem};
-
+use crate::frontend::ast::{Block, Class, ClassItem, Expression, Function, Program, Reference, Statement};
 
 pub trait AstMapper<FromMeta, ToMeta, ErrT> {
     /// reference to a variable or object property
@@ -18,8 +17,8 @@ pub trait AstMapper<FromMeta, ToMeta, ErrT> {
 
     /// main ast mapper function, default implementation
     fn map_program(
-        &mut self, program: &Program<FromMeta>
-    ) -> Result<Program<ToMeta>, Vec<ErrT>> where ToMeta: Debug+Clone+Sized, ErrT: Debug {
+        &mut self, program: &Program<FromMeta>,
+    ) -> Result<Program<ToMeta>, Vec<ErrT>> where ToMeta: Debug + Clone + Sized, ErrT: Debug {
         // map all functions, collect errors
         let (mut mapped_func, mut errors): (Vec<_>, Vec<_>) = program.functions
             .values()

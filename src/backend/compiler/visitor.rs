@@ -1,11 +1,10 @@
 use regex::internal::Inst;
 
-use crate::meta::{TypeMeta, GetType, Meta};
-use crate::util::visitor::AstVisitor;
 use crate::backend::compiler::compiler::Compiler;
-use crate::backend::compiler::ir::{Instruction, InstructionKind, Entity, GetEntity, LLVM};
+use crate::backend::compiler::ir::{Entity, GetEntity, Instruction, InstructionKind, LLVM};
 use crate::frontend::ast::*;
-
+use crate::meta::{GetType, Meta, TypeMeta};
+use crate::util::visitor::AstVisitor;
 
 pub enum CompilationResult {
     Entity { entity: Entity },
@@ -14,7 +13,7 @@ pub enum CompilationResult {
 
 impl CompilationResult {
     pub fn llvm(self) -> Option<Vec<LLVM>> {
-        if let CompilationResult::LLVM {llvm} = self {
+        if let CompilationResult::LLVM { llvm } = self {
             Option::Some(llvm)
         } else {
             Option::None
@@ -30,7 +29,7 @@ fn combine_instructions(r: CompilationResult, instructions: &mut Vec<LLVM>) -> E
             let last_ent = llvm.last().unwrap().get_entity();
             instructions.append(&mut llvm);
             last_ent
-        },
+        }
     }
 }
 
@@ -54,7 +53,7 @@ fn last_instruction_returns(llvm: &Vec<LLVM>) -> bool {
                 InstructionKind::RetVal { .. } => true,
                 _ => false,
             }
-        },
+        }
         _ => false,
     }
 }
@@ -64,10 +63,10 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
         match &expr.item {
             ExpressionKind::LitInt { val } => {
                 CompilationResult::Entity { entity: Entity::from(*val) }
-            },
+            }
             ExpressionKind::LitBool { val } => {
                 CompilationResult::Entity { entity: Entity::from(*val) }
-            },
+            }
             ExpressionKind::LitStr { val } => {
                 // register new global constant value
                 // TODO: Optimization: re-use constant if already defined
@@ -75,36 +74,36 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 let const_str = LLVM::ConstStrDecl {
                     name: const_name.clone(),
                     val: val.clone(),
-                    len: val.len() - 1 // -2 for brackets, +1 for null terminator
+                    len: val.len() - 1, // -2 for brackets, +1 for null terminator
                 };
                 self.add_decl(const_str);
 
                 // load the defined constant
                 let instr = InstructionKind::LoadConst {
                     name: const_name,
-                    len: val.len() - 1 // -2 for brackets, +1 for null terminator
+                    len: val.len() - 1, // -2 for brackets, +1 for null terminator
                 };
                 let result_reg = Entity::Register {
                     n: self.new_reg(),
-                    t: expr.get_type()
+                    t: expr.get_type(),
                 };
                 CompilationResult::LLVM {
                     llvm: vec![instr.with_result(result_reg)]
                 }
-            },
+            }
             ExpressionKind::LitNull => {
                 CompilationResult::Entity { entity: Entity::Null }
-            },
+            }
             ExpressionKind::App { r, args } => {
                 // get name of the function / method, mapped by compiler
                 let func_name = match &r.item {
                     ReferenceKind::Ident { ident } => self.get_function(ident),
                     ReferenceKind::Object { obj, field } => {
                         unimplemented!();  // TODO: virtual method call
-                    },
+                    }
                     ReferenceKind::ObjectSelf { field } => {
                         unimplemented!();  // TODO: virtual method call
-                    },
+                    }
                     r => {
                         panic!("unsupported reference type for function call: {:?}", r)
                     }
@@ -126,18 +125,18 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 // compile actual call instruction
                 let instr = InstructionKind::Call {
                     func: func_name,
-                    args: arg_ents
+                    args: arg_ents,
                 };
                 // function return type determines whether we store or forget the return value
                 if let Type::Function { args: _, ret } = r.get_type() {
                     let compiled_call = match *ret {
                         Type::Void => {
                             instr.without_result()
-                        },
+                        }
                         t => {
                             let result_ent = Entity::Register {
                                 n: self.new_reg(),
-                                t
+                                t,
                             };
                             instr.with_result(result_ent)
                         }
@@ -151,24 +150,24 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 } else {
                     panic!("invalid function type in compiler: {:?}", expr)
                 }
-            },
+            }
             ExpressionKind::Unary { op, arg } => {
                 // compile argument instructions and get the result entity
                 let mut instructions = Vec::new();
                 let arg_ent = combine_instructions(
                     self.visit_expression(&arg),
-                    &mut instructions
+                    &mut instructions,
                 );
 
                 // compile the operation and return the combined instructions
                 let instr = InstructionKind::UnaryOp { op: op.clone(), arg: arg_ent };
                 let result_ent = Entity::Register {
                     n: self.new_reg(),
-                    t: expr.get_type()
+                    t: expr.get_type(),
                 };
                 instructions.push(instr.with_result(result_ent));
                 CompilationResult::LLVM { llvm: instructions }
-            },
+            }
             ExpressionKind::Binary { left, op, right } => {
                 // compile arguments
                 let mut instructions = Vec::new();
@@ -178,7 +177,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                     let alloc = InstructionKind::Alloc { t: Type::Bool };
                     let result_reg = Entity::Register {
                         n: self.new_reg(),
-                        t: Type::Reference { t: Box::new(Type::Bool) }
+                        t: Type::Reference { t: Box::new(Type::Bool) },
                     };
                     instructions.push(alloc.with_result(result_reg.clone()));
 
@@ -207,17 +206,17 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                     let cmp = InstructionKind::BinaryOp {
                         op: BinaryOperator::Equal,
                         l: left_ent,
-                        r: ending_value
+                        r: ending_value,
                     };
                     let cmp_result = Entity::Register {
                         n: self.new_reg(),
-                        t: Type::Bool
+                        t: Type::Bool,
                     };
                     instructions.push(cmp.with_result(cmp_result.clone()));
                     let cond_jump = InstructionKind::JumpCond {
                         cond: cmp_result,
                         true_label: end_label.clone(),
-                        false_label: false_label.clone()
+                        false_label: false_label.clone(),
                     };
                     instructions.push(cond_jump.without_result());
 
@@ -243,32 +242,32 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                     let instr = if left.get_type() == Type::Str && *op == BinaryOperator::Plus {
                         InstructionKind::Call {
                             func: String::from("__builtin_method__str__concat__"),
-                            args: vec![left_ent, right_ent]
+                            args: vec![left_ent, right_ent],
                         }
                     } else {
                         InstructionKind::BinaryOp {
                             op: op.clone(),
                             l: left_ent,
-                            r: right_ent
+                            r: right_ent,
                         }
                     };
                     let result_ent = Entity::Register {
                         n: self.new_reg(),
-                        t: expr.get_type()
+                        t: expr.get_type(),
                     };
                     instructions.push(instr.with_result(result_ent));
                 }
                 CompilationResult::LLVM { llvm: instructions }
-            },
+            }
             ExpressionKind::InitDefault { t } => {
                 if let Type::Class { ident } = t {
                     let instr = InstructionKind::Call {
                         func: self.get_init(ident),
-                        args: vec![]
+                        args: vec![],
                     };
                     let result_ent = Entity::Register {
                         n: self.new_reg(),
-                        t: t.clone()
+                        t: t.clone(),
                     };
 
                     CompilationResult::LLVM {
@@ -277,10 +276,10 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 } else {
                     panic!("Invalid type {:?} for Expression::InitDefault", t)
                 }
-            },
+            }
             ExpressionKind::InitArr { t, size } => {
                 unimplemented!()
-            },
+            }
             ExpressionKind::Reference { r } => {
                 match &r.item {
                     ReferenceKind::Ident { ident } => {
@@ -289,38 +288,38 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                         };
                         let result_ent = Entity::Register {
                             n: self.new_reg(),
-                            t: expr.get_type()
+                            t: expr.get_type(),
                         };
                         CompilationResult::LLVM {
                             llvm: vec![instr.with_result(result_ent)]
                         }
-                    },
+                    }
                     ReferenceKind::Object { .. } => {
                         // 1. load by pointer, assign type from local env
                         // 2. getelementptr to the struct field
                         // 3. load that struct field, assign type from local env
                         unimplemented!();  // TODO
-                    },
+                    }
                     ReferenceKind::Array { .. } => {
                         // 1. load by pointer, assign type from local env
                         // 2. getelementptr to the struct field
                         // 3. load the desired index, assign type from local env (based on array type)
                         unimplemented!();  // TODO
-                    },
+                    }
                     ReferenceKind::ObjectSelf { field: _ } => {
                         unimplemented!();  // TODO
-                    },
+                    }
                     ReferenceKind::ArrayLen { ident: _ } => {
                         unimplemented!();  // TODO
                     }
                 }
-            },
+            }
             ExpressionKind::Cast { t, expr } => {
                 unimplemented!()
-            },
+            }
             ExpressionKind::Error => {
                 unreachable!()
-            },
+            }
         }
     }
 
@@ -340,10 +339,10 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 self.combine_declarations(&mut compiler);
 
                 CompilationResult::LLVM { llvm: instructions }
-            },
+            }
             StatementKind::Empty => {
                 CompilationResult::LLVM { llvm: vec![] }
-            },
+            }
             StatementKind::Decl { t, items } => {
                 let mut instructions = Vec::new();
                 for item in items {
@@ -356,11 +355,11 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                                 Type::Str => {
                                     let default_init = InstructionKind::Call {
                                         func: String::from("__builtin_method__str__init__"),
-                                        args: vec![Entity::Int { v: 0 }]
+                                        args: vec![Entity::Int { v: 0 }],
                                     };
                                     let call_ret_ent = Entity::Register {
                                         n: self.new_reg(),
-                                        t: Type::Str
+                                        t: Type::Str,
                                     };
                                     instructions.push(
                                         default_init.with_result(call_ret_ent.clone())
@@ -370,28 +369,28 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                                 _ => unimplemented!(),
                             };
                             (entity, ident)
-                        },
+                        }
                         DeclItemKind::Init { ident, val } => {
                             let entity = combine_instructions(
                                 self.visit_expression(&val),
-                                &mut instructions
+                                &mut instructions,
                             );
                             (entity, ident)
-                        },
+                        }
                     };
 
                     // allocate memory for the new variable
                     let alloc = InstructionKind::Alloc { t: t.clone() };
                     let alloc_ent = Entity::Register {
                         n: self.new_reg(),
-                        t: Type::Reference { t: Box::new(t.clone()) }
+                        t: Type::Reference { t: Box::new(t.clone()) },
                     };
                     let alloc_instr = alloc.with_result(alloc_ent.clone());
 
                     // store entity with value at the allocated memory location
                     let store = InstructionKind::Store {
                         val: entity,
-                        ptr: alloc_instr.get_entity()
+                        ptr: alloc_instr.get_entity(),
                     };
                     let store_instr = store.without_result();
 
@@ -402,13 +401,13 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                     instructions.push(store_instr);
                 }
                 CompilationResult::LLVM { llvm: instructions }
-            },
+            }
             StatementKind::Ass { r, expr } => {
                 // collect instructions from the expression
                 let mut instructions = Vec::new();
                 let entity = combine_instructions(
                     self.visit_expression(&expr),
-                    &mut instructions
+                    &mut instructions,
                 );
 
                 // get entity with a pointer to the referenced variable
@@ -421,12 +420,12 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 // store the entity at the location pointed to by the variable pointer
                 let store = InstructionKind::Store {
                     val: entity,
-                    ptr
+                    ptr,
                 };
                 instructions.push(store.without_result());
 
                 CompilationResult::LLVM { llvm: instructions }
-            },
+            }
             StatementKind::Mut { r, op } => {
                 let mut instructions = Vec::new();
 
@@ -443,7 +442,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 };
                 let load_ent = Entity::Register {
                     n: self.new_reg(),
-                    t: Type::Int
+                    t: Type::Int,
                 };
                 instructions.push(load.with_result(load_ent.clone()));
 
@@ -455,35 +454,35 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 let mut_op = InstructionKind::BinaryOp {
                     op: binary_op,
                     l: load_ent,
-                    r: Entity::Int { v: 1 }
+                    r: Entity::Int { v: 1 },
                 };
                 let mut_result_ent = Entity::Register {
                     n: self.new_reg(),
-                    t: Type::Int
+                    t: Type::Int,
                 };
                 instructions.push(mut_op.with_result(mut_result_ent.clone()));
 
                 // store the result back to the original location
                 let store = InstructionKind::Store {
                     val: mut_result_ent,
-                    ptr: ptr_ent
+                    ptr: ptr_ent,
                 };
                 instructions.push(store.without_result());
 
                 CompilationResult::LLVM { llvm: instructions }
-            },
+            }
             StatementKind::Return { expr } => {
                 match expr {
                     None => {
                         let ret = InstructionKind::RetVoid;
                         CompilationResult::LLVM { llvm: vec![ret.without_result()] }
-                    },
+                    }
                     Some(e) => {
                         // compile expression
                         let mut instructions = Vec::new();
                         let result_ent = combine_instructions(
                             self.visit_expression(&e),
-                            &mut instructions
+                            &mut instructions,
                         );
 
                         // return the value from register containing expression result
@@ -491,30 +490,30 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                         instructions.push(ret.without_result());
 
                         CompilationResult::LLVM { llvm: instructions }
-                    },
+                    }
                 }
-            },
+            }
             StatementKind::Cond { expr, stmt } => {
-                // TODO: This should probably be performed in preprocessor
+                // TODO: This should be solved differently (by jumping to the end, omitting else branch)
                 let empty_stmt = Box::new(Statement::from(StatementKind::Empty));
                 let cond_with_empty_false = Statement::new(
                     StatementKind::CondElse {
                         expr: expr.clone(),
                         stmt_true: stmt.clone(),
-                        stmt_false: empty_stmt
+                        stmt_false: empty_stmt,
                     },
-                    stmt.get_meta().clone()
+                    stmt.get_meta().clone(),
                 );
                 self.visit_statement(&cond_with_empty_false)
-            },
+            }
             StatementKind::CondElse { expr, stmt_true, stmt_false } => {
-                // TODO: This part really needs refactoring, but implemtn PHI & SSA first
+                // TODO: This part really needs refactoring, but implement PHI & SSA first
                 let mut llvm = Vec::new();
 
                 // first, add instructions from the expr
                 let expr_ent = combine_instructions(
                     self.visit_expression(&expr),
-                    &mut llvm
+                    &mut llvm,
                 );
 
                 // create labels and the conditional jump instruction
@@ -539,7 +538,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 let cond = InstructionKind::JumpCond {
                     cond: expr_ent,
                     true_label: true_label.clone(),
-                    false_label: false_label.clone()
+                    false_label: false_label.clone(),
                 };
                 llvm.push(cond.without_result());
 
@@ -594,7 +593,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                     llvm.push(LLVM::Label { name: end_label });
                 }
                 CompilationResult::LLVM { llvm }
-            },
+            }
             StatementKind::While { expr, stmt } => {
                 let mut llvm = Vec::new();
 
@@ -612,12 +611,12 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 llvm.push(LLVM::Label { name: cond_label.clone() });
                 let expr_result = combine_instructions(
                     self.visit_expression(&expr),
-                    &mut llvm
+                    &mut llvm,
                 );
                 let cond_jump = InstructionKind::JumpCond {
                     cond: expr_result,
                     true_label: loop_label.clone(),
-                    false_label: end_label.clone()
+                    false_label: end_label.clone(),
                 };
                 llvm.push(cond_jump.without_result());
 
@@ -635,20 +634,20 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
                 llvm.push(LLVM::Label { name: end_label });
 
                 CompilationResult::LLVM { llvm }
-            },
+            }
             StatementKind::For { t, ident, arr, stmt } => {
                 unimplemented!();
-            },
+            }
             StatementKind::Expr { expr } => {
                 if let CompilationResult::LLVM { llvm } = self.visit_expression(&expr) {
                     CompilationResult::LLVM { llvm }
                 } else {
                     CompilationResult::LLVM { llvm: vec![] }
                 }
-            },
+            }
             StatementKind::Error => {
                 unreachable!()
-            },
+            }
         }
     }
 
@@ -662,7 +661,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
 
         // add args to the env of nested compiler
         let n_args = function.item.args.len();
-        let mut compiler = self.nested_for_function(n_args+1);
+        let mut compiler = self.nested_for_function(n_args + 1);
         for (arg_reg, arg) in function.item.args.iter().enumerate() {
             // collect variable types in case the caller needs to cast the passed arguments later
             // TODO: This is not necessary at the moment, re-visit before implementing method calls
@@ -677,17 +676,17 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
             };
             let var_ptr_ent = Entity::Register {
                 n: compiler.new_reg(),
-                t: Type::Reference { t: Box::new(arg.get_type()) }
+                t: Type::Reference { t: Box::new(arg.get_type()) },
             };
 
             // load passed argument value to memory allocated for variable
             let arg_val_ent = Entity::Register {
                 n: arg_reg,
-                t: arg.get_type()
+                t: arg.get_type(),
             };
             let store = InstructionKind::Store {
                 val: arg_val_ent,
-                ptr: var_ptr_ent.clone()
+                ptr: var_ptr_ent.clone(),
             };
 
             // append instructions and set the nested compiler's env accordingly
@@ -711,7 +710,7 @@ impl AstVisitor<TypeMeta, CompilationResult> for Compiler {
             name: self.get_function(&function.item.ident),
             ret_type: function.item.ret.clone(),
             arg_types,
-            llvm: instructions.into_iter().map(Box::new).collect()
+            llvm: instructions.into_iter().map(Box::new).collect(),
         };
         CompilationResult::LLVM {
             llvm: vec![func]

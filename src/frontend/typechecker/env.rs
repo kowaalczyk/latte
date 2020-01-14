@@ -1,8 +1,7 @@
 use crate::frontend::ast::{Program, Type};
 use crate::frontend::error::{FrontendError, FrontendErrorKind};
-use crate::meta::{LocationMeta, GetLocation};
+use crate::meta::{GetLocation, LocationMeta};
 use crate::util::env::Env;
-
 
 /// checks if main function is defined and has a correct signature
 pub fn check_main(program: &Program<LocationMeta>) -> Result<(), Vec<FrontendError<LocationMeta>>> {
@@ -13,7 +12,7 @@ pub fn check_main(program: &Program<LocationMeta>) -> Result<(), Vec<FrontendErr
             } else {
                 let kind = FrontendErrorKind::TypeError {
                     expected: Type::Int,
-                    actual: func.item.ret.clone()
+                    actual: func.item.ret.clone(),
                 };
                 Err(vec![FrontendError::new(kind, func.get_location())])
             }
@@ -27,13 +26,13 @@ pub fn check_main(program: &Program<LocationMeta>) -> Result<(), Vec<FrontendErr
         let kind = FrontendErrorKind::EnvError {
             message: String::from("Function 'main' not defined")
         };
-        Err(vec![FrontendError::new(kind,  LocationMeta { offset: 0 })])
+        Err(vec![FrontendError::new(kind, LocationMeta { offset: 0 })])
     }
 }
 
 /// checks if no builtin method is overwritten
 pub fn check_builtin_conflicts(
-    program: &Program<LocationMeta>, builtins: &Env<Type>
+    program: &Program<LocationMeta>, builtins: &Env<Type>,
 ) -> Result<(), Vec<FrontendError<LocationMeta>>> {
     let overwritten_builtins: Vec<_> = program.functions
         .keys()
@@ -49,7 +48,7 @@ pub fn check_builtin_conflicts(
                 };
                 FrontendError::new(
                     kind,
-                    program.functions.get(f.clone()).unwrap().get_location()
+                    program.functions.get(f.clone()).unwrap().get_location(),
                 )
             })
             .collect();

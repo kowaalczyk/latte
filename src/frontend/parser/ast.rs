@@ -1,10 +1,9 @@
-use crate::util::env::{Env, UniqueEnv, FromKeyedVec};
-use crate::frontend::error::FrontendError;
-use crate::util::visitor::AstVisitor;
-use crate::meta::Meta;
-
 use std::fmt::Debug;
 
+use crate::frontend::error::FrontendError;
+use crate::meta::Meta;
+use crate::util::env::{Env, FromKeyedVec, UniqueEnv};
+use crate::util::visitor::AstVisitor;
 
 /// trait for marking ast items that can searched by key (in an environment)
 pub trait Keyed {
@@ -55,7 +54,7 @@ pub enum ExpressionKind<MetaT> {
     Binary {
         left: Box<Expression<MetaT>>,
         op: BinaryOperator,
-        right: Box<Expression<MetaT>>
+        right: Box<Expression<MetaT>>,
     },
     InitDefault { t: Type },
     InitArr { t: Type, size: Box<Expression<MetaT>> },
@@ -64,6 +63,7 @@ pub enum ExpressionKind<MetaT> {
     Cast { t: Type, expr: Box<Expression<MetaT>> },
     Error,
 }
+
 pub type Expression<MetaT> = AstItem<ExpressionKind<MetaT>, MetaT>;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -109,19 +109,22 @@ pub enum ReferenceKind<MetaT> {
     Array { arr: String, idx: Box<Expression<MetaT>> },
     ArrayLen { ident: String },
 }
+
 pub type Reference<MetaT> = AstItem<ReferenceKind<MetaT>, MetaT>;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum DeclItemKind<MetaT> {
     NoInit { ident: String },
-    Init { ident: String, val: Box<Expression<MetaT>> }
+    Init { ident: String, val: Box<Expression<MetaT>> },
 }
+
 pub type DeclItem<MetaT> = AstItem<DeclItemKind<MetaT>, MetaT>;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BlockItem<MetaT> {
     pub stmts: Vec<Box<Statement<MetaT>>>
 }
+
 pub type Block<MetaT> = AstItem<BlockItem<MetaT>, MetaT>;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -136,18 +139,19 @@ pub enum StatementKind<MetaT> {
     CondElse {
         expr: Box<Expression<MetaT>>,
         stmt_true: Box<Statement<MetaT>>,
-        stmt_false: Box<Statement<MetaT>>
+        stmt_false: Box<Statement<MetaT>>,
     },
     While { expr: Box<Expression<MetaT>>, stmt: Box<Statement<MetaT>> },
     For {
         t: Type,
         ident: String,
         arr: Box<Expression<MetaT>>,
-        stmt: Box<Statement<MetaT>>
+        stmt: Box<Statement<MetaT>>,
     },
     Expr { expr: Box<Expression<MetaT>> },
     Error,
 }
+
 pub type Statement<MetaT> = AstItem<StatementKind<MetaT>, MetaT>;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -158,6 +162,7 @@ pub enum StatementOp {
 
 #[derive(Debug, PartialEq, Hash, Clone)]
 pub struct ArgItem { pub t: Type, pub ident: String }
+
 pub type Arg<MetaT> = AstItem<ArgItem, MetaT>;
 
 impl Keyed for ArgItem {
@@ -171,13 +176,14 @@ pub struct FunctionItem<MetaT> {
     pub ret: Type,
     pub ident: String,
     pub args: Vec<Arg<MetaT>>,
-    pub block: Block<MetaT>
+    pub block: Block<MetaT>,
 }
+
 pub type Function<MetaT> = AstItem<FunctionItem<MetaT>, MetaT>;
 
 impl<MetaT: Clone> FunctionItem<MetaT> {
     pub fn new(
-        ret: Type, ident: String, args: Vec<Arg<MetaT>>, block: Block<MetaT>
+        ret: Type, ident: String, args: Vec<Arg<MetaT>>, block: Block<MetaT>,
     ) -> Result<Self, Vec<FrontendError<MetaT>>> {
         // check if there are no duplicate arguments
         Env::<Arg<MetaT>>::from_vec(&mut args.clone())?;
@@ -205,6 +211,7 @@ pub struct ClassVarItem {
     pub t: Type,
     pub ident: String,
 }
+
 pub type ClassVar<MetaT> = AstItem<ClassVarItem, MetaT>;
 
 impl Keyed for ClassVarItem {
@@ -220,11 +227,12 @@ pub struct ClassItem<MetaT> {
     pub methods: Env<Function<MetaT>>,
     pub parent: Option<String>,
 }
+
 pub type Class<MetaT> = AstItem<ClassItem<MetaT>, MetaT>;
 
-impl<MetaT: Debug+Clone> ClassItem<MetaT> {
+impl<MetaT: Debug + Clone> ClassItem<MetaT> {
     pub fn new(
-        ident: String, var_vec: &mut Vec<ClassVar<MetaT>>, method_vec: &mut Vec<Function<MetaT>>
+        ident: String, var_vec: &mut Vec<ClassVar<MetaT>>, method_vec: &mut Vec<Function<MetaT>>,
     ) -> Result<Self, Vec<FrontendError<MetaT>>> {
         let vars = Env::from_vec(var_vec)?;
         let methods = Env::from_vec(method_vec)?;
@@ -250,6 +258,7 @@ pub enum TopDefKind<MetaT> {
     Class { cls: Class<MetaT> },
     Error,
 }
+
 pub type TopDef<MetaT> = AstItem<TopDefKind<MetaT>, MetaT>;
 
 /// the result of parsing and all subsequent operations (ast root)
@@ -259,7 +268,7 @@ pub struct Program<MetaT> {
     pub functions: Env<Function<MetaT>>,
 }
 
-impl<MetaT: Debug+Clone> Program<MetaT> {
+impl<MetaT: Debug + Clone> Program<MetaT> {
     pub fn new(classes: &mut Vec<Class<MetaT>>, functions: &mut Vec<Function<MetaT>>) -> Result<Self, Vec<FrontendError<MetaT>>> {
         let classes = Env::<Class<MetaT>>::from_vec(classes)?;
         let functions = Env::<Function<MetaT>>::from_vec(functions)?;

@@ -1,25 +1,23 @@
+use std::fs;
+use std::ops::Add;
+use std::sync::Arc;
+
+use codemap::{CodeMap, File, Pos};
+
+use crate::frontend::preprocessor::{optimize_constants, organize_blocks};
+use crate::meta::{LocationMeta, Meta, MetaMapper, TypeMeta};
+
+use self::error::{FrontendError, FrontendErrorKind};
+pub use self::parser::ast;
+use self::parser::parse_program;
+use self::preprocessor::{CharOffset, clean_comments};
+use self::typechecker::check_types;
+
 mod parser;
 mod preprocessor;
 mod typechecker;
 
 pub mod error;
-
-
-pub use self::parser::ast;
-
-use self::error::{FrontendError, FrontendErrorKind};
-use self::preprocessor::{clean_comments, CharOffset};
-use self::parser::parse_program;
-use self::typechecker::check_types;
-
-use crate::meta::{TypeMeta, LocationMeta, MetaMapper, Meta};
-
-use codemap::{CodeMap, Pos, File};
-
-use std::fs;
-use std::ops::Add;
-use std::sync::Arc;
-use crate::frontend::preprocessor::{optimize_constants, organize_blocks};
 
 
 pub type CheckedProgram = ast::Program<TypeMeta>;
@@ -32,7 +30,7 @@ pub fn process_file(path: String) -> Result<CheckedProgram, Vec<Error>> {
         Err(e) => {
             let err = FrontendError::new(
                 FrontendErrorKind::SystemError { message: format!("Failed to read file {}: {}", path, e) },
-                path.clone()
+                path.clone(),
             );
             return Err(vec![err]);
         }
@@ -46,7 +44,7 @@ pub fn process_code(file_name: String, source_code: String) -> Result<CheckedPro
     let mut codemap = CodeMap::new();
     let codemap_file = codemap.add_file(
         file_name,
-        source_code.clone()
+        source_code.clone(),
     );
     let (clean_code, source_map) = clean_comments(source_code);
 
@@ -64,7 +62,7 @@ pub fn process_code(file_name: String, source_code: String) -> Result<CheckedPro
                 .map(|e| locate_error(&e, &source_map, &codemap_file, &codemap))
                 .collect();
             Err(located_errors)
-        },
+        }
     }
 }
 
@@ -86,7 +84,7 @@ impl MetaMapper<Pos, String> for CodeMap {
 /// to its true location in the source code file, using provided MetaMappers
 fn locate_error(
     e: &FrontendError<LocationMeta>, comment_offset: &CharOffset,
-    file: &Arc<File>, code_map: &CodeMap
+    file: &Arc<File>, code_map: &CodeMap,
 ) -> FrontendError<String> {
     e.map_meta(comment_offset)
         .map_meta(file)

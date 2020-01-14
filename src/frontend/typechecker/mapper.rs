@@ -1,13 +1,12 @@
 use std::iter::FromIterator;
 
-use crate::meta::{LocationMeta, GetLocation, TypeMeta, GetType};
-use crate::util::mapper::AstMapper;
-use crate::util::env::Env;
+use crate::frontend::ast::*;
 use crate::frontend::error::{FrontendError, FrontendErrorKind};
 use crate::frontend::typechecker::typechecker::TypeChecker;
 use crate::frontend::typechecker::util::ToTypeEnv;
-use crate::frontend::ast::*;
-
+use crate::meta::{GetLocation, GetType, LocationMeta, TypeMeta};
+use crate::util::env::Env;
+use crate::util::mapper::AstMapper;
 
 pub type TypeCheckResult<AstT> = Result<AstT, Vec<FrontendError<LocationMeta>>>;
 
@@ -18,7 +17,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
             ReferenceKind::Ident { ident } => {
                 let var_t = self.get_local_variable(ident, loc)?;
                 Ok((ReferenceKind::Ident { ident: ident.clone() }, var_t.clone()))
-            },
+            }
             ReferenceKind::Object { obj, field } => {
                 let var_t = self.get_local_variable(obj, loc)?;
                 if let Type::Array { item_t } = var_t {
@@ -35,9 +34,9 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     // interpret var_t as object and try to get the `field` instance variable
                     let cls = self.get_class(var_t, loc)?;
                     let field_t = self.get_instance_variable(cls, field, loc)?;
-                    Ok((ReferenceKind::Object { obj: obj.clone(), field: field.clone()}, field_t.clone()))
+                    Ok((ReferenceKind::Object { obj: obj.clone(), field: field.clone() }, field_t.clone()))
                 }
-            },
+            }
             ReferenceKind::ObjectSelf { field } => {
                 if let Some(cls) = self.get_current_class() {
                     let field_t = self.get_instance_variable(cls, field, loc)?;
@@ -48,7 +47,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     };
                     Err(vec![FrontendError::new(kind, loc.clone())])
                 }
-            },
+            }
             ReferenceKind::Array { arr, idx } => {
                 // TODO: Refactor to 2 simpler methods (like class & member)
                 let var_t = self.get_local_variable(arr, loc)?;
@@ -61,28 +60,28 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     } else {
                         let kind = FrontendErrorKind::TypeError {
                             expected: Type::Int,
-                            actual: mapped_t.clone()
+                            actual: mapped_t.clone(),
                         };
                         Err(vec![FrontendError::new(kind, loc.clone())])
                     }
                 } else {
                     let kind = FrontendErrorKind::TypeError {
                         expected: Type::Array { item_t: Box::new(Type::Any) },
-                        actual: var_t.clone()
+                        actual: var_t.clone(),
                     };
                     Err(vec![FrontendError::new(kind, loc.clone())])
                 }
-            },
+            }
             ReferenceKind::ArrayLen { ident } => {
                 // parser never creates these, ArrayLen can only be a result of a transformation
                 unreachable!();
-            },
+            }
         };
         match typecheck_result {
             Ok((kind, t)) => {
                 let mapped: Reference<TypeMeta> = Reference::new(kind, TypeMeta { t });
                 Ok(mapped)
-            },
+            }
             Err(err_vec) => Err(err_vec),
         }
     }
@@ -93,13 +92,13 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
             ReferenceKind::Ident { ident } => {
                 let func_t = self.get_func(ident, loc)?;
                 Ok((ReferenceKind::Ident { ident: ident.clone() }, func_t.clone()))
-            },
+            }
             ReferenceKind::Object { obj, field } => {
                 let var_t = self.get_local_variable(obj, loc)?;
                 let cls = self.get_class(var_t, loc)?;
                 let method_t = self.get_method(cls, field, loc)?;
                 Ok((ReferenceKind::Object { obj: obj.clone(), field: field.clone() }, method_t.clone()))
-            },
+            }
             ReferenceKind::ObjectSelf { field } => {
                 if let Some(cls) = self.get_current_class() {
                     let method_t = self.get_method(cls, field, loc)?;
@@ -110,20 +109,20 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     };
                     Err(vec![FrontendError::new(kind, loc.clone())])
                 }
-            },
+            }
             r => {
                 let kind = FrontendErrorKind::ArgumentError {
                     message: format!("Expected function or method, got: {:?}", r)
                 };
                 Err(vec![FrontendError::new(kind, loc.clone())])
-            },
+            }
         };
         // TODO: Refactor to separate function (or better: From trait)
         match typecheck_result {
             Ok((kind, t)) => {
                 let mapped: Reference<TypeMeta> = Reference::new(kind, TypeMeta { t });
                 Ok(mapped)
-            },
+            }
             Err(err_vec) => Err(err_vec),
         }
     }
@@ -158,16 +157,16 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
         let typecheck_result = match &expr.item {
             ExpressionKind::LitInt { val } => {
                 Ok((ExpressionKind::LitInt { val: val.clone() }, Type::Int))
-            },
+            }
             ExpressionKind::LitBool { val } => {
                 Ok((ExpressionKind::LitBool { val: val.clone() }, Type::Bool))
-            },
+            }
             ExpressionKind::LitStr { val } => {
                 Ok((ExpressionKind::LitStr { val: val.clone() }, Type::Str))
-            },
+            }
             ExpressionKind::LitNull => {
                 Ok((ExpressionKind::LitNull, Type::Null))
-            },
+            }
             ExpressionKind::App { r, args } => {
                 let mapped_r = self.map_func_reference(&r)?;
                 match &mapped_r.get_meta().t {
@@ -189,17 +188,17 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                                     Ok(mapped_arg) => {
                                         let assignment_check = self.check_assignment(
                                             &expected_arg_type,
-                                            &mapped_arg.get_meta().t
+                                            &mapped_arg.get_meta().t,
                                         );
                                         if let Err(kind) = assignment_check {
                                             errors.push(FrontendError::new(kind, arg_expr.get_location()));
                                         } else {
                                             mapped_args.push(Box::new(mapped_arg));
                                         }
-                                    },
+                                    }
                                     Err(mut err_vec) => {
                                         errors.append(&mut err_vec);
-                                    },
+                                    }
                                 }
                             }
                         }
@@ -209,16 +208,16 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                         } else {
                             Err(errors)
                         }
-                    },
+                    }
                     t => {
                         let kind = FrontendErrorKind::TypeError {
                             expected: Type::Function { args: vec![], ret: Box::new(Type::Any) },
-                            actual: t.clone()
+                            actual: t.clone(),
                         };
                         Err(vec![FrontendError::new(kind, r.get_location())])
                     }
                 }
-            },
+            }
             ExpressionKind::Unary { op, arg } => {
                 let op_t = match op {
                     UnaryOperator::Neg => Type::Int,
@@ -231,11 +230,11 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 } else {
                     let kind = FrontendErrorKind::TypeError {
                         expected: op_t,
-                        actual: mapped_arg.get_type()
+                        actual: mapped_arg.get_type(),
                     };
                     Err(vec![FrontendError::new(kind, arg.get_location())])
                 }
-            },
+            }
             ExpressionKind::Binary { left, op, right } => {
                 // TODO: Collect errors from both sides before terminating
                 let mapped_l = self.map_expression(&left)?;
@@ -246,21 +245,21 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     let op_result_t = match op {
                         BinaryOperator::Equal | BinaryOperator::NotEqual => {
                             Option::Some(Type::Bool)
-                        },
+                        }
                         BinaryOperator::Plus => {
                             if left_t == Type::Str || left_t == Type::Int {
                                 Option::Some(left_t.clone())
                             } else {
                                 Option::None
                             }
-                        },
+                        }
                         BinaryOperator::And | BinaryOperator::Or => {
                             if left_t == Type::Bool {
                                 Option::Some(Type::Bool)
                             } else {
                                 Option::None
                             }
-                        },
+                        }
                         BinaryOperator::Greater
                         | BinaryOperator::GreaterEqual
                         | BinaryOperator::LessEqual
@@ -270,60 +269,62 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                             } else {
                                 Option::None
                             }
-                        },
+                        }
                         _ => {
                             if left_t == Type::Int {
                                 Option::Some(Type::Int)
                             } else {
                                 Option::None
                             }
-                        },
+                        }
                     };
                     if let Some(result_t) = op_result_t {
                         let mapped_expr = ExpressionKind::Binary {
                             left: Box::new(mapped_l),
                             op: op.clone(),
-                            right: Box::new(mapped_r)
+                            right: Box::new(mapped_r),
                         };
                         Ok((mapped_expr, result_t))
                     } else {
-                        let kind = FrontendErrorKind::ArgumentError { message: format!(
+                        let kind = FrontendErrorKind::ArgumentError {
+                            message: format!(
                                 "Invalid argument type {:?} for operator {:?}",
                                 mapped_l.get_type(),
                                 op
-                        )};
+                            )
+                        };
                         Err(vec![FrontendError::new(kind, left.get_location())])
                     }
                 } else {
                     let kind = FrontendErrorKind::TypeError {
                         expected: mapped_l.get_type(),
-                        actual: mapped_r.get_type()
+                        actual: mapped_r.get_type(),
                     };
                     Err(vec![FrontendError::new(kind, right.get_location())])
                 }
-            },
+            }
             ExpressionKind::InitDefault { t } => {
                 Ok((ExpressionKind::InitDefault { t: t.clone() }, t.clone()))
-            },
+            }
             ExpressionKind::InitArr { t, size } => {
                 let mapped_size = self.map_expression(&size)?;
                 if mapped_size.get_meta().t == Type::Int {
                     // in this scope, t is always an array (by parser definition)
                     // + the type that we return will always be checked by the caller
-                    Ok((ExpressionKind::InitArr { t: t.clone(), size: Box::new(mapped_size)}, t.clone()))
+                    Ok((ExpressionKind::InitArr { t: t.clone(), size: Box::new(mapped_size) }, t.clone()))
                 } else {
                     let kind = FrontendErrorKind::TypeError {
                         expected: Type::Int,
-                        actual: mapped_size.get_type()
+                        actual: mapped_size.get_type(),
                     };
                     Err(vec![FrontendError::new(kind, size.get_location())])
                 }
-            },
+            }
             ExpressionKind::Reference { r } => {
                 let mapped_ref = self.map_var_reference(r)?;
                 let t = mapped_ref.get_type();
                 Ok((ExpressionKind::Reference { r: mapped_ref }, t))
-            },
+            }
             ExpressionKind::Cast { t, expr } => {
                 let mapped_expr = self.map_expression(&expr)?;
                 if mapped_expr.get_meta().t == Type::Null {
@@ -333,20 +334,20 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     // for now we only allow the null type to be casted
                     let kind = FrontendErrorKind::TypeError {
                         expected: Type::Null,
-                        actual: mapped_expr.get_type()
+                        actual: mapped_expr.get_type(),
                     };
                     Err(vec![FrontendError::new(kind, expr.get_location())])
                 }
-            },
+            }
             ExpressionKind::Error => {
                 unreachable!()
-            },
+            }
         };
         match typecheck_result {
             Ok((kind, t)) => {
                 let mapped: Expression<TypeMeta> = Expression::new(kind, TypeMeta { t });
                 Ok(mapped)
-            },
+            }
             Err(err_vec) => Err(err_vec),
         }
     }
@@ -359,10 +360,10 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 let meta = mapped_block.get_meta().clone();
                 let kind = StatementKind::Block { block: mapped_block };
                 Ok(Statement::new(kind, meta))
-            },
+            }
             StatementKind::Empty => {
-                Ok(Statement::new(StatementKind::Empty, TypeMeta{ t: Type::Void }))
-            },
+                Ok(Statement::new(StatementKind::Empty, TypeMeta { t: Type::Void }))
+            }
             StatementKind::Decl { items, t } => {
                 let mut errors = Vec::new();
                 let mut mapped_declitems = Vec::new();
@@ -382,7 +383,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                                 self.local_decl.insert(ident.clone());
 
                                 let kind = DeclItemKind::NoInit { ident: ident.clone() };
-                                mapped_declitems.push(DeclItem::new(kind, TypeMeta{ t: t.clone() }))
+                                mapped_declitems.push(DeclItem::new(kind, TypeMeta { t: t.clone() }))
                             }
                         }
                         DeclItemKind::Init { ident, val } => {
@@ -406,21 +407,21 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                                             self.local_env.insert(ident.clone(), t.clone());
                                             let kind = DeclItemKind::Init {
                                                 ident: ident.clone(),
-                                                val: Box::new(mapped_expr.clone())
+                                                val: Box::new(mapped_expr.clone()),
                                             };
                                             mapped_declitems.push(DeclItem::new(
                                                 kind,
-                                                TypeMeta{ t: t.clone() }
+                                                TypeMeta { t: t.clone() },
                                             ));
-                                        },
+                                        }
                                         Err(kind) => {
                                             errors.push(FrontendError::new(kind, loc));
-                                        },
+                                        }
                                     }
-                                },
+                                }
                                 Err(mut v) => {
                                     errors.append(&mut v);
-                                },
+                                }
                             }
                         }
                     };
@@ -431,7 +432,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 } else {
                     Err(errors)
                 }
-            },
+            }
             StatementKind::Ass { r, expr } => {
                 let expr_loc = expr.get_location();
                 // TODO: Collect errors from both expression and the reference before failing
@@ -446,12 +447,12 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                         let kind = StatementKind::Ass { r: mapped_ref, expr: Box::new(mapped_expr) };
                         let meta = TypeMeta { t: Type::Void };
                         Ok(Statement::new(kind, meta))
-                    },
+                    }
                     Err(kind) => {
                         Err(vec![FrontendError::new(kind, expr_loc)])
-                    },
+                    }
                 }
-            },
+            }
             StatementKind::Mut { r, op } => {
                 let mapped_ref = self.map_var_reference(r)?;
                 let target_t = &mapped_ref.get_meta().t;
@@ -463,15 +464,16 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                         let kind = StatementKind::Mut { r: mapped_ref, op: op.clone() };
                         let meta = TypeMeta { t: Type::Void };
                         Ok(Statement::new(kind, meta))
-                    },
+                    }
                     t => {
                         let kind = FrontendErrorKind::TypeError {
-                            expected: Type::Int, actual: t.clone()
+                            expected: Type::Int,
+                            actual: t.clone(),
                         };
                         Err(vec![FrontendError::new(kind, r.get_location())])
-                    },
+                    }
                 }
-            },
+            }
             StatementKind::Return { expr } => {
                 match expr {
                     None => {
@@ -487,7 +489,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                         Ok(Statement::new(kind, meta))
                     }
                 }
-            },
+            }
             StatementKind::Cond { expr, stmt } => {
                 // TODO: Collect errors from both expression and statement before failing
                 let mapped_expr = self.map_expression(&expr)?;
@@ -497,21 +499,20 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                         let t = mapped_stmt.get_type();
                         let kind = StatementKind::Cond {
                             expr: Box::new(mapped_expr),
-                            stmt: Box::new(mapped_stmt)
+                            stmt: Box::new(mapped_stmt),
                         };
                         let meta = TypeMeta { t };
                         Ok(Statement::new(kind, meta))
-                    },
+                    }
                     t => {
                         let kind = FrontendErrorKind::TypeError {
                             expected: Type::Bool,
-                            actual: t.clone()
+                            actual: t.clone(),
                         };
                         Err(vec![FrontendError::new(kind, expr.get_location())])
-                    },
+                    }
                 }
-
-            },
+            }
             StatementKind::CondElse { expr, stmt_true, stmt_false } => {
                 let mapped_expr = self.map_expression(&expr)?;
                 match &mapped_expr.get_meta().t {
@@ -527,11 +528,11 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                                 let kind = StatementKind::CondElse {
                                     expr: Box::new(mapped_expr),
                                     stmt_true: Box::new(mapped_true),
-                                    stmt_false: Box::new(mapped_false)
+                                    stmt_false: Box::new(mapped_false),
                                 };
                                 let meta = TypeMeta { t: lca_t };
                                 Ok(Statement::new(kind, meta))
-                            },
+                            }
                             None => {
                                 // technically, if this is not the last statement in block we could
                                 // allow retuning from one branch and not returning from other branch
@@ -543,31 +544,31 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                                 // so I decided to report it as a typing error
                                 let kind = FrontendErrorKind::TypeError {
                                     expected: true_t.clone(),
-                                    actual: false_t.clone()
+                                    actual: false_t.clone(),
                                 };
                                 Err(vec![FrontendError::new(kind, stmt_false.get_location())])
-                            },
+                            }
                         }
-                    },
+                    }
                     t => {
                         let kind = FrontendErrorKind::TypeError {
                             expected: Type::Bool,
-                            actual: t.clone()
+                            actual: t.clone(),
                         };
                         Err(vec![FrontendError::new(kind, expr.get_location())])
-                    },
+                    }
                 }
-            },
+            }
             StatementKind::While { expr, stmt } => {
                 let mapped_expr = self.map_expression(&expr)?;
                 let mut typechecker = self.with_nested_env(Env::new());
                 let mapped_stmt = typechecker.map_statement(&stmt)?;
                 let kind = StatementKind::While {
                     expr: Box::new(mapped_expr),
-                    stmt: Box::new(mapped_stmt)
+                    stmt: Box::new(mapped_stmt),
                 };
                 Ok(Statement::new(kind, TypeMeta { t: Type::Void }))
-            },
+            }
             StatementKind::For { t, ident, arr, stmt } => {
                 let mapped_arr = self.map_expression(&arr)?;
                 let arr_t = &mapped_arr.get_meta().t;
@@ -587,32 +588,32 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                                     t: t.clone(),
                                     ident: ident.clone(),
                                     arr: Box::new(mapped_arr),
-                                    stmt: Box::new(mapped_stmt)
+                                    stmt: Box::new(mapped_stmt),
                                 };
                                 Ok(Statement::new(kind, TypeMeta { t: Type::Void }))
-                            },
+                            }
                             Err(kind) => {
                                 Err(vec![FrontendError::new(kind, arr.get_location())])
-                            },
+                            }
                         }
-                    },
+                    }
                     invalid_arr_t => {
                         let kind = FrontendErrorKind::TypeError {
                             expected: Type::Array { item_t: Box::new(t.clone()) },
-                            actual: invalid_arr_t.clone()
+                            actual: invalid_arr_t.clone(),
                         };
                         Err(vec![FrontendError::new(kind, arr.get_location())])
-                    },
+                    }
                 }
-            },
+            }
             StatementKind::Expr { expr } => {
                 let mapped_expr = self.map_expression(&expr)?;
                 let kind = StatementKind::Expr { expr: Box::new(mapped_expr) };
                 Ok(Statement::new(kind, TypeMeta { t: Type::Void }))
-            },
+            }
             StatementKind::Error => {
                 unreachable!()
-            },
+            }
         }
     }
 
@@ -649,14 +650,13 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
             if let Ok(mut item) = ClassItem::new(
                 class.item.get_key().clone(),
                 &mut mapped_vars,
-                &mut mapped_methods
+                &mut mapped_methods,
             ) {
                 if let Some(parent) = &class.item.parent {
                     item = item.with_parent(parent);
                 }
                 Ok(Class::new(item, TypeMeta { t: Type::Object }))
-            }
-            else {
+            } else {
                 // because we only transformed metadata in envs, we know creation cannot fail
                 unreachable!()
             }
@@ -681,17 +681,17 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     function.item.ret.clone(),
                     function.item.ident.clone(),
                     mapped_args,
-                    mapped_block
+                    mapped_block,
                 ) {
                     Ok(Function::new(item.clone(), TypeMeta { t: item.get_type() }))
                 } else {
                     // because we only transformed metadata in envs, we know creation cannot fail
                     unreachable!()
                 }
-            },
+            }
             Err(kind) => {
                 Err(vec![FrontendError::new(kind, function.get_location())])
-            },
+            }
         }
     }
 }

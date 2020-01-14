@@ -1,10 +1,9 @@
 use std::collections::HashSet;
 
+use crate::frontend::ast::{Class, Keyed, Program, Type};
+use crate::frontend::error::{FrontendError, FrontendErrorKind};
 use crate::meta::LocationMeta;
 use crate::util::env::Env;
-use crate::frontend::ast::{Program, Type, Class, Keyed};
-use crate::frontend::error::{FrontendErrorKind, FrontendError};
-
 
 #[derive(Debug, PartialEq)]
 pub struct TypeChecker<'prog> {
@@ -33,7 +32,7 @@ impl<'p> TypeChecker<'p> {
             builtins,
             local_env: Env::new(),
             local_decl: HashSet::new(),
-            current_class: Option::None
+            current_class: Option::None,
         }
     }
 
@@ -49,7 +48,7 @@ impl<'p> TypeChecker<'p> {
             local_env: env,
             local_decl: HashSet::new(),
             builtins: self.builtins,
-            current_class: self.current_class
+            current_class: self.current_class,
         }
     }
 
@@ -87,10 +86,10 @@ impl<'p> TypeChecker<'p> {
                 match &cls.item.parent {
                     Some(parent_name) => {
                         Option::Some(Type::Class { ident: parent_name.clone() })
-                    },
+                    }
                     None => Option::None,
                 }
-            },
+            }
             _ => Option::None
         }
     }
@@ -104,7 +103,7 @@ impl<'p> TypeChecker<'p> {
         } else {
             let kind = FrontendErrorKind::TypeError {
                 expected: lvalue.clone(),
-                actual: rvalue.clone()
+                actual: rvalue.clone(),
             };
             Err(kind)
         }
@@ -123,7 +122,7 @@ impl<'p> TypeChecker<'p> {
                 }
             } else {
                 // we found the type in supertypes set
-                return Option::Some(t.clone())
+                return Option::Some(t.clone());
             }
         }
         // no ancestor was present in the supertypes set
@@ -142,7 +141,7 @@ impl<'p> TypeChecker<'p> {
     }
 
     /// get variable type from local environment
-    pub fn get_local_variable(&self, ident: & String, loc: &LocationMeta) -> Result<&Type, Vec<FrontendError<LocationMeta>>> {
+    pub fn get_local_variable(&self, ident: &String, loc: &LocationMeta) -> Result<&Type, Vec<FrontendError<LocationMeta>>> {
         if let Some(t) = self.local_env.get(ident) {
             Ok(t)
         } else {
@@ -167,7 +166,7 @@ impl<'p> TypeChecker<'p> {
         } else {
             let kind = FrontendErrorKind::TypeError {
                 expected: Type::Object,
-                actual: t.clone()
+                actual: t.clone(),
             };
             Err(vec![FrontendError::new(kind, loc.clone())])
         }
@@ -175,7 +174,7 @@ impl<'p> TypeChecker<'p> {
 
     /// get type of variable (field) for object of class cls or closest superclass
     pub fn get_instance_variable(
-        &self, cls: &'p Class<LocationMeta>, field: &String, loc: &LocationMeta
+        &self, cls: &'p Class<LocationMeta>, field: &String, loc: &LocationMeta,
     ) -> Result<&'p Type, Vec<FrontendError<LocationMeta>>> {
         if let Some(var) = cls.item.vars.get(field) {
             // get variable from class directly
@@ -210,7 +209,7 @@ impl<'p> TypeChecker<'p> {
 
     /// get type of a method matching given identifier from class or closest superclass
     pub fn get_method(
-        &self, cls: &'p Class<LocationMeta>, field: &String, loc: &LocationMeta
+        &self, cls: &'p Class<LocationMeta>, field: &String, loc: &LocationMeta,
     ) -> Result<Type, Vec<FrontendError<LocationMeta>>> {
         if let Some(func) = cls.item.methods.get(field) {
             // get method for current class

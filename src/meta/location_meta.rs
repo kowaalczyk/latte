@@ -1,4 +1,4 @@
-use crate::meta::{Meta};
+use crate::meta::Meta;
 
 /// metadata type for location data (used by generated parser)
 #[derive(Debug, PartialEq, Clone)]

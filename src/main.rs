@@ -1,11 +1,10 @@
-use std::{fs, env, io};
-use std::process::{exit, Command, ExitStatus};
+use std::{env, fs, io};
 use std::path::Path;
+use std::process::{Command, exit, ExitStatus};
 
-use latte::frontend::process_file;
-use latte::frontend::{CheckedProgram};
 use latte::backend::compile;
-
+use latte::frontend::CheckedProgram;
+use latte::frontend::process_file;
 
 /// get a single required command line argument
 pub fn parse_arg() -> String {
@@ -13,11 +12,11 @@ pub fn parse_arg() -> String {
     match args.get(1) {
         Some(input_filename) => {
             String::from(input_filename)
-        },
+        }
         None => {
             println!("Usage: {} {}", &args[0], "[input_filename]");
             exit(2)
-        },
+        }
     }
 }
 
@@ -37,7 +36,7 @@ pub fn check_exit_code(command_name: &str, status: &io::Result<ExitStatus>) {
                 eprintln!("{} exited with error code: {:?}", command_name, status);
                 exit(1);
             }
-        },
+        }
         Err(e) => {
             eprintln!("{} failed to execute: {:?}", command_name, e);
             exit(1);
@@ -49,18 +48,18 @@ pub fn check_exit_code(command_name: &str, status: &io::Result<ExitStatus>) {
 fn compile_llvm_file(program: &CheckedProgram, output_path: &String) {
     let compiled_code = compile(program);
     match fs::write(output_path, compiled_code) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => {
             eprintln!("Failed to write compulation output output to file {}: {:?}", output_path, e);
             exit(1);
-        },
+        }
     }
 }
 
 /// compile and link binary (.bc) file or exit with error
 fn compile_binary_file(
     llvm_assembler: &String, llvm_linker: &String, llvm_runtime: &String,
-    llvm_compiled_program: &String, binary_output_path: &String
+    llvm_compiled_program: &String, binary_output_path: &String,
 ) {
     let mut compilation_output_dir = env::temp_dir().to_path_buf();
     compilation_output_dir.push("latte_program_out.bc");
@@ -88,7 +87,7 @@ fn main() {
     let llvm_linker = parse_env("LLVM_LINKER", "llvm-link");
     let llvm_runtime = parse_env("LLVM_RUNTIME", "lib/runtime.bc");
 
-    let llvm_output_filename= String::from(
+    let llvm_output_filename = String::from(
         Path::new(&input_filename).with_extension("ll").to_str().unwrap()
     );
     let binary_output_filename = String::from(
@@ -104,15 +103,15 @@ fn main() {
                 &llvm_linker,
                 &llvm_runtime,
                 &llvm_output_filename,
-                &binary_output_filename
+                &binary_output_filename,
             );
-        },
+        }
         Err(err_vec) => {
             eprintln!("ERROR");
             for err in err_vec.iter() {
                 eprintln!("{}", err);
             }
             exit(1);
-        },
+        }
     }
 }

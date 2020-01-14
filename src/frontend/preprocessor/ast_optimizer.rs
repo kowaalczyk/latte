@@ -1,8 +1,7 @@
-use crate::util::mapper::AstMapper;
-use crate::meta::{LocationMeta, Meta};
+use crate::frontend::ast::{Block, BlockItem, Class, ClassItem, Expression, ExpressionKind, Function, FunctionItem, Reference, ReferenceKind, Statement, StatementKind};
 use crate::frontend::error::{FrontendError, FrontendErrorKind};
-use crate::frontend::ast::{Block, Statement, Reference, ClassItem, ExpressionKind, ReferenceKind, StatementKind, FunctionItem, BlockItem, Expression, Class, Function};
-
+use crate::meta::{LocationMeta, Meta};
+use crate::util::mapper::AstMapper;
 
 pub struct AstOptimizer;
 
@@ -27,7 +26,7 @@ impl AstMapper<LocationMeta, LocationMeta, FrontendError<LocationMeta>> for AstO
 
         let mapped_block = Block::new(
             BlockItem { stmts: mapped_stmts },
-            block.get_meta().clone()
+            block.get_meta().clone(),
         );
         Ok(mapped_block)
     }
@@ -42,36 +41,36 @@ impl AstMapper<LocationMeta, LocationMeta, FrontendError<LocationMeta>> for AstO
                 let mapped_block = self.map_block(block)?;
                 let mapped_stmt = Statement::new(
                     StatementKind::Block { block: mapped_block },
-                    stmt.get_meta().clone()
+                    stmt.get_meta().clone(),
                 );
                 Ok(mapped_stmt)
-            },
+            }
             StatementKind::Cond { expr, stmt: cond_stmt } => {
                 match &expr.item {
                     ExpressionKind::LitBool { val: true } => {
                         Ok(*cond_stmt.clone())
-                    },
+                    }
                     ExpressionKind::LitBool { val: false } => {
                         let empty = Statement::new(
                             StatementKind::Empty,
-                            cond_stmt.get_meta().clone()
+                            cond_stmt.get_meta().clone(),
                         );
                         Ok(empty)
-                    },
+                    }
                     _ => Ok(stmt.clone())
                 }
-            },
+            }
             StatementKind::CondElse { expr, stmt_true, stmt_false } => {
                 match &expr.item {
                     ExpressionKind::LitBool { val: true } => {
                         Ok(*stmt_true.clone())
-                    },
+                    }
                     ExpressionKind::LitBool { val: false } => {
                         Ok(*stmt_false.clone())
-                    },
+                    }
                     _ => Ok(stmt.clone())
                 }
-            },
+            }
             _ => Ok(stmt.clone())
         }
     }

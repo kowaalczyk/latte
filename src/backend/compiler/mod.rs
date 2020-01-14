@@ -1,19 +1,18 @@
-mod ir;
-mod compiler;
-mod visitor;
-mod display;
-
-
 use std::string::ToString;
 
 use itertools::Itertools;
 
+use crate::backend::compiler::compiler::Compiler;
+use crate::backend::compiler::ir::LLVM;
+use crate::backend::compiler::visitor::CompilationResult;
+use crate::frontend::ast::Program;
 use crate::meta::TypeMeta;
 use crate::util::visitor::AstVisitor;
-use crate::frontend::ast::Program;
-use crate::backend::compiler::compiler::Compiler;
-use crate::backend::compiler::visitor::CompilationResult;
-use crate::backend::compiler::ir::LLVM;
+
+mod ir;
+mod compiler;
+mod visitor;
+mod display;
 
 
 /// compiles the given program, assuming it meets all the necessary criteria (is checked by frontend)

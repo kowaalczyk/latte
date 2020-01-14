@@ -1,17 +1,16 @@
+use crate::frontend::ast;
+use crate::frontend::error::FrontendError;
+use crate::frontend::parser::{ParsedProgram, ParserErrors};
+use crate::frontend::preprocessor::ast_optimizer::AstOptimizer;
+use crate::frontend::preprocessor::block_organizer::BlockOrganizer;
+use crate::meta::LocationMeta;
+use crate::util::mapper::AstMapper;
+
+pub use self::char_offset::{CharOffset, clean_comments};
+
 mod char_offset;
 mod ast_optimizer;
 mod block_organizer;
-
-
-use crate::frontend::ast;
-use crate::frontend::error::FrontendError;
-use crate::meta::LocationMeta;
-use crate::frontend::parser::{ParsedProgram, ParserErrors};
-use crate::frontend::preprocessor::ast_optimizer::AstOptimizer;
-use crate::util::mapper::AstMapper;
-
-pub use self::char_offset::{clean_comments, CharOffset};
-use crate::frontend::preprocessor::block_organizer::BlockOrganizer;
 
 
 /// substitute conditional statements that are always true/false

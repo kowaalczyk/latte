@@ -38,7 +38,6 @@ fn good_examples_processed() {
     let objects_dir_2: Dir = include_dir!("tests/extensions/objects2");
     let struct_dir: Dir = include_dir!("tests/extensions/struct");
     let mut failed_cases: Vec<String> = vec![];
-    // TODO: Re-enable after implementing compiler for extensions:
     for dir in vec![good_dir, arrays_dir, objects_dir_1, objects_dir_2, struct_dir] {
         parse_good_dir(dir, &mut failed_cases);
     }

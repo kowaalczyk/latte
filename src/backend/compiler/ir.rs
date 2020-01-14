@@ -1,15 +1,16 @@
+use std::fmt::{Display, Error, Formatter};
+
+use regex::internal::Inst;
+
 /// internal type representation (as argument or object member):
 /// string: pointer to an array of characters, passed by value
 /// int, bool: passed by value
 /// array: pointer to array, passed by value
 /// object: pointer to struct, passed by value
 
-use crate::frontend::ast::{Type, UnaryOperator, BinaryOperator};
-use crate::meta::{Meta, GetType};
+use crate::frontend::ast::{BinaryOperator, Type, UnaryOperator};
+use crate::meta::{GetType, Meta};
 use crate::util::env::Env;
-use std::fmt::{Display, Formatter, Error};
-use regex::internal::Inst;
-
 
 #[derive(Debug, Clone)]
 pub enum Entity {
@@ -66,6 +67,7 @@ impl InstructionKind {
         LLVM::from(Instruction::new(self, Some(result)))
     }
 }
+
 pub type Instruction = Meta<InstructionKind, Option<Entity>>;
 
 pub trait GetEntity {

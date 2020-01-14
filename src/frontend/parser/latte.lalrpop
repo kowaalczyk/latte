@@ -321,8 +321,8 @@ Expr6Kind: ast::ExpressionKind<LocationMeta> = {
     "true" => ast::ExpressionKind::LitBool { val: true },
     "false" => ast::ExpressionKind::LitBool { val: false },
     "null" => ast::ExpressionKind::LitNull,
-    // TODO: Unescape characters from the string, use wider regex so that quote can also be included (!!!)
-    r#""[^"]*""# => ast::ExpressionKind::LitStr { val: String::from(<>) },
+    // string regex from: https://stackoverflow.com/questions/249791/regex-for-quoted-string-with-escaping-quotes
+    r#""(?:[^"\\]|\\.)*""# => ast::ExpressionKind::LitStr { val: String::from(<>) },
     // nested expression conflicts with type cast, so we only implement the possibility of casting null
     "(" <t:Type> <expr:NullCast> => ast::ExpressionKind::Cast { t, expr },
     // https://stackoverflow.com/questions/27448189/bison-reduce-reduce-conflict-with-casting-and-expression-parentheses

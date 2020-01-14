@@ -1,10 +1,10 @@
+use std::fmt::{Display, Error, Formatter};
+
+pub use location_meta::{GetLocation, LocationMeta};
+pub use type_meta::{GetType, TypeMeta};
+
 mod location_meta;
 mod type_meta;
-
-use std::fmt::{Display, Formatter, Error};
-
-pub use location_meta::{LocationMeta, GetLocation};
-pub use type_meta::{TypeMeta, GetType};
 
 /// generic structure for attaching metadata to any other structure
 /// can be used in ast items (eg. for type) or errors (eg. for location)
@@ -34,7 +34,7 @@ impl<ItemT: Clone, MetaT: Clone> Meta<ItemT, MetaT> {
     }
 }
 
-impl<ItemT: Clone, MetaT: Clone+Default> From<ItemT> for Meta<ItemT, MetaT> {
+impl<ItemT: Clone, MetaT: Clone + Default> From<ItemT> for Meta<ItemT, MetaT> {
     /// wrap item using default value of metadata
     fn from(item: ItemT) -> Self {
         Self::new(item, Default::default())

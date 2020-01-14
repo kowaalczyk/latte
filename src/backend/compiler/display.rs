@@ -1,12 +1,11 @@
-use itertools::Itertools;
-
-use std::fmt::{Display, Formatter, Error};
+use std::fmt::{Display, Error, Formatter};
 use std::string::ToString;
 
-use crate::frontend::ast::{Type, UnaryOperator, BinaryOperator};
-use crate::backend::compiler::ir::{Entity, Instruction, InstructionKind, LLVM, GetEntity};
-use crate::meta::GetType;
+use itertools::Itertools;
 
+use crate::backend::compiler::ir::{Entity, GetEntity, Instruction, InstructionKind, LLVM};
+use crate::frontend::ast::{BinaryOperator, Type, UnaryOperator};
+use crate::meta::GetType;
 
 impl Display for Type {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
@@ -142,24 +141,24 @@ impl Display for LLVM {
         match self {
             LLVM::Instruction { instruction } => {
                 write!(f, "\t{}", instruction)
-            },
+            }
             LLVM::Label { name } => {
                 write!(f, "{}:", name)
-            },
+            }
             LLVM::ConstStrDecl { name, val, len } => {
                 // string already contains quotes inside
                 let mut s = val.clone();
-                s.insert(s.len()-1, '\\');
-                s.insert(s.len()-1, '0');
-                s.insert(s.len()-1, '0');
+                s.insert(s.len() - 1, '\\');
+                s.insert(s.len() - 1, '0');
+                s.insert(s.len() - 1, '0');
                 write!(
                     f, "@{} = private unnamed_addr constant [{} x i8] c{}",
                     name, len, s
                 )
-            },
-            LLVM::FuncDecl { decl} => {
+            }
+            LLVM::FuncDecl { decl } => {
                 write!(f, "{}", decl)
-            },
+            }
             LLVM::Function { name, ret_type, arg_types, llvm } => {
                 let f_args = arg_types.iter()
                     .map(Type::to_string)
