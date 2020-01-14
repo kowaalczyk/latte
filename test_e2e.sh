@@ -66,10 +66,6 @@ for test_in in tests/good/*.lat; do
   echo "."
 
   # clean generated files for test cases that passed
-  rm "$logfile"
-  rm "$realout"
-  rm "$compiled"
-  rm "$llfile"
 done
 
 if [[ $failed_cases -gt 0 ]]; then

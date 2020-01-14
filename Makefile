@@ -17,3 +17,10 @@ release: runtime
 	cp target/release/latc_llvm ./
 	cp latc_llvm latc
 	chmod +x latc_llvm latc
+
+clean:
+	rm latc latc_llvm
+	find tests -name '*.ll' | xargs rm
+	find tests -name '*.bc' | xargs rm
+	find tests -name '*.realout' | xargs rm
+	find tests -name '*.log' | xargs rm

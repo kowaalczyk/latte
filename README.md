@@ -97,9 +97,11 @@ Compiler is separated into a library and executable, which is just a wrapper con
 That way, compiler functions can be easily accessed programmatically (eg. during tests or to use in a larger project).
 
 
-### Latte compiler library: `latte_lib`
+### Latte compiler library
 
-The compiler library is a separate Cargo crate, implementing all front-end and back-end compiler logic.
+The compiler library `latte` implements all front-end and back-end compiler logic,
+and although it is located in [the same directory as executables](src), 
+it is 100% ready for standalone use (can be imported as `latte = "0.2.0"` via Cargo.toml file).
 
 It consists of the following modules:
 - `frontend`
@@ -121,31 +123,31 @@ The program structure processed by the frontend meets all compiler requirements:
 - all tree nodes have attached type information and all types are correct
 
 Currently, the front-end pipeline consists of the following steps:
-- use parser generated from [grammar](latte_lib/src/frontend/parser/latte.lalrpop) to parse the file into abstract syntax tree
-- optimize constant expressions (implemented [here](latte_lib/src/frontend/preprocessor/ast_optimizer.rs) using `AstMapper` pattern)
-- ensure blocks have return values (implemented [here](latte_lib/src/frontend/preprocessor/block_organizer.rs) using `AstMapper` pattern)
+- use parser generated from [grammar](src/frontend/parser/latte.lalrpop) to parse the file into abstract syntax tree
+- optimize constant expressions (implemented [here](src/frontend/preprocessor/ast_optimizer.rs) using `AstMapper` pattern)
+- ensure blocks have return values (implemented [here](src/frontend/preprocessor/block_organizer.rs) using `AstMapper` pattern)
 - assign and check types, variable access errors and possible name confilcts using typechecker
-  (high-level interface [here](latte_lib/src/frontend/typechecker/mod.rs), 
-  structure defined [here](latte_lib/src/frontend/typechecker/typechecker.rs), 
-  and `AstMapper` implemented [here](latte_lib/src/frontend/typechecker/mapper.rs))
+  (high-level interface [here](src/frontend/typechecker/mod.rs), 
+  structure defined [here](src/frontend/typechecker/typechecker.rs), 
+  and `AstMapper` implemented [here](src/frontend/typechecker/mapper.rs))
 
 If any step in the front-end pipeline fails, the entire pipeline fails as well. Within a single step (ie. parsing or type checking),
 the frontend tries to collect as many independent errors as possible to speed up debugging and provide better feedback.
 
 Errors returned from the frontend are already mapped to their locations within the source file and can be formatted or printed
 (implement [Display trait](https://doc.rust-lang.org/std/fmt/trait.Display.html)) to provide location and error information.
-Error implementation can be found [here](latte_lib/src/frontend/error.rs), I also use 
-a [CharOffset structure](latte_lib/src/frontend/preprocessor/char_offset.rs) to remember original position of characters 
+Error implementation can be found [here](src/frontend/error.rs), I also use 
+a [CharOffset structure](src/frontend/preprocessor/char_offset.rs) to remember original position of characters 
 in file after the comments are removed (which is a necessary step for a lalropop-generated parser). 
 
 **Public interface**
 
-The 2 public functions exposed by [frontend module](latte_lib/src/frontend/mod.rs) are:
+The 2 public functions exposed by [frontend module](src/frontend/mod.rs) are:
 - `process_code`, which attempts to perform all frontend actions and return either compiled program or a vector of errors
 - `process_file`, a convenience wrapper around `process_code` which reads a file from the given path
 
 Aside from these 2 functions, frontend exposes all abstract syntax tree structures via `frontend::ast`.
-Definition and detailed documentation of these structures can be found [here](latte_lib/src/frontend/parser/ast.rs).
+Definition and detailed documentation of these structures can be found [here](src/frontend/parser/ast.rs).
 
 
 #### Backend
@@ -153,18 +155,18 @@ Definition and detailed documentation of these structures can be found [here](la
 Frontend module handles most of the heavy tasks, and because no backend optimizations are implemented yet
 the `backend` module consists of the single `backend::compiler` submodule.
 
-The [compiler structure](latte_lib/src/backend/compiler/compiler.rs) implements a `AstVisitor` pattern
-(trait implementation for compiler is defined [here](latte_lib/src/backend/compiler/visitor.rs)) 
+The [compiler structure](src/backend/compiler/compiler.rs) implements a `AstVisitor` pattern
+(trait implementation for compiler is defined [here](src/backend/compiler/visitor.rs)) 
 that walks the abstract syntax tree and assembles the program into a list of LLVM statements. 
-These statements are a part of the compiler internal representation format (defined [here](latte_lib/src/backend/compiler/ir.rs)), 
-and implement the `Display` trait (implementation defined [here](latte_lib/src/backend/compiler/display.rs)) 
+These statements are a part of the compiler internal representation format (defined [here](src/backend/compiler/ir.rs)), 
+and implement the `Display` trait (implementation defined [here](src/backend/compiler/display.rs)) 
 that allows to represent them as LLVM IR instructions during string conversion.
 
 
 **Public interface**
 
 To compile a code checked by frontend module, use the `backend::compile` function, 
-which is defined [here](latte_lib/src/backend/compiler/mod.rs).
+which is defined [here](src/backend/compiler/mod.rs).
 
 The function assumes its input program is checked by the frontend, and it will `panic!` if that assumption is broken.
 
@@ -175,9 +177,9 @@ but the linking is delegated to the caller (in the case of assignment: `latc_llv
 
 #### Meta
 
-Contains a definition of generic [`Meta`](latte_lib/src/meta/mod.rs) structure, which allows to easy add metadata to any node in abstract syntax tree.
+Contains a definition of generic [`Meta`](src/meta/mod.rs) structure, which allows to easy add metadata to any node in abstract syntax tree.
 
-The [`LocationMeta`](latte_lib/src/meta/location_meta.rs) and [`TypeMeta`](latte_lib/src/meta/type_meta.rs) 
+The [`LocationMeta`](src/meta/location_meta.rs) and [`TypeMeta`](src/meta/type_meta.rs) 
 are some of the concrete implementations of `Meta` that are used throughout the entire project,
 and therefore were also located in the `Meta` module. They both contain aliases to common `Meta` methods, so that
 the calling is more verbose (ie. `node.get_type()` or `node.get_location()` instead of `node.get_meta()`).
@@ -185,8 +187,8 @@ the calling is more verbose (ie. `node.get_type()` or `node.get_location()` inst
 
 #### Util
 
-Contains generic implementations of [`AstMapper`](latte_lib/src/util/mapper.rs) 
-and [`AstVisitor`](latte_lib/src/util/visitor.rs) patterns, as well as the [`Env`](latte_lib/src/util/env.rs)
+Contains generic implementations of [`AstMapper`](src/util/mapper.rs) 
+and [`AstVisitor`](src/util/visitor.rs) patterns, as well as the [`Env`](src/util/env.rs)
 wrapper around `HashMap` for easy creation and management of environments.
 
 
@@ -202,9 +204,9 @@ Runtime is compiled to LLVM using `make runtime` and works on both linux and uni
 It's automatically re-compiled before running tests or building a release to prevent any accidental errors.
 
 
-### Latte compiler executable: `src`, `Cargo.toml`
+### Latte compiler executable
 
-The main Cargo crate, located in the repository root, is just a thin wrapper around the `latte_lib` that
+The main Cargo crate, located in the repository root, is just a thin wrapper around the `latte` library that
 adds the command line interface and calls necessary external commands (`llvm-link`, `llvm-as`) to complete the compilation.
 
 Entire implementation is defined in [main.rs](src/main.rs).

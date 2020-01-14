@@ -2,11 +2,9 @@ use std::{fs, env, io};
 use std::process::{exit, Command, ExitStatus};
 use std::path::Path;
 
-use latte_lib::frontend::process_file;
-use latte_lib::frontend::{CheckedProgram};
-use latte_lib::backend::compile;
-
-use latte_utils::parse_env;
+use latte::frontend::process_file;
+use latte::frontend::{CheckedProgram};
+use latte::backend::compile;
 
 
 /// get a single required command line argument
@@ -20,6 +18,14 @@ pub fn parse_arg() -> String {
             println!("Usage: {} {}", &args[0], "[input_filename]");
             exit(2)
         },
+    }
+}
+
+/// get key from environment variable, or default if it's not defined
+pub fn parse_env(key: &str, default: &str) -> String {
+    match env::var_os(key) {
+        Some(llvm_as) => llvm_as.into_string().unwrap(),
+        None => String::from(default),
     }
 }
 

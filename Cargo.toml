@@ -6,17 +6,22 @@ authors = ["Krzysztof Kowalczyk <k.kowaalczyk@gmail.com>"]
 edition = "2018"
 
 [lib]
-# utility functions for compiler executables
-name = "latte_utils"
+# implementation of latte: compiler, frontend and
+name = "latte"
+version = "0.2.0"
+authors = ["Krzysztof Kowalczyk <k.kowaalczyk@gmail.com>"]
 path = "src/lib.rs"
 
 [workspace]
-members = [".", "latte_lib"]
+members = ["."]
 
 [dependencies]
-# actual compiler & frontend logic implementation
-latte_lib = {path = "latte_lib", version = "0.2.0"}
+lalrpop-util = "0.17.2"  # error recovery from lalrpop-generated parser
+regex = "1.3.1"  # lalrpop dependency used in generated parser
+codemap = "0.1.2"  # mapping byte offset from lalrpop to (file, line, column)
+itertools = "0.8.2"  # for Iterator.join(sep) - efficient string concatenation
+
 
 [dev-dependencies]
-# compile-time embedding of files from source directories, used for testing
-include_dir = "0.4.1"
+lalrpop = "0.17.2"  # parser generator
+include_dir = "0.4.1" # includes file contents in compiled binary, used for testing
