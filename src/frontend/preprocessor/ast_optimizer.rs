@@ -9,15 +9,15 @@ pub struct AstOptimizer;
 type OptimizationResult<T> = Result<T, Vec<FrontendError<LocationMeta>>>;
 
 impl AstMapper<LocationMeta, LocationMeta, FrontendError<LocationMeta>> for AstOptimizer {
-    fn map_var_reference(&mut self, r: &Meta<ReferenceKind<LocationMeta>, LocationMeta>) -> OptimizationResult<Reference<LocationMeta>> {
+    fn map_var_reference(&mut self, r: &Reference<LocationMeta>) -> OptimizationResult<Reference<LocationMeta>> {
         Ok(r.clone())
     }
 
-    fn map_func_reference(&mut self, r: &Meta<ReferenceKind<LocationMeta>, LocationMeta>) -> OptimizationResult<Reference<LocationMeta>> {
+    fn map_func_reference(&mut self, r: &Reference<LocationMeta>) -> OptimizationResult<Reference<LocationMeta>> {
         Ok(r.clone())
     }
 
-    fn map_block(&mut self, block: &Meta<BlockItem<LocationMeta>, LocationMeta>) -> OptimizationResult<Block<LocationMeta>> {
+    fn map_block(&mut self, block: &Block<LocationMeta>) -> OptimizationResult<Block<LocationMeta>> {
         let mapped_stmts: Vec<_> = block.item.stmts.iter()
             .map(|stmt| self.map_statement(stmt))
             .filter_map(Result::ok) // no error is possible at this point
@@ -32,11 +32,11 @@ impl AstMapper<LocationMeta, LocationMeta, FrontendError<LocationMeta>> for AstO
         Ok(mapped_block)
     }
 
-    fn map_expression(&mut self, expr: &Meta<ExpressionKind<LocationMeta>, LocationMeta>) -> OptimizationResult<Expression<LocationMeta>> {
+    fn map_expression(&mut self, expr: &Expression<LocationMeta>) -> OptimizationResult<Expression<LocationMeta>> {
         Ok(expr.clone()) // TODO: More optimization is possible, we can recursively check if there are constants
     }
 
-    fn map_statement(&mut self, stmt: &Meta<StatementKind<LocationMeta>, LocationMeta>) -> OptimizationResult<Statement<LocationMeta>> {
+    fn map_statement(&mut self, stmt: &Statement<LocationMeta>) -> OptimizationResult<Statement<LocationMeta>> {
         match &stmt.item {
             StatementKind::Block { block } => {
                 let mapped_block = self.map_block(block)?;
@@ -76,14 +76,14 @@ impl AstMapper<LocationMeta, LocationMeta, FrontendError<LocationMeta>> for AstO
         }
     }
 
-    fn map_class(&mut self, class: &Meta<ClassItem<LocationMeta>, LocationMeta>) -> OptimizationResult<Class<LocationMeta>> {
+    fn map_class(&mut self, class: &Class<LocationMeta>) -> OptimizationResult<Class<LocationMeta>> {
         let mut mapped_class = class.clone();
         mapped_class.item.methods = class.item.methods.iter()
             .map(|(k, v)| (k.clone(), self.map_function(v).unwrap())).collect();
         Ok(mapped_class)
     }
 
-    fn map_function(&mut self, function: &Meta<FunctionItem<LocationMeta>, LocationMeta>) -> OptimizationResult<Function<LocationMeta>> {
+    fn map_function(&mut self, function: &Function<LocationMeta>) -> OptimizationResult<Function<LocationMeta>> {
         let mapped_block = self.map_block(&function.item.block)?;
         let mut mapped_function = function.clone();
         mapped_function.item.block = mapped_block;

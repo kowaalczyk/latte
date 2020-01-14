@@ -1,22 +1,24 @@
 use crate::util::mapper::AstMapper;
 use crate::meta::{LocationMeta, Meta};
 use crate::frontend::error::{FrontendError, FrontendErrorKind};
-use crate::frontend::parser::ast::{ClassItem, ExpressionKind, ReferenceKind, StatementKind, FunctionItem, BlockItem};
-use crate::frontend::ast::{Statement, Block};
+use crate::frontend::ast::{Statement, Block, Expression, ClassItem, ExpressionKind, ReferenceKind, StatementKind, FunctionItem, BlockItem, Class, Function, Reference};
+
 
 pub struct BlockOrganizer;
 
+type OrganizerResult<T> = Result<T, Vec<FrontendError<LocationMeta>>>;
+
 impl AstMapper<LocationMeta, LocationMeta, FrontendError<LocationMeta>> for BlockOrganizer {
-    fn map_var_reference(&mut self, r: &Meta<ReferenceKind<LocationMeta>, LocationMeta>) -> Result<Meta<ReferenceKind<LocationMeta>, LocationMeta>, Vec<Meta<FrontendErrorKind, LocationMeta>>> {
+    fn map_var_reference(&mut self, r: &Reference<LocationMeta>) -> OrganizerResult<Reference<LocationMeta>> {
         Ok(r.clone())
     }
 
-    fn map_func_reference(&mut self, r: &Meta<ReferenceKind<LocationMeta>, LocationMeta>) -> Result<Meta<ReferenceKind<LocationMeta>, LocationMeta>, Vec<Meta<FrontendErrorKind, LocationMeta>>> {
+    fn map_func_reference(&mut self, r: &Reference<LocationMeta>) -> OrganizerResult<Reference<LocationMeta>> {
         Ok(r.clone())
     }
 
     /// ensures there is a return value at the end of every possible path through the block
-    fn map_block(&mut self, block: &Meta<BlockItem<LocationMeta>, LocationMeta>) -> Result<Meta<BlockItem<LocationMeta>, LocationMeta>, Vec<Meta<FrontendErrorKind, LocationMeta>>> {
+    fn map_block(&mut self, block: &Block<LocationMeta>) -> OrganizerResult<Block<LocationMeta>> {
         // filter statements to remove anything after return statement
         // Iterator::take_while doesn't yield the return statement :c
         let mut filtered_stmts = Vec::new();
@@ -47,12 +49,12 @@ impl AstMapper<LocationMeta, LocationMeta, FrontendError<LocationMeta>> for Bloc
         Ok(mapped_block)
     }
 
-    fn map_expression(&mut self, expr: &Meta<ExpressionKind<LocationMeta>, LocationMeta>) -> Result<Meta<ExpressionKind<LocationMeta>, LocationMeta>, Vec<Meta<FrontendErrorKind, LocationMeta>>> {
+    fn map_expression(&mut self, expr: &Expression<LocationMeta>) -> OrganizerResult<Expression<LocationMeta>> {
         Ok(expr.clone())
     }
 
     /// ensures the statement always ends with a return value
-    fn map_statement(&mut self, stmt: &Meta<StatementKind<LocationMeta>, LocationMeta>) -> Result<Meta<StatementKind<LocationMeta>, LocationMeta>, Vec<Meta<FrontendErrorKind, LocationMeta>>> {
+    fn map_statement(&mut self, stmt: &Statement<LocationMeta>) -> OrganizerResult<Statement<LocationMeta>> {
         match &stmt.item {
             StatementKind::Return { .. } => Ok(stmt.clone()),
             StatementKind::CondElse { expr, stmt_true, stmt_false } => {
@@ -95,14 +97,14 @@ impl AstMapper<LocationMeta, LocationMeta, FrontendError<LocationMeta>> for Bloc
         }
     }
 
-    fn map_class(&mut self, class: &Meta<ClassItem<LocationMeta>, LocationMeta>) -> Result<Meta<ClassItem<LocationMeta>, LocationMeta>, Vec<Meta<FrontendErrorKind, LocationMeta>>> {
+    fn map_class(&mut self, class: &Class<LocationMeta>) -> OrganizerResult<Class<LocationMeta>> {
         let mut mapped_class = class.clone();
         mapped_class.item.methods = class.item.methods.iter()
             .map(|(k, v)| (k.clone(), self.map_function(v).unwrap())).collect();
         Ok(mapped_class)
     }
 
-    fn map_function(&mut self, function: &Meta<FunctionItem<LocationMeta>, LocationMeta>) -> Result<Meta<FunctionItem<LocationMeta>, LocationMeta>, Vec<Meta<FrontendErrorKind, LocationMeta>>> {
+    fn map_function(&mut self, function: &Function<LocationMeta>) -> OrganizerResult<Function<LocationMeta>> {
         let mut mapped_block = self.map_block(&function.item.block)?;
         let mut mapped_function = function.clone();
         mapped_function.item.block = mapped_block;
