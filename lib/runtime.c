@@ -41,6 +41,15 @@ char* __builtin_method__str__concat__(char* left, char* right) {
     return combined;
 }
 
+void* __builtin_method__array__init__(int size) {
+    void* arr = malloc(size);
+    if (arr == NULL) __func__error();
+
+    // fill memory with zeros
+    memset(arr, (char)0, size+1);
+    return arr;
+}
+
 /// latte standard library
 void __func__printInt(int i) {
     printf("%d\n", i);

@@ -3,7 +3,7 @@ use std::string::ToString;
 
 use itertools::Itertools;
 
-use crate::backend::compiler::ir::{Entity, GetEntity, Instruction, InstructionKind, LLVM};
+use crate::backend::ir::{Entity, GetEntity, Instruction, InstructionKind, LLVM, BasicBlock, StructDecl, StringDecl, FunctionDef};
 use crate::frontend::ast::{BinaryOperator, Type, UnaryOperator};
 use crate::meta::GetType;
 
@@ -132,46 +132,68 @@ impl Display for Instruction {
             InstructionKind::Jump { label } => {
                 write!(f, "br label %{}", label)
             }
+            InstructionKind::Phi { args: _ } => {
+                unimplemented!()
+            }
         }
+    }
+}
+
+impl Display for BasicBlock {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        if let Some(label) = &self.label {
+            write!(f, "{}:\n", label)?
+        }
+        let instructions = self.instructions.iter()
+            .map(Instruction::to_string)
+            .map(|i| format!("\t{}", i))
+            .join("\n");
+        write!(f, "{}\n", instructions)
+    }
+}
+
+impl Display for StructDecl {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        unimplemented!()
+    }
+}
+
+impl Display for StringDecl {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        // string already contains quotes inside
+        let mut s = self.val.clone();
+        s.insert(s.len() - 1, '\\');
+        s.insert(s.len() - 1, '0');
+        s.insert(s.len() - 1, '0');
+        write!(
+            f, "@{} = private unnamed_addr constant [{} x i8] c{}",
+            self.name, self.len, s
+        )
+    }
+}
+
+impl Display for FunctionDef {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        let f_args = self.arg_types.iter()
+            .map(Type::to_string)
+            .join(",");
+        let f_instrs = self.body.iter()
+            .map(BasicBlock::to_string)
+            .join("\n");
+        write!(
+            f, "define {} @{} ({}) {{\n {} \n}}\n",
+            self.ret_type, self.name, f_args, f_instrs
+        )
     }
 }
 
 impl Display for LLVM {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self {
-            LLVM::Instruction { instruction } => {
-                write!(f, "\t{}", instruction)
-            }
-            LLVM::Label { name } => {
-                write!(f, "{}:", name)
-            }
-            LLVM::ConstStrDecl { name, val, len } => {
-                // string already contains quotes inside
-                let mut s = val.clone();
-                s.insert(s.len() - 1, '\\');
-                s.insert(s.len() - 1, '0');
-                s.insert(s.len() - 1, '0');
-                write!(
-                    f, "@{} = private unnamed_addr constant [{} x i8] c{}",
-                    name, len, s
-                )
-            }
-            LLVM::FuncDecl { decl } => {
-                write!(f, "{}", decl)
-            }
-            LLVM::Function { name, ret_type, arg_types, llvm } => {
-                let f_args = arg_types.iter()
-                    .map(Type::to_string)
-                    .join(",");
-                let f_instrs = llvm.iter()
-                    .map(|boxed| *boxed.clone())
-                    .map(|i| i.to_string())
-                    .join("\n");
-                write!(
-                    f, "define {} @{} ({}) {{\n {} \n}}\n",
-                    ret_type, name, f_args, f_instrs
-                )
-            }
+            LLVM::DeclFunction { decl } => write!(f, "{}", decl),
+            LLVM::DeclStruct { decl } => write!(f, "{}", decl),
+            LLVM::DeclString { decl } => write!(f, "{}", decl),
+            LLVM::Function { def } => write!(f, "{}", def),
         }
     }
 }

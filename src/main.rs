@@ -45,7 +45,7 @@ pub fn check_exit_code(command_name: &str, status: &io::Result<ExitStatus>) {
 }
 
 /// compile llvm file (.ll) or exit with error
-fn compile_llvm_file(program: &CheckedProgram, output_path: &String) {
+fn compile_llvm_file(program: CheckedProgram, output_path: &String) {
     let compiled_code = compile(program);
     match fs::write(output_path, compiled_code) {
         Ok(_) => {}
@@ -97,7 +97,7 @@ fn main() {
     match process_file(input_filename) {
         Ok(prog) => {
             eprintln!("OK");
-            compile_llvm_file(&prog, &llvm_output_filename);
+            compile_llvm_file(prog, &llvm_output_filename);
             compile_binary_file(
                 &llvm_assembler,
                 &llvm_linker,

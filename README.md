@@ -155,7 +155,7 @@ Definition and detailed documentation of these structures can be found [here](sr
 Frontend module handles most of the heavy tasks, and because no backend optimizations are implemented yet
 the `backend` module consists of the single `backend::compiler` submodule.
 
-The [compiler structure](src/backend/compiler/compiler.rs) implements a `AstVisitor` pattern
+The [compiler structure](src/backend/compiler.rs) implements a `AstVisitor` pattern
 (trait implementation for compiler is defined [here](src/backend/compiler/visitor.rs)) 
 that walks the abstract syntax tree and assembles the program into a list of LLVM statements. 
 These statements are a part of the compiler internal representation format (defined [here](src/backend/compiler/ir.rs)), 
