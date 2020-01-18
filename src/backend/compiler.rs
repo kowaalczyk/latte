@@ -6,11 +6,15 @@ use crate::frontend::ast::{BinaryOperator, Block, DeclItemKind, Expression, Expr
 use crate::meta::{GetType, TypeMeta};
 use crate::util::env::Env;
 use itertools::Itertools;
+use std::collections::HashSet;
+use std::iter::FromIterator;
+use crate::backend::builder::BlockBuilder;
 
 #[derive(Clone)]
 pub struct Compiler {
     block_context: Option<BlockContext>,
     function_context: Option<FunctionContext>,
+    builder: Option<BlockBuilder>,
     global_context: GlobalContext,
 }
 
@@ -19,6 +23,7 @@ impl Compiler {
         Self {
             block_context: None,
             function_context: None,
+            builder: None,
             global_context: GlobalContext::new(),
         }
     }
@@ -36,6 +41,7 @@ impl Compiler {
         let mut compiler = Compiler::new();
         compiler.block_context = Some(BlockContext::new());
         compiler.function_context = Some(FunctionContext::new(starting_reg));
+        compiler.builder = Some(BlockBuilder::without_label());
         compiler.global_context = self.global_context.clone();
         compiler
     }
@@ -54,31 +60,78 @@ impl Compiler {
     fn merge_block_compiler(&mut self, nested: Self) {
         self.global_context = nested.global_context;
         self.function_context = nested.function_context;
+        self.builder = nested.builder;
+        self.block_context = nested.block_context; // TODO: Nested envs are necessary, fix this (!!!)
     }
 
     /// shortcut function for getting a new register entity
     fn new_register(&mut self, t: Type) -> Entity {
-        Entity::Register {
-            n: self.function_context.as_mut().unwrap().new_register(),
-            t,
-        }
+        // TODO: Create a one function returning mutable reference to the context
+        self.function_context.as_mut().unwrap().new_register(t)
     }
 
     /// shortcut function for puhsing instructions to current block in function context
     fn push_instruction(&mut self, i: Instruction) {
-        self.function_context.as_mut().unwrap().push_instruction(i)
+        self.builder.as_mut().unwrap().push_instruction(i);
     }
 
     /// shortcut function for creating a new basic block
     fn next_block(&mut self, label: String) {
-        self.function_context.as_mut().unwrap().next_block(label)
+        let block = self.builder.as_mut().unwrap().build(
+            self.function_context.as_mut().unwrap()
+        );
+        self.function_context.as_mut().unwrap().push_block(block);
+        self.builder = Some(BlockBuilder::with_label(label));
+    }
+
+    /// creates new basic block, but before that maps entities in the last block (loop body)
+    /// using mapping for the currently built block (loop condition)
+    fn complete_loop_block(&mut self, next_label: String) {
+        let cond_block = self.builder.as_mut().unwrap().build(
+            self.function_context.as_mut().unwrap()
+        );
+
+        let mapping = self.builder.as_mut().unwrap().get_entity_mapping(
+            self.function_context.as_mut().unwrap()
+        );
+        self.function_context.as_mut().unwrap().map_entities_in_last_block(mapping);
+        self.block_context.as_mut().unwrap().map_env(mapping);
+
+        self.function_context.as_mut().unwrap().push_block(cond_block);
+        self.builder = Some(BlockBuilder::with_label(next_label));
+    }
+
+    /// shortcut function for getting the label from currently constructed basic block
+    fn get_current_block_label(&self) -> String {
+        self.builder.as_ref().unwrap().get_block_label()
+    }
+
+    /// shortcut for getting environment from currently used block context
+    fn get_current_env(&self) -> Env<Entity> {
+        self.block_context.as_ref().unwrap().get_env().clone()
+    }
+
+    /// shortcut for setting a variable and updating gen for current basic block
+    fn set_variable(&mut self, ident: String, ent: Entity) {
+        self.block_context.as_mut().unwrap().set_ptr(&ident, &ent);
+//        self.builder.as_mut().unwrap().set_gen(ident, ent);
     }
 
     pub fn compile_expression(&mut self, expr: Expression<TypeMeta>) -> Entity {
         let result_t = expr.get_type();
         match expr.item {
-            ExpressionKind::LitInt { val } => Entity::from(val),
-            ExpressionKind::LitBool { val } => Entity::from(val),
+            ExpressionKind::LitInt { val } => {
+                Entity::Int {
+                    v: val,
+                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                }
+            },
+            ExpressionKind::LitBool { val } => {
+                Entity::Bool {
+                    v: val,
+                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                }
+            },
             ExpressionKind::LitStr { val } => {
                 // declare the string as global constant
                 let string_decl = self.global_context.declare_string(val);
@@ -90,9 +143,22 @@ impl Compiler {
                 };
                 let register = self.new_register(Type::Str);
                 self.push_instruction(instr.with_result(register.clone()));
-                register
+
+                // immediately cast the constant to i8* to prevent type mismatch in phi expressions
+                let cast_instr = InstructionKind::BitCast {
+                    ent: register,
+                    to: Type::Str
+                };
+                let cast_register = self.new_register(Type::Str);
+                self.push_instruction(cast_instr.with_result(cast_register.clone()));
+
+                cast_register
             }
-            ExpressionKind::LitNull => Entity::Null,
+            ExpressionKind::LitNull => {
+                Entity::Null {
+                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                }
+            },
             ExpressionKind::App { r, args } => {
                 // get name of the function / method, mapped by compiler
                 let func_name = match &r.item {
@@ -126,7 +192,7 @@ impl Compiler {
                         Type::Void => {
                             self.push_instruction(instr.without_result());
                             // typechecker guarantees we don't use this so just return a placeholder
-                            Entity::Null
+                            Entity::Null { uuid: 0 }
                         }
                         t => {
                             let result_ent = self.new_register(t);
@@ -167,10 +233,10 @@ impl Compiler {
                     // check if left result is enough to determine the entire expression result
                     let ending_value = if let BinaryOperator::Or = op {
                         // for OR, if left expression was true, entire expression is also true
-                        Entity::Bool { v: true }
+                        Entity::Bool { v: true, uuid: 0 }
                     } else {
                         // for AND, if left expression was false, entire expression is also false
-                        Entity::Bool { v: false }
+                        Entity::Bool { v: false, uuid: 0 }
                     };
                     let cmp = InstructionKind::BinaryOp {
                         op: BinaryOperator::Equal,
@@ -243,12 +309,7 @@ impl Compiler {
             ExpressionKind::Reference { r } => {
                 match &r.item {
                     ReferenceKind::Ident { ident } => {
-                        let instr = InstructionKind::Load {
-                            ptr: self.block_context.as_mut().unwrap().get_ptr(ident)
-                        };
-                        let result_ent = self.new_register(result_t);
-                        self.push_instruction(instr.with_result(result_ent.clone()));
-                        result_ent
+                        self.block_context.as_mut().unwrap().get_ptr(ident)
                     }
                     ReferenceKind::Object { .. } => {
                         // 1. load by pointer, assign type from local env
@@ -295,13 +356,19 @@ impl Compiler {
                     // get identifier and entity representing the value (const with default if not provided)
                     let (entity, ident) = match item.item {
                         DeclItemKind::NoInit { ident } => {
-                            let entity = match t {
-                                Type::Int => Entity::Int { v: 0 },
-                                Type::Bool => Entity::Bool { v: false },
+                            let entity = match &t {
+                                Type::Int => Entity::Int {
+                                    v: 0,
+                                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                                },
+                                Type::Bool => Entity::Bool {
+                                    v: false,
+                                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                                },
                                 Type::Str => {
                                     let default_init = InstructionKind::Call {
                                         func: String::from("__builtin_method__str__init__"),
-                                        args: vec![Entity::Int { v: 0 }],
+                                        args: vec![Entity::Int { v: 0, uuid: 0 }],
                                     };
                                     let call_ret_ent = self.new_register(Type::Str);
                                     self.push_instruction(
@@ -314,62 +381,63 @@ impl Compiler {
                             (entity, ident)
                         }
                         DeclItemKind::Init { ident, val } => {
-                            let entity = self.compile_expression(*val);
+                            // collect instructions from the expression TODO: Refactor-out
+                            let entity = match self.compile_expression(*val) {
+                                Entity::Null { uuid } => Entity::Null {
+                                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                                },
+                                Entity::Int { v, uuid } => Entity::Int {
+                                    v,
+                                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                                },
+                                Entity::Bool { v, uuid } => Entity::Bool {
+                                    v,
+                                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                                },
+                                reg_entity => reg_entity,
+                            };
                             (entity, ident)
                         }
                     };
 
-                    // allocate memory for the new variable
-                    let alloc = InstructionKind::Alloc { t: t.clone() };
-                    let alloc_ent = self.new_register(
-                        Type::Reference { t: Box::new(t.clone()) }
-                    );
-                    self.push_instruction(alloc.with_result(alloc_ent.clone()));
-
-                    // store entity with value at the allocated memory location
-                    let store = InstructionKind::Store {
-                        val: entity,
-                        ptr: alloc_ent.clone(),
-                    };
-                    self.push_instruction(store.without_result());
-
                     // use compiler environment to remember where the variable is stored
-                    self.block_context.as_mut().unwrap().set_ptr(&ident, &alloc_ent);
+                    self.set_variable(ident, entity);
                 }
             }
             StatementKind::Ass { r, expr } => {
-                // collect instructions from the expression
-                let entity = self.compile_expression(*expr);
+                // collect instructions from the expression TODO: Refactor-out
+                let entity = match self.compile_expression(*expr) {
+                    Entity::Null { uuid } => Entity::Null {
+                        uuid: self.function_context.as_mut().unwrap().new_uuid()
+                    },
+                    Entity::Int { v, uuid } => Entity::Int {
+                        v,
+                        uuid: self.function_context.as_mut().unwrap().new_uuid()
+                    },
+                    Entity::Bool { v, uuid } => Entity::Bool {
+                        v,
+                        uuid: self.function_context.as_mut().unwrap().new_uuid()
+                    },
+                    reg_entity => reg_entity,
+                };
 
                 // get entity with a pointer to the referenced variable
                 let var_ident = match &r.item {
-                    ReferenceKind::Ident { ident } => ident,
+                    ReferenceKind::Ident { ident } => ident.clone(),
                     t => unimplemented!()
                 };
-                let ptr = self.block_context.as_mut().unwrap().get_ptr(var_ident);
 
-                // store the entity at the location pointed to by the variable pointer
-                let store = InstructionKind::Store {
-                    val: entity,
-                    ptr,
-                };
-                self.push_instruction(store.without_result());
+                // update local variable environment to reflect the change
+                self.set_variable(var_ident, entity)
             }
             StatementKind::Mut { r, op } => {
                 // get entity with a pointer to the referenced variable
                 // TODO: This part needs to be refactored-out to independent function
                 let var_ident = match &r.item {
-                    ReferenceKind::Ident { ident } => ident,
+                    ReferenceKind::Ident { ident } => ident.clone(),
                     t => unimplemented!(),
                 };
-                let ptr_ent = self.block_context.as_mut().unwrap().get_ptr(var_ident);
-
-                // load the value of a variable to a register
-                let load = InstructionKind::Load {
-                    ptr: ptr_ent.clone()
-                };
-                let load_ent = self.new_register(Type::Int);
-                self.push_instruction(load.with_result(load_ent.clone()));
+                let var_ent = self.block_context.as_mut().unwrap().get_ptr(&var_ident);
 
                 // perform the op on the extracted value
                 let binary_op = match op {
@@ -378,18 +446,14 @@ impl Compiler {
                 };
                 let mut_op = InstructionKind::BinaryOp {
                     op: binary_op,
-                    l: load_ent,
-                    r: Entity::Int { v: 1 },
+                    l: var_ent,
+                    r: Entity::Int { v: 1, uuid: 0 },
                 };
                 let mut_result_ent = self.new_register(Type::Int);
                 self.push_instruction(mut_op.with_result(mut_result_ent.clone()));
 
-                // store the result back to the original location
-                let store = InstructionKind::Store {
-                    val: mut_result_ent,
-                    ptr: ptr_ent,
-                };
-                self.push_instruction(store.without_result());
+                // update local variable environment to reflect the change
+                self.set_variable(var_ident, mut_result_ent)
             }
             StatementKind::Return { expr } => {
                 match expr {
@@ -422,16 +486,26 @@ impl Compiler {
                 };
                 self.push_instruction(cond_jump_instr.without_result());
 
+                // collect information for phi calculation
+                let in_label = self.get_current_block_label();
+                let in_env = self.get_current_env();
+
                 // true branch
-                self.function_context.as_mut().unwrap().next_block(true_label);
+                self.next_block(true_label.clone());
+                self.builder.as_mut().unwrap().add_predecessor(in_label.clone(), &in_env);
                 self.compile_statement(*stmt);
-                if !self.function_context.as_ref().unwrap().current_block_always_returns() {
+                if !self.builder.as_ref().unwrap().block_always_returns() {
                     let jump_instr = InstructionKind::Jump { label: end_label.clone() };
                     self.push_instruction(jump_instr.without_result());
                 }
 
-                // end = new current block
-                self.function_context.as_mut().unwrap().next_block(end_label);
+                // collect information for phi calculation
+                let true_env = self.get_current_env();
+
+                // end = new current block, with additional predecessor (in_block)
+                self.next_block(end_label);
+                self.builder.as_mut().unwrap().add_predecessor(in_label, &in_env);
+                self.builder.as_mut().unwrap().add_predecessor(true_label, &true_env);
             }
             StatementKind::CondElse { expr, stmt_true, stmt_false } => {
                 // create labels for all branches
@@ -449,37 +523,52 @@ impl Compiler {
                 };
                 self.push_instruction(cond_jump_instr.without_result());
 
+                // collect information for phi calculation
+                let in_label = self.get_current_block_label();
+                let in_env = self.get_current_env();
+
                 // prepare common jump instruction for both branches
                 let end_jump_instr = InstructionKind::Jump { label: end_label.clone() }
                     .without_result();
                 let mut next_block_necessary = false;
 
                 // true branch
-                self.function_context.as_mut().unwrap().next_block(true_label);
+                self.next_block(true_label.clone());
+                self.builder.as_mut().unwrap().add_predecessor(in_label.clone(), &in_env);
                 self.compile_statement(*stmt_true);
-                if !self.function_context.as_ref().unwrap().current_block_always_returns() {
+                if !self.builder.as_ref().unwrap().block_always_returns() {
                     self.push_instruction(end_jump_instr.clone());
                     next_block_necessary = true;
                 }
 
+                // collect information for phi calculation
+                let true_env = self.get_current_env();
+
                 // false branch
-                self.function_context.as_mut().unwrap().next_block(false_label);
+                self.next_block(false_label.clone());
+                self.builder.as_mut().unwrap().add_predecessor(in_label.clone(), &in_env);
                 self.compile_statement(*stmt_false);
-                if !self.function_context.as_ref().unwrap().current_block_always_returns() {
+                if !self.builder.as_ref().unwrap().block_always_returns() {
                     self.push_instruction(end_jump_instr.clone());
                     next_block_necessary = true;
                 }
+
+                // collect information for phi calculation
+                let false_env = self.get_current_env();
 
                 // if either of the sides needed to jump to the end block, create it
                 if next_block_necessary {
-                    self.function_context.as_mut().unwrap().next_block(end_label);
+                    self.next_block(end_label);
+//                    self.builder.as_mut().unwrap().add_predecessor(in_label, &in_env);
+                    self.builder.as_mut().unwrap().add_predecessor(true_label, &true_env);
+                    self.builder.as_mut().unwrap().add_predecessor(false_label, &false_env);
                 }
             }
             StatementKind::While { expr, stmt } => {
                 // get labels with unique suffix
                 let suffix = self.global_context.new_label_suffix();
                 let cond_label = format!("__loop_cond__{}", suffix);
-                let loop_label = format!("__loop_begin__{}", suffix);
+                let loop_label = format!("__loop_body__{}", suffix);
                 let end_label = format!("__loop_end__{}", suffix);
 
                 // jump to condition evaluation sequence
@@ -487,23 +576,35 @@ impl Compiler {
                     .without_result();
                 self.push_instruction(cond_jump.clone());
 
+                // collect information for phi calculation
+                let in_label = self.get_current_block_label();
+                let in_env = self.get_current_env();
+
+                // compile loop body, that also jumps back to cond at the end
+                self.next_block(loop_label.clone());
+                // we don't need to specify predecessor for body block
+                self.compile_statement(*stmt);
+                self.push_instruction(cond_jump);
+
+                // collect information for phi calculation
+                let body_env = self.get_current_env();
+
+                // begin next block by evaluating necessary phi statements based on block variables
+                self.next_block(cond_label);
+                self.builder.as_mut().unwrap().add_predecessor(in_label, &in_env);
+                self.builder.as_mut().unwrap().add_predecessor(loop_label.clone(), &body_env);
+
                 // evaluate condition in a new block and jump to loop body or end
-                self.function_context.as_mut().unwrap().next_block(cond_label);
                 let expr_result = self.compile_expression(*expr);
                 let loop_cond_jump = InstructionKind::JumpCond {
                     cond: expr_result,
-                    true_label: loop_label.clone(),
+                    true_label: loop_label,
                     false_label: end_label.clone(),
                 };
                 self.push_instruction(loop_cond_jump.without_result());
 
-                // compile loop body that jumps back to cond at the end
-                self.function_context.as_mut().unwrap().next_block(loop_label);
-                self.compile_statement(*stmt);
-                self.push_instruction(cond_jump);
-
-                // start new block with loop end label
-                self.function_context.as_mut().unwrap().next_block(end_label);
+                // start new block with loop end label, and fix mapping in 2 previous blocks
+                self.complete_loop_block(end_label);
             }
             StatementKind::For { t, ident, arr, stmt } => {
                 unimplemented!();
@@ -518,41 +619,22 @@ impl Compiler {
     }
 
     pub fn compile_function(&mut self, function: Function<TypeMeta>) -> FunctionDef {
-        let mut arg_types = Vec::new();
+        let mut args = Vec::new();
 
         // add args to the env of nested compiler
         let n_args = function.item.args.len();
-        let mut compiler = self.nested_for_function(n_args + 1);
+        let mut compiler = self.nested_for_function(1); // TODO: This parameter is no longer needed
         for (arg_reg, arg) in function.item.args.iter().enumerate() {
             // collect variable types in case the caller needs to cast the passed arguments later
             // TODO: This is not necessary at the moment, re-visit before implementing method calls
-            arg_types.push(arg.get_type());
-
-            // for consistent way of accessing variables (via self.get_ptr()),
-            // function stores the value of every variable before executing instructions
-
-            // allocate memory for the variable
-            let alloc = InstructionKind::Alloc {
-                t: arg.get_type()
-            };
-            let var_ptr_ent = compiler.new_register(
-                Type::Reference { t: Box::new(arg.get_type()) }
-            );
-            compiler.push_instruction(alloc.with_result(var_ptr_ent.clone()));
-
-            // load passed argument value to memory allocated for variable
-            let arg_val_ent = Entity::Register {
-                n: arg_reg,
-                t: arg.get_type(),
-            };
-            let store = InstructionKind::Store {
-                val: arg_val_ent,
-                ptr: var_ptr_ent.clone(),
-            };
-            compiler.push_instruction(store.without_result());
+            args.push(arg.item.clone());
 
             // mark location of the variable in the block environment
-            compiler.block_context.as_mut().unwrap().set_ptr(&arg.item.ident, &var_ptr_ent);
+            let arg_ent = Entity::NamedRegister {
+                name: arg.item.ident.clone(),
+                t: arg.get_type()
+            };
+            compiler.set_variable(arg.item.ident.clone(), arg_ent);
         }
 
         // compile function instructions using the nested compiler
@@ -560,11 +642,17 @@ impl Compiler {
             compiler.compile_statement(*stmt);
         }
 
+        // finish last block within the nested compiler
+        let block = compiler.builder.as_mut().unwrap().build(
+            compiler.function_context.as_mut().unwrap()
+        );
+        compiler.function_context.as_mut().unwrap().push_block(block);
+
         // build the LLVM function
         let llvm_function = FunctionDef {
             name: self.global_context.get_function(&function.item.ident),
             ret_type: function.item.ret.clone(),
-            arg_types,
+            args,
             body: compiler.function_context.as_mut().unwrap().conclude(),
         };
 

@@ -1,55 +1,49 @@
-use std::fmt::{Display, Error, Formatter};
-
-use regex::internal::Inst;
-
 /// internal type representation (as argument or object member):
 /// string: pointer to an array of characters, passed by value
 /// int, bool: passed by value
 /// array: pointer to array, passed by value
 /// object: pointer to struct, passed by value
 
-use crate::frontend::ast::{BinaryOperator, Type, UnaryOperator};
-use crate::meta::{GetType, Meta};
-use crate::util::env::Env;
+use std::fmt::{Display, Error, Formatter};
+
 use std::collections::HashSet;
 
-#[derive(Debug, Clone)]
+use crate::frontend::ast::{BinaryOperator, Type, UnaryOperator, ArgItem};
+use crate::meta::{GetType, Meta};
+use crate::util::env::Env;
+
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+/// represents anything that can be passed as argument to LLVM operation
+/// uuid fields are necessary for constants to guarantee that they are
+/// differentiate between variables with same, constant value
 pub enum Entity {
-    Null,
-    Int { v: i32 },
-    Bool { v: bool },
+    Null { uuid: usize },
+    Int { v: i32, uuid: usize },
+    Bool { v: bool, uuid: usize },
     Register { n: usize, t: Type },
+    NamedRegister { name: String, t: Type },
 }
 
 impl GetType for Entity {
     fn get_type(&self) -> Type {
         match self {
-            Entity::Null => Type::Null,
+            Entity::Null { .. } => Type::Null,
             Entity::Int { .. } => Type::Int,
             Entity::Bool { .. } => Type::Bool,
             Entity::Register { n: _, t } => t.clone(),
+            Entity::NamedRegister { name: _, t } => t.clone(),
         }
     }
 }
 
-impl From<i32> for Entity {
-    fn from(i: i32) -> Self {
-        Entity::Int { v: i }
-    }
-}
-
-impl From<bool> for Entity {
-    fn from(b: bool) -> Self {
-        Entity::Bool { v: b }
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum InstructionKind {
     Alloc { t: Type },
     Load { ptr: Entity },
     Store { val: Entity, ptr: Entity },
     LoadConst { name: String, len: usize },
+    BitCast { ent: Entity, to: Type },
     UnaryOp { op: UnaryOperator, arg: Entity },
     BinaryOp { op: BinaryOperator, l: Entity, r: Entity },
     Call { func: String, args: Vec<Entity> },
@@ -101,10 +95,43 @@ impl GetType for Instruction {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct BasicBlock {
     pub label: Option<String>,
     pub instructions: Vec<Instruction>,
+}
+
+impl BasicBlock {
+    /// checks if the block ends with a return instruction
+    pub fn always_returns(&self) -> bool {
+        if let Some(last_instr) = self.instructions.last() {
+            match &last_instr.item {
+                InstructionKind::RetVoid => true,
+                InstructionKind::RetVal { .. } => true,
+                _ => false,
+            }
+        } else {
+            false
+        }
+    }
+
+    /// get the lowest register number used within the block
+    pub fn get_first_register(&self) -> Option<Entity> {
+        self.instructions.iter()
+            .filter_map(|i| i.get_meta().clone())
+            .nth(0)
+    }
+
+    /// get block label name, or unnamed label 0
+    pub fn get_label(&self) -> String {
+        if let Some(label) = &self.label {
+            label.clone()
+        } else {
+            // label is numbered, % will be automatically prepended
+            // when used as a variable (ie. phi argument)
+            String::from("0")
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -124,7 +151,7 @@ pub struct StringDecl {
 pub struct FunctionDef {
     pub name: String,
     pub ret_type: Type,
-    pub arg_types: Vec<Type>,
+    pub args: Vec<ArgItem>,
     pub body: Vec<BasicBlock>,
 }
 

@@ -1,12 +1,16 @@
-use crate::backend::ir::{BasicBlock, Instruction, InstructionKind};
+use crate::backend::ir::{BasicBlock, Instruction, InstructionKind, Entity};
+use crate::util::env::Env;
+use crate::frontend::ast::Type;
+use std::collections::HashMap;
+use crate::backend::builder::MapEntities;
 
 #[derive(Debug, Clone)]
 pub struct FunctionContext {
-    /// basic block to which we're actively writing instructions
-    current_block: Option<BasicBlock>,
-
     /// number of next available register
     available_register: usize,
+
+    /// uuid for variables initialized to constant values
+    available_uuid: usize,
 
     /// already compiled basic blocks
     compiled_blocks: Vec<BasicBlock>,
@@ -15,64 +19,44 @@ pub struct FunctionContext {
 impl FunctionContext {
     pub fn new(starting_reg: usize) -> Self {
         Self {
-            current_block: Some(BasicBlock { label: None, instructions: vec![] }),
             available_register: starting_reg,
+            available_uuid: 1, // 0 is reserved for built-in constants
             compiled_blocks: vec![]
         }
     }
 
     /// get new numbered register identifier
-    pub fn new_register(&mut self) -> usize {
-        let register = self.available_register;
+    pub fn new_register(&mut self, t: Type) -> Entity {
+        let register_n = self.available_register;
         self.available_register += 1;
-        register
-    }
 
-    /// add new instruction to the current basic block
-    pub fn push_instruction(&mut self, instr: Instruction) {
-        self.current_block.as_mut().unwrap().instructions.push(instr)
-    }
-
-    /// check if current block always returns
-    pub fn current_block_always_returns(&self) -> bool {
-        if let Some(block) = &self.current_block {
-            if let Some(last_instr) = block.instructions.last() {
-                match last_instr.item {
-                    InstructionKind::RetVoid => true,
-                    InstructionKind::RetVal { .. } => true,
-                    _ => false,
-                }
-            } else {
-                false
-            }
-        } else {
-            panic!("Cannot check return value without current_block")
+        Entity::Register {
+            n: register_n,
+            t,
         }
     }
 
-    /// concludes the current block and creates a new one, with specified label
-    pub fn next_block(&mut self, label: String) {
-        if let Some(block) = &mut self.current_block {
-            self.compiled_blocks.push(block.clone());
+    /// get new unique identifier
+    pub fn new_uuid(&mut self) -> usize {
+        let uuid = self.available_uuid;
+        self.available_uuid += 1;
+        uuid
+    }
 
-            let new_block = BasicBlock {
-                label: Some(label),
-                instructions: vec![]
-            };
-            self.current_block = Some(new_block);
-        } else {
-            panic!("Cannot conclude current block: it doesn't exist")
-        }
+    /// push new, compiled basic block to the function context
+    pub fn push_block(&mut self, block: BasicBlock) {
+        self.compiled_blocks.push(block);
+    }
+
+    /// map entities in instructions from the last compiled block using provided mapping
+    pub fn map_entities_in_last_block(&mut self, mapping: &HashMap<Entity, Entity>) {
+        let mut last_block = self.compiled_blocks.pop().unwrap();
+        last_block = last_block.map_entities(0, mapping);
+        self.compiled_blocks.push(last_block);
     }
 
     /// concludes the current block and returns all compiled blocks
     pub fn conclude(&mut self) -> Vec<BasicBlock> {
-        if let Some(block) = &mut self.current_block {
-            self.compiled_blocks.push(block.clone());
-            self.current_block = None;
-        } else {
-            panic!("Cannot conclude current block: it doesn't exist")
-        }
         self.compiled_blocks.drain(..).collect()
     }
 }

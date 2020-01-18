@@ -1,5 +1,8 @@
-use crate::util::env::Env;
+use std::collections::HashMap;
+
+use crate::backend::builder::MapEntities;
 use crate::backend::ir::Entity;
+use crate::util::env::Env;
 
 #[derive(Debug, Clone)]
 pub struct BlockContext {
@@ -20,5 +23,15 @@ impl BlockContext {
     /// set pointer to a variable in a local environment, given an entity that represents it
     pub fn set_ptr(&mut self, ident: &String, ent: &Entity) {
         self.env.insert(ident.clone(), ent.clone());
+    }
+
+    pub fn get_env(&self) -> &Env<Entity> {
+        &self.env
+    }
+
+    pub fn map_env(&mut self, mapping: &HashMap<Entity, Entity>) {
+        self.env = self.env.iter()
+            .map(|(k, v)| (k.clone(), v.map_entities(0, &mapping)))
+            .collect()
     }
 }

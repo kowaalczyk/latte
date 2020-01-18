@@ -2,6 +2,7 @@ use crate::frontend::ast::Program;
 use crate::meta::TypeMeta;
 
 mod compiler;
+mod builder;
 mod context;
 mod ir;
 

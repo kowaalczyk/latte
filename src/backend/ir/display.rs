@@ -1,7 +1,7 @@
 use std::fmt::{Display, Error, Formatter};
 use std::string::ToString;
 
-use itertools::Itertools;
+use itertools::{Itertools, join};
 
 use crate::backend::ir::{Entity, GetEntity, Instruction, InstructionKind, LLVM, BasicBlock, StructDecl, StringDecl, FunctionDef};
 use crate::frontend::ast::{BinaryOperator, Type, UnaryOperator};
@@ -47,10 +47,11 @@ impl Display for BinaryOperator {
 impl Display for Entity {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self {
-            Entity::Null => write!(f, "null"),
-            Entity::Register { n, t } => write!(f, "%{}", n),
-            Entity::Int { v } => write!(f, "{}", v),
-            Entity::Bool { v } => write!(f, "{}", v),
+            Entity::Null { .. } => write!(f, "null"),
+            Entity::Register { n, t: _ } => write!(f, "%{}", n),
+            Entity::NamedRegister { name, t: _ } => write!(f, "%{}", name),
+            Entity::Int { v, uuid: _ } => write!(f, "{}", v),
+            Entity::Bool { v, uuid: _ } => write!(f, "{}", v),
         }
     }
 }
@@ -87,6 +88,13 @@ impl Display for Instruction {
                     f, "{} = getelementptr inbounds [{} x i8], [{} x i8]* @{}, i32 0, i32 0",
                     self.get_entity(),
                     len, len, name
+                )
+            }
+            InstructionKind::BitCast { ent, to } => {
+                write!(
+                    f, "{} = bitcast {} {} to {}",
+                    self.get_entity(),
+                    ent.get_type(), ent, to
                 )
             }
             InstructionKind::UnaryOp { op, arg } => {
@@ -132,8 +140,15 @@ impl Display for Instruction {
             InstructionKind::Jump { label } => {
                 write!(f, "br label %{}", label)
             }
-            InstructionKind::Phi { args: _ } => {
-                unimplemented!()
+            InstructionKind::Phi { args } => {
+                let phi_args = args.iter()
+                    .map(|(ent, label)| format!("[{}, %{}]", ent, label))
+                    .join(", ");
+                write!(
+                    f, "{} = phi {} {}",
+                    self.get_entity(),
+                    self.get_type(), phi_args
+                )
             }
         }
     }
@@ -174,9 +189,9 @@ impl Display for StringDecl {
 
 impl Display for FunctionDef {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        let f_args = self.arg_types.iter()
-            .map(Type::to_string)
-            .join(",");
+        let f_args = self.args.iter()
+            .map(|arg| format!("{} %{}", arg.t, arg.ident))
+            .join(", ");
         let f_instrs = self.body.iter()
             .map(BasicBlock::to_string)
             .join("\n");
