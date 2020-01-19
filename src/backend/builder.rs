@@ -227,6 +227,13 @@ impl MapEntities for Instruction {
                     false_label: false_label.clone(),
                 }
             }
+            InstructionKind::GetElementPtr { container_type_name, var, idx } => {
+                InstructionKind::GetElementPtr {
+                    container_type_name: container_type_name.clone(),
+                    var: var.map_entities(cyclic_shift, mapping),
+                    idx: idx.map_entities(cyclic_shift, mapping)
+                }
+            }
             i => i.clone()
         };
         if let Some(ent) = self.get_meta() {
