@@ -66,23 +66,6 @@ impl BlockBuilder {
         self.block.always_returns()
     }
 
-//    /// update gen set for the current block
-//    pub fn set_gen(&mut self, ident: String, val: Entity) {
-//        self.variables_gen.insert(ident, val);  // TODO: Gen sets seem to no longer be necessary
-//    }
-//
-//    /// shorthand for push_instruction(); set_gen() on the instruction result
-//    pub fn push_gen_instruction(&mut self, instr: Instruction, gen_var_ident: String) {
-//        let entity = instr.get_entity();
-//        self.push_instruction(instr);
-//        self.set_gen(gen_var_ident, entity);
-//    }
-
-//    /// get gen set for the current block
-//    pub fn get_gen(&self) -> &Env<Entity> {
-//        &self.variables_gen
-//    }
-
     /// build the block, adding all necessary phi instructions at the beginning
     pub fn build(&mut self, function_ctx: &mut FunctionContext) -> BasicBlock {
         // create mapping: variable => (vec![(predecessor_label, entity_in_predecessor)], set of unique entities)

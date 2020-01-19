@@ -53,7 +53,9 @@ impl Compiler {
 
     /// construct a nested compiler for a block (without re-setting register numbers)
     fn nested_for_block(&self) -> Self {
-        self.clone()
+        let mut nested = self.clone();
+        nested.block_context.as_mut().unwrap().increase_depth();
+        nested
     }
 
     /// merge with nested compiler that compiled a block
@@ -61,7 +63,10 @@ impl Compiler {
         self.global_context = nested.global_context;
         self.function_context = nested.function_context;
         self.builder = nested.builder;
-        self.block_context = nested.block_context; // TODO: Nested envs are necessary, fix this (!!!)
+
+        // TODO: Refactor to more specific compilers
+        self.block_context = nested.block_context;
+        self.block_context.as_mut().unwrap().decrease_depth();
     }
 
     /// shortcut function for getting a new register entity
@@ -108,13 +113,7 @@ impl Compiler {
 
     /// shortcut for getting environment from currently used block context
     fn get_current_env(&self) -> Env<Entity> {
-        self.block_context.as_ref().unwrap().get_env().clone()
-    }
-
-    /// shortcut for setting a variable and updating gen for current basic block
-    fn set_variable(&mut self, ident: String, ent: Entity) {
-        self.block_context.as_mut().unwrap().set_ptr(&ident, &ent);
-//        self.builder.as_mut().unwrap().set_gen(ident, ent);
+        self.block_context.as_ref().unwrap().get_env_view()
     }
 
     pub fn compile_expression(&mut self, expr: Expression<TypeMeta>) -> Entity {
@@ -213,22 +212,13 @@ impl Compiler {
             }
             ExpressionKind::Binary { left, op, right } => {
                 if op == BinaryOperator::Or || op == BinaryOperator::And {
-                    // perform lazy evaluation by storing the result in allocated memory TODO: PHI
-                    let alloc = InstructionKind::Alloc { t: Type::Bool };
-                    let result_reg = self.new_register(
-                        Type::Reference { t: Box::new(Type::Bool) }
-                    );
-                    self.push_instruction(alloc.with_result(result_reg.clone()));
-
                     // generate labels for conditional jump
                     let suffix = self.global_context.new_label_suffix();
-                    let false_label = format!("__lazy_cont__{}", suffix);
+                    let cont_label = format!("__lazy_cont__{}", suffix);
                     let end_label = format!("__lazy_end__{}", suffix);
 
-                    // evaluate left expression, store the result
+                    // evaluate left expression
                     let left_ent = self.compile_expression(*left);
-                    let store = InstructionKind::Store { val: left_ent.clone(), ptr: result_reg.clone() };
-                    self.push_instruction(store.without_result());
 
                     // check if left result is enough to determine the entire expression result
                     let ending_value = if let BinaryOperator::Or = op {
@@ -240,32 +230,44 @@ impl Compiler {
                     };
                     let cmp = InstructionKind::BinaryOp {
                         op: BinaryOperator::Equal,
-                        l: left_ent,
+                        l: left_ent.clone(),
                         r: ending_value,
                     };
                     let cmp_result = self.new_register(Type::Bool);
                     self.push_instruction(cmp.with_result(cmp_result.clone()));
+
+                    // perform conditional jump to cont_label if we need to evaluate 2nd expression
                     let cond_jump = InstructionKind::JumpCond {
                         cond: cmp_result,
                         true_label: end_label.clone(),
-                        false_label: false_label.clone(),
+                        false_label: cont_label.clone(),
                     };
                     self.push_instruction(cond_jump.without_result());
 
-                    // if the left branch was was not enough, evaluate right branch and store result
-                    self.next_block(false_label);
+                    // collect information for phi calculation
+                    let in_label = self.get_current_block_label();
+                    let in_env = self.get_current_env();
+
+                    // if the left branch was was not enough, evaluate right branch
+                    self.next_block(cont_label);
                     let right_ent = self.compile_expression(*right);
-                    let store = InstructionKind::Store { val: right_ent, ptr: result_reg.clone() };
-                    self.push_instruction(store.without_result());
                     let jump = InstructionKind::Jump { label: end_label.clone() };
                     self.push_instruction(jump.without_result());
 
+                    // collect information for phi calculation, we need to re-define cont_label
+                    // as the end of continued evaluation branch may have different label than
+                    // the beginning (eg. when there are more than 2 lazy-evaluated expressions)
+                    let cont_env = self.get_current_env();
+                    let cont_label = self.get_current_block_label();
+
                     // at the end, load the value of the result back to a register
                     self.next_block(end_label);
-                    let load = InstructionKind::Load { ptr: result_reg };
-                    let load_reg = self.new_register(Type::Bool);
-                    self.push_instruction(load.with_result(load_reg.clone()));
-                    load_reg
+                    let phi_instr = InstructionKind::Phi {
+                        args: vec![(left_ent, in_label), (right_ent, cont_label)]
+                    };
+                    let phi_reg = self.new_register(result_t);
+                    self.push_instruction(phi_instr.with_result(phi_reg.clone()));
+                    phi_reg
                 } else {
                     // evaluate both sides of expression before performing the operation
                     let t = left.get_type();
@@ -309,7 +311,7 @@ impl Compiler {
             ExpressionKind::Reference { r } => {
                 match &r.item {
                     ReferenceKind::Ident { ident } => {
-                        self.block_context.as_mut().unwrap().get_ptr(ident)
+                        self.block_context.as_mut().unwrap().get_variable(ident)
                     }
                     ReferenceKind::Object { .. } => {
                         // 1. load by pointer, assign type from local env
@@ -401,7 +403,7 @@ impl Compiler {
                     };
 
                     // use compiler environment to remember where the variable is stored
-                    self.set_variable(ident, entity);
+                    self.block_context.as_mut().unwrap().set_new_variable(ident, entity);
                 }
             }
             StatementKind::Ass { r, expr } => {
@@ -428,7 +430,7 @@ impl Compiler {
                 };
 
                 // update local variable environment to reflect the change
-                self.set_variable(var_ident, entity)
+                self.block_context.as_mut().unwrap().update_variable(var_ident, entity);
             }
             StatementKind::Mut { r, op } => {
                 // get entity with a pointer to the referenced variable
@@ -437,7 +439,7 @@ impl Compiler {
                     ReferenceKind::Ident { ident } => ident.clone(),
                     t => unimplemented!(),
                 };
-                let var_ent = self.block_context.as_mut().unwrap().get_ptr(&var_ident);
+                let var_ent = self.block_context.as_mut().unwrap().get_variable(&var_ident);
 
                 // perform the op on the extracted value
                 let binary_op = match op {
@@ -453,7 +455,7 @@ impl Compiler {
                 self.push_instruction(mut_op.with_result(mut_result_ent.clone()));
 
                 // update local variable environment to reflect the change
-                self.set_variable(var_ident, mut_result_ent)
+                self.block_context.as_mut().unwrap().update_variable(var_ident, mut_result_ent);
             }
             StatementKind::Return { expr } => {
                 match expr {
@@ -559,7 +561,6 @@ impl Compiler {
                 // if either of the sides needed to jump to the end block, create it
                 if next_block_necessary {
                     self.next_block(end_label);
-//                    self.builder.as_mut().unwrap().add_predecessor(in_label, &in_env);
                     self.builder.as_mut().unwrap().add_predecessor(true_label, &true_env);
                     self.builder.as_mut().unwrap().add_predecessor(false_label, &false_env);
                 }
@@ -634,7 +635,7 @@ impl Compiler {
                 name: arg.item.ident.clone(),
                 t: arg.get_type()
             };
-            compiler.set_variable(arg.item.ident.clone(), arg_ent);
+            compiler.block_context.as_mut().unwrap().set_new_variable(arg.item.ident.clone(), arg_ent);
         }
 
         // compile function instructions using the nested compiler
