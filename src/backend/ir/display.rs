@@ -3,7 +3,7 @@ use std::string::ToString;
 
 use itertools::{Itertools, join};
 
-use crate::backend::ir::{Entity, GetEntity, Instruction, InstructionKind, LLVM, BasicBlock, StructDecl, StringDecl, FunctionDef};
+use crate::backend::ir::{BasicBlock, Entity, FunctionDef, GetEntity, Instruction, InstructionKind, LLVM, StringDecl, StructDecl};
 use crate::frontend::ast::{BinaryOperator, Type, UnaryOperator};
 use crate::meta::GetType;
 
@@ -31,7 +31,7 @@ impl Display for BinaryOperator {
             BinaryOperator::Minus => write!(f, "sub"),
             BinaryOperator::Times => write!(f, "mul"),
             BinaryOperator::Divide => write!(f, "sdiv"),
-            BinaryOperator::Modulo => write!(f, "srem"), // TODO: Make sure it's ok
+            BinaryOperator::Modulo => write!(f, "srem"),
             BinaryOperator::Less => write!(f, "icmp slt"),
             BinaryOperator::LessEqual => write!(f, "icmp sle"),
             BinaryOperator::Greater => write!(f, "icmp sgt"),

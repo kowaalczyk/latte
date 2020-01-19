@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 /// internal type representation (as argument or object member):
 /// string: pointer to an array of characters, passed by value
 /// int, bool: passed by value
@@ -6,12 +7,9 @@
 
 use std::fmt::{Display, Error, Formatter};
 
-use std::collections::HashSet;
-
-use crate::frontend::ast::{BinaryOperator, Type, UnaryOperator, ArgItem};
+use crate::frontend::ast::{ArgItem, BinaryOperator, Type, UnaryOperator};
 use crate::meta::{GetType, Meta};
 use crate::util::env::Env;
-
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 /// represents anything that can be passed as argument to LLVM operation

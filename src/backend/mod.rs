@@ -1,13 +1,14 @@
+use itertools::Itertools;
+
 use crate::frontend::ast::Program;
 use crate::meta::TypeMeta;
+
+use self::compiler::Compiler;
 
 mod compiler;
 mod builder;
 mod context;
 mod ir;
-
-use self::compiler::Compiler;
-use itertools::Itertools;
 
 /// compiles the given program, assuming it meets all the necessary criteria (is checked by frontend)
 /// into a string containing its LLVM intermediate representation

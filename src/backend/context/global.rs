@@ -1,4 +1,4 @@
-use crate::backend::ir::{StringDecl, LLVM};
+use crate::backend::ir::{LLVM, StringDecl};
 use crate::util::env::Env;
 
 #[derive(Debug, Clone)]

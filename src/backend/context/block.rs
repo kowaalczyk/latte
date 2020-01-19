@@ -32,7 +32,7 @@ impl BlockContext {
     pub fn get_variable(&self, ident: &String) -> Entity {
         for env in self.env_stack.iter().rev() {
             if let Some(ent) = env.get(ident) {
-                return ent.clone()
+                return ent.clone();
             }
         }
         panic!("Identifier not found: {}", ident)
@@ -44,7 +44,7 @@ impl BlockContext {
         for env in self.env_stack.iter_mut().rev() {
             if let Some(_) = env.get(&ident) {
                 env.insert(ident, ent);
-                return
+                return;
             }
         }
         panic!("Identifier not found: {}", ident)

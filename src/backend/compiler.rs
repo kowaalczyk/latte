@@ -1,14 +1,15 @@
 use std::cmp::max;
-
-use crate::backend::context::{BlockContext, FunctionContext, GlobalContext};
-use crate::backend::ir::{Entity, FunctionDef, Instruction, InstructionKind, LLVM};
-use crate::frontend::ast::{BinaryOperator, Block, DeclItemKind, Expression, ExpressionKind, Function, ReferenceKind, Statement, StatementKind, StatementOp, Type, Program};
-use crate::meta::{GetType, TypeMeta};
-use crate::util::env::Env;
-use itertools::Itertools;
 use std::collections::HashSet;
 use std::iter::FromIterator;
+
+use itertools::Itertools;
+
 use crate::backend::builder::BlockBuilder;
+use crate::backend::context::{BlockContext, FunctionContext, GlobalContext};
+use crate::backend::ir::{Entity, FunctionDef, Instruction, InstructionKind, LLVM};
+use crate::frontend::ast::{BinaryOperator, Block, DeclItemKind, Expression, ExpressionKind, Function, Program, ReferenceKind, Statement, StatementKind, StatementOp, Type};
+use crate::meta::{GetType, TypeMeta};
+use crate::util::env::Env;
 
 #[derive(Clone)]
 pub struct Compiler {
@@ -36,11 +37,11 @@ impl Compiler {
     }
 
     /// construct a nested compiler for function compilation
-    fn nested_for_function(&self, starting_reg: usize) -> Self {
+    fn nested_for_function(&self) -> Self {
         // TODO: Nesting logic would be much nicer with some smart references instead of copying
         let mut compiler = Compiler::new();
         compiler.block_context = Some(BlockContext::new());
-        compiler.function_context = Some(FunctionContext::new(starting_reg));
+        compiler.function_context = Some(FunctionContext::new());
         compiler.builder = Some(BlockBuilder::without_label());
         compiler.global_context = self.global_context.clone();
         compiler
@@ -71,7 +72,6 @@ impl Compiler {
 
     /// shortcut function for getting a new register entity
     fn new_register(&mut self, t: Type) -> Entity {
-        // TODO: Create a one function returning mutable reference to the context
         self.function_context.as_mut().unwrap().new_register(t)
     }
 
@@ -122,15 +122,15 @@ impl Compiler {
             ExpressionKind::LitInt { val } => {
                 Entity::Int {
                     v: val,
-                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                    uuid: self.function_context.as_mut().unwrap().new_uuid(),
                 }
-            },
+            }
             ExpressionKind::LitBool { val } => {
                 Entity::Bool {
                     v: val,
-                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                    uuid: self.function_context.as_mut().unwrap().new_uuid(),
                 }
-            },
+            }
             ExpressionKind::LitStr { val } => {
                 // declare the string as global constant
                 let string_decl = self.global_context.declare_string(val);
@@ -146,7 +146,7 @@ impl Compiler {
                 // immediately cast the constant to i8* to prevent type mismatch in phi expressions
                 let cast_instr = InstructionKind::BitCast {
                     ent: register,
-                    to: Type::Str
+                    to: Type::Str,
                 };
                 let cast_register = self.new_register(Type::Str);
                 self.push_instruction(cast_instr.with_result(cast_register.clone()));
@@ -157,7 +157,7 @@ impl Compiler {
                 Entity::Null {
                     uuid: self.function_context.as_mut().unwrap().new_uuid()
                 }
-            },
+            }
             ExpressionKind::App { r, args } => {
                 // get name of the function / method, mapped by compiler
                 let func_name = match &r.item {
@@ -361,11 +361,11 @@ impl Compiler {
                             let entity = match &t {
                                 Type::Int => Entity::Int {
                                     v: 0,
-                                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                                    uuid: self.function_context.as_mut().unwrap().new_uuid(),
                                 },
                                 Type::Bool => Entity::Bool {
                                     v: false,
-                                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                                    uuid: self.function_context.as_mut().unwrap().new_uuid(),
                                 },
                                 Type::Str => {
                                     let default_init = InstructionKind::Call {
@@ -390,11 +390,11 @@ impl Compiler {
                                 },
                                 Entity::Int { v, uuid } => Entity::Int {
                                     v,
-                                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                                    uuid: self.function_context.as_mut().unwrap().new_uuid(),
                                 },
                                 Entity::Bool { v, uuid } => Entity::Bool {
                                     v,
-                                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                                    uuid: self.function_context.as_mut().unwrap().new_uuid(),
                                 },
                                 reg_entity => reg_entity,
                             };
@@ -414,11 +414,11 @@ impl Compiler {
                     },
                     Entity::Int { v, uuid } => Entity::Int {
                         v,
-                        uuid: self.function_context.as_mut().unwrap().new_uuid()
+                        uuid: self.function_context.as_mut().unwrap().new_uuid(),
                     },
                     Entity::Bool { v, uuid } => Entity::Bool {
                         v,
-                        uuid: self.function_context.as_mut().unwrap().new_uuid()
+                        uuid: self.function_context.as_mut().unwrap().new_uuid(),
                     },
                     reg_entity => reg_entity,
                 };
@@ -624,7 +624,7 @@ impl Compiler {
 
         // add args to the env of nested compiler
         let n_args = function.item.args.len();
-        let mut compiler = self.nested_for_function(1); // TODO: This parameter is no longer needed
+        let mut compiler = self.nested_for_function();
         for (arg_reg, arg) in function.item.args.iter().enumerate() {
             // collect variable types in case the caller needs to cast the passed arguments later
             // TODO: This is not necessary at the moment, re-visit before implementing method calls
@@ -633,7 +633,7 @@ impl Compiler {
             // mark location of the variable in the block environment
             let arg_ent = Entity::NamedRegister {
                 name: arg.item.ident.clone(),
-                t: arg.get_type()
+                t: arg.get_type(),
             };
             compiler.block_context.as_mut().unwrap().set_new_variable(arg.item.ident.clone(), arg_ent);
         }

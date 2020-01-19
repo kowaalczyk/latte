@@ -20,7 +20,6 @@ pub use self::__intern_token::Token;
 use self::__lalrpop_util::state_machine as __state_machine;
 pub use self::__parse__Program::ProgramParser;
 
-
 #[cfg_attr(rustfmt, rustfmt_skip)]
 mod __parse__Program {
     #![allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens)]

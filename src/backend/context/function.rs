@@ -1,8 +1,9 @@
-use crate::backend::ir::{BasicBlock, Instruction, InstructionKind, Entity};
-use crate::util::env::Env;
-use crate::frontend::ast::Type;
 use std::collections::HashMap;
+
 use crate::backend::builder::MapEntities;
+use crate::backend::ir::{BasicBlock, Entity, Instruction, InstructionKind};
+use crate::frontend::ast::Type;
+use crate::util::env::Env;
 
 #[derive(Debug, Clone)]
 pub struct FunctionContext {
@@ -17,11 +18,11 @@ pub struct FunctionContext {
 }
 
 impl FunctionContext {
-    pub fn new(starting_reg: usize) -> Self {
+    pub fn new() -> Self {
         Self {
-            available_register: starting_reg,
+            available_register: 1,
             available_uuid: 1, // 0 is reserved for built-in constants
-            compiled_blocks: vec![]
+            compiled_blocks: vec![],
         }
     }
 

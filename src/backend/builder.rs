@@ -28,7 +28,7 @@ impl BlockBuilder {
             predecessors: Env::new(),
             block: BasicBlock {
                 label: None,
-                instructions: vec![]
+                instructions: vec![],
             },
             entity_mapping: None,
             variables_gen: Env::new(),
@@ -40,7 +40,7 @@ impl BlockBuilder {
             predecessors: Env::new(),
             block: BasicBlock {
                 label: Some(label),
-                instructions: vec![]
+                instructions: vec![],
             },
             entity_mapping: None,
             variables_gen: Env::new(),
@@ -121,7 +121,7 @@ impl BlockBuilder {
                 // and we'll shift the original registers' numbers later to prevent conflicts
                 Entity::Register {
                     n: n + cyclic_shift,
-                    t: variable_t
+                    t: variable_t,
                 }
             } else {
                 // instructions in the don't use result registers so we use the available register
@@ -259,15 +259,16 @@ impl MapEntities for BasicBlock {
         }
         Self {
             label: self.label.clone(),
-            instructions
+            instructions,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::frontend::ast::UnaryOperator;
+
+    use super::*;
 
     #[test]
     fn block_entities_are_mapped() {
@@ -276,30 +277,30 @@ mod tests {
             instructions: vec![
                 InstructionKind::UnaryOp {
                     op: UnaryOperator::Neg,
-                    arg: Entity::Bool { v: false, uuid: 1 }
+                    arg: Entity::Bool { v: false, uuid: 1 },
                 }.with_result(Entity::Register { n: 1, t: Type::Int }),
                 InstructionKind::RetVal {
                     val: Entity::Register { n: 1, t: Type::Int }
                 }.without_result(),
-            ]
+            ],
         };
         let expected_block = BasicBlock {
             label: None,
             instructions: vec![
                 InstructionKind::UnaryOp {
                     op: UnaryOperator::Neg,
-                    arg: Entity::Register { n: 2, t: Type::Int }
+                    arg: Entity::Register { n: 2, t: Type::Int },
                 }.with_result(Entity::Register { n: 3, t: Type::Int }),
                 InstructionKind::RetVal {
                     val: Entity::Register { n: 3, t: Type::Int }
                 }.without_result(),
-            ]
+            ],
         };
 
         let mut mapping = HashMap::new();
         mapping.insert(
             Entity::Bool { v: false, uuid: 1 },
-            Entity::Register { n: 2, t: Type::Int }
+            Entity::Register { n: 2, t: Type::Int },
         );
         let offset = 2 as usize;
 
