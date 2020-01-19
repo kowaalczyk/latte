@@ -95,6 +95,13 @@ pub enum Type {
     Reference { t: Box<Type> },
 }
 
+// TODO: Type semantics are getting out of hand, probably need to split between frontend and backend types
+impl Type {
+    pub fn reference(&self) -> Self {
+        Type::Reference { t: Box::new(self.clone()) }
+    }
+}
+
 impl Default for Type {
     fn default() -> Self {
         Type::Void
@@ -103,11 +110,15 @@ impl Default for Type {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ReferenceKind<MetaT> {
+    // parser-generated references:
     Ident { ident: String },
     Object { obj: String, field: String },
     ObjectSelf { field: String },
     Array { arr: String, idx: Box<Expression<MetaT>> },
+
+    // after typechecker mapping:
     ArrayLen { ident: String },
+    TypedObject { obj: String, cls: String, field: String },
 }
 
 pub type Reference<MetaT> = AstItem<ReferenceKind<MetaT>, MetaT>;

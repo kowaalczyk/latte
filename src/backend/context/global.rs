@@ -1,5 +1,7 @@
-use crate::backend::ir::{LLVM, StringDecl};
+use crate::backend::ir::{LLVM, StringDecl, StructDecl};
 use crate::util::env::Env;
+use crate::frontend::ast::{Class, Keyed, ClassVar, Type};
+use crate::meta::{TypeMeta, GetType};
 
 #[derive(Debug, Clone)]
 pub struct GlobalContext {
@@ -8,6 +10,9 @@ pub struct GlobalContext {
 
     /// LLVM IR String representation of function declarations
     function_declarations: Vec<String>,
+
+    /// struct name to struct declaration mapping
+    struct_declarations: Env<StructDecl>,
 
     /// number for next available global constant
     available_const: usize,
@@ -21,6 +26,7 @@ impl GlobalContext {
         Self {
             string_declarations: Env::new(),
             function_declarations: vec![],
+            struct_declarations: Env::new(),
             available_const: 1,
             available_label_suffix: 1,
         }
@@ -45,6 +51,34 @@ impl GlobalContext {
     /// append vector of function declarations to the existing ones
     pub fn append_function_declarations(&mut self, declarations: &mut Vec<String>) {
         self.function_declarations.append(declarations);
+    }
+
+    /// add new class declaration, get a StructDecl object corresponding to the new LLVM IR struct
+    pub fn declare_class(&mut self, s: &Class<TypeMeta>) -> StructDecl {
+        let struct_name = s.item.get_key();
+
+        let mut fields = Vec::new();
+        let mut field_env = Env::new();
+        for (field_idx, (field_name, field_var)) in s.item.vars.iter().enumerate() {
+            // objects are always stored as references
+            let stored_field_t = match field_var.get_type() {
+//                Type::Class { ident } => {
+//                    Type::Class { ident }.reference()
+//                }
+                t => t
+            };
+            fields.push(stored_field_t);
+            field_env.insert(field_name.clone(), field_idx as i32);
+        }
+
+        let new_struct = StructDecl {
+            name: format!("__class__{}", struct_name.clone()),
+            size_constant_name: format!("__sizeof__{}", struct_name.clone()),
+            fields,
+            field_env,
+        };
+        self.struct_declarations.insert(struct_name.clone(), new_struct.clone());
+        new_struct
     }
 
     /// get new unique name for a global constant
@@ -76,12 +110,19 @@ impl GlobalContext {
         }
     }
 
+    /// get struct declaration from the original class identifier
+    pub fn get_struct_decl(&self, class_ident: &String) -> StructDecl {
+        self.struct_declarations.get(class_ident).unwrap().clone()
+    }
+
     /// get all global declarations
     pub fn get_declarations(&self) -> Vec<LLVM> {
         let llvm_func_decl = self.function_declarations.iter()
             .map(|decl| LLVM::DeclFunction { decl: decl.clone() });
         let llvm_str_decl = self.string_declarations.values()
             .map(|decl| LLVM::DeclString { decl: decl.clone() });
-        llvm_func_decl.chain(llvm_str_decl).collect()
+        let llvm_struct_decl = self.struct_declarations.values()
+            .map(|decl| LLVM::DeclStruct{ decl: decl.clone() });
+        llvm_func_decl.chain(llvm_str_decl).chain(llvm_struct_decl).collect()
     }
 }

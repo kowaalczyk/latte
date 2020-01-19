@@ -7,11 +7,12 @@ cargo build --package latc_llvm --bin latc_llvm
 cp target/debug/latc_llvm ./
 chmod +x latc_llvm
 
-# TODO: Repeat for extension folders when implemented
+test_dir="$1"
+echo "$test_dir"
 
 failed_cases=0
 
-for test_in in tests/good/*.lat; do
+for test_in in "$test_dir"/*.lat; do
   logfile="${test_in%.lat}.log"
   infile="${test_in%.lat}.input"
   llfile="${test_in%.lat}.ll"

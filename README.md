@@ -20,11 +20,11 @@ the extensions are partially implemented (most of the frontend is done, while ba
     - runtime: done, without extensions
     - optimizations: todo
 
-- SSA (1p): todo
+- SSA (1p): done
 
 - tables (2p): in progress
     - frontend: done
-    - backend: todo
+    - backend: in progress
 
 - structs (2p): in progress
     - frontend: done

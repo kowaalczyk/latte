@@ -15,6 +15,7 @@ mod ir;
 pub fn compile(program: Program<TypeMeta>) -> String {
     let mut builtins = vec![
         String::from("declare i8* @__builtin_method__str__init__(i32)"),
+        String::from("declare i8* @__builtin_method__array__init__(i32)"),
         String::from("declare i8* @__builtin_method__str__concat__(i8*, i8*)"),
         String::from("declare void @__func__printInt(i32)"),
         String::from("declare void @__func__printString(i8*)"),

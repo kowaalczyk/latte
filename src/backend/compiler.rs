@@ -6,10 +6,11 @@ use itertools::Itertools;
 
 use crate::backend::builder::BlockBuilder;
 use crate::backend::context::{BlockContext, FunctionContext, GlobalContext};
-use crate::backend::ir::{Entity, FunctionDef, Instruction, InstructionKind, LLVM};
-use crate::frontend::ast::{BinaryOperator, Block, DeclItemKind, Expression, ExpressionKind, Function, Program, ReferenceKind, Statement, StatementKind, StatementOp, Type};
+use crate::backend::ir::{Entity, FunctionDef, Instruction, InstructionKind, LLVM, StructDecl, BasicBlock};
+use crate::frontend::ast::{BinaryOperator, Block, DeclItemKind, Expression, ExpressionKind, Function, Program, ReferenceKind, Statement, StatementKind, StatementOp, Type, Keyed, FunctionItem, ArgItem};
 use crate::meta::{GetType, TypeMeta};
 use crate::util::env::Env;
+use crate::backend::compile;
 
 #[derive(Clone)]
 pub struct Compiler {
@@ -116,6 +117,25 @@ impl Compiler {
         self.block_context.as_ref().unwrap().get_env_view()
     }
 
+    /// clone entity, ensuring its uniqueness (new uuid) if it is a constant
+    pub fn make_unique_entity(&mut self, ent: Entity) -> Entity {
+        match ent {
+            Entity::Null { uuid, t } => Entity::Null {
+                uuid: self.function_context.as_mut().unwrap().new_uuid(),
+                t
+            },
+            Entity::Int { v, uuid } => Entity::Int {
+                v,
+                uuid: self.function_context.as_mut().unwrap().new_uuid(),
+            },
+            Entity::Bool { v, uuid } => Entity::Bool {
+                v,
+                uuid: self.function_context.as_mut().unwrap().new_uuid(),
+            },
+            reg_entity => reg_entity,
+        }
+    }
+
     pub fn compile_expression(&mut self, expr: Expression<TypeMeta>) -> Entity {
         let result_t = expr.get_type();
         match expr.item {
@@ -155,7 +175,8 @@ impl Compiler {
             }
             ExpressionKind::LitNull => {
                 Entity::Null {
-                    uuid: self.function_context.as_mut().unwrap().new_uuid()
+                    uuid: self.function_context.as_mut().unwrap().new_uuid(),
+                    t: Type::Null
                 }
             }
             ExpressionKind::App { r, args } => {
@@ -191,7 +212,7 @@ impl Compiler {
                         Type::Void => {
                             self.push_instruction(instr.without_result());
                             // typechecker guarantees we don't use this so just return a placeholder
-                            Entity::Null { uuid: 0 }
+                            Entity::Null { uuid: 0, t: Type::Null }
                         }
                         t => {
                             let result_ent = self.new_register(t);
@@ -311,13 +332,35 @@ impl Compiler {
             ExpressionKind::Reference { r } => {
                 match &r.item {
                     ReferenceKind::Ident { ident } => {
-                        self.block_context.as_mut().unwrap().get_variable(ident)
+                        self.block_context.as_ref().unwrap().get_variable(ident)
                     }
-                    ReferenceKind::Object { .. } => {
-                        // 1. load by pointer, assign type from local env
-                        // 2. getelementptr to the struct field
-                        // 3. load that struct field, assign type from local env
-                        unimplemented!();  // TODO
+                    ReferenceKind::TypedObject { obj, cls, field } => {
+                        let struct_decl = self.global_context.get_struct_decl(cls);
+
+                        let field_idx = struct_decl.field_env.get(field).unwrap();
+                        let field_t: &Type = struct_decl.fields.get(*field_idx as usize).unwrap();
+
+                        let obj_ent = self.block_context.as_ref().unwrap().get_variable(obj);
+
+                        let gep_instr = InstructionKind::GetElementPtr {
+                            container_type_name: struct_decl.llvm_name(),
+                            var: obj_ent,
+                            idx: Entity::Int { v: *field_idx, uuid: 0 }
+                        };
+                        let gep_reg = self.new_register(field_t.reference());
+                        self.push_instruction(gep_instr.with_result(gep_reg.clone()));
+
+                        let load_reg = self.new_register(field_t.clone());
+                        let load_instr = InstructionKind::Load { ptr: gep_reg };
+                        self.push_instruction(load_instr.with_result(load_reg.clone()));
+
+                        load_reg
+                    }
+                    ReferenceKind::Object { obj, field } => {
+                        panic!(
+                            "Reference to {} should've been converted to TypedObject before compiling",
+                            obj
+                        )
                     }
                     ReferenceKind::Array { .. } => {
                         // 1. load by pointer, assign type from local env
@@ -334,7 +377,11 @@ impl Compiler {
                 }
             }
             ExpressionKind::Cast { t, expr } => {
-                unimplemented!()
+                if let Entity::Null { uuid, t: _ } = self.compile_expression(*expr) {
+                    Entity::Null { uuid, t }
+                } else {
+                    unimplemented!()
+                }
             }
             ExpressionKind::Error => {
                 unreachable!()
@@ -358,6 +405,7 @@ impl Compiler {
                     // get identifier and entity representing the value (const with default if not provided)
                     let (entity, ident) = match item.item {
                         DeclItemKind::NoInit { ident } => {
+                            let result_t = t.clone();
                             let entity = match &t {
                                 Type::Int => Entity::Int {
                                     v: 0,
@@ -378,26 +426,23 @@ impl Compiler {
                                     );
                                     call_ret_ent
                                 }
+                                Type::Class { ident } => {
+                                    let call_instr = InstructionKind::Call {
+                                        func: self.global_context.get_init(&ident),
+                                        args: vec![],
+                                    };
+                                    let call_result_ent = self.new_register(result_t);
+                                    self.push_instruction(call_instr.with_result(call_result_ent.clone()));
+                                    call_result_ent
+                                }
                                 _ => unimplemented!(),
                             };
                             (entity, ident)
                         }
                         DeclItemKind::Init { ident, val } => {
-                            // collect instructions from the expression TODO: Refactor-out
-                            let entity = match self.compile_expression(*val) {
-                                Entity::Null { uuid } => Entity::Null {
-                                    uuid: self.function_context.as_mut().unwrap().new_uuid()
-                                },
-                                Entity::Int { v, uuid } => Entity::Int {
-                                    v,
-                                    uuid: self.function_context.as_mut().unwrap().new_uuid(),
-                                },
-                                Entity::Bool { v, uuid } => Entity::Bool {
-                                    v,
-                                    uuid: self.function_context.as_mut().unwrap().new_uuid(),
-                                },
-                                reg_entity => reg_entity,
-                            };
+                            // collect instructions from the expression
+                            let original_ent = self.compile_expression(*val);
+                            let entity = self.make_unique_entity(original_ent);
                             (entity, ident)
                         }
                     };
@@ -407,34 +452,44 @@ impl Compiler {
                 }
             }
             StatementKind::Ass { r, expr } => {
-                // collect instructions from the expression TODO: Refactor-out
-                let entity = match self.compile_expression(*expr) {
-                    Entity::Null { uuid } => Entity::Null {
-                        uuid: self.function_context.as_mut().unwrap().new_uuid()
-                    },
-                    Entity::Int { v, uuid } => Entity::Int {
-                        v,
-                        uuid: self.function_context.as_mut().unwrap().new_uuid(),
-                    },
-                    Entity::Bool { v, uuid } => Entity::Bool {
-                        v,
-                        uuid: self.function_context.as_mut().unwrap().new_uuid(),
-                    },
-                    reg_entity => reg_entity,
-                };
+                // collect instructions from the expression
+                let original_ent = self.compile_expression(*expr);
+                let entity = self.make_unique_entity(original_ent);
 
-                // get entity with a pointer to the referenced variable
-                let var_ident = match &r.item {
-                    ReferenceKind::Ident { ident } => ident.clone(),
+                // get entity with a pointer to the referenced variable TODO: Refactor-out
+                match &r.item {
+                    ReferenceKind::Ident { ident } => {
+                        // update local variable environment to reflect the change
+                        self.block_context.as_mut().unwrap().update_variable(ident.clone(), entity);
+                    }
+                    ReferenceKind::TypedObject { obj, cls, field } => {
+                        let struct_decl = self.global_context.get_struct_decl(cls);
+                        let field_idx = struct_decl.field_env.get(field).unwrap();
+
+                        let obj_ent = self.block_context.as_ref().unwrap().get_variable(obj);
+
+                        // get pointer to the struct member
+                        let ptr_t = r.get_type().reference();
+                        let gep_instr = InstructionKind::GetElementPtr {
+                            container_type_name: struct_decl.llvm_name(),
+                            var: obj_ent,
+                            idx: Entity::Int { v: *field_idx, uuid: 0 }
+                        };
+                        let gep_reg = self.new_register(ptr_t);
+                        self.push_instruction(gep_instr.with_result(gep_reg.clone()));
+
+                        // store expression result at the pointer
+                        let store_instr = InstructionKind::Store {
+                            val: entity,
+                            ptr: gep_reg
+                        };
+                        self.push_instruction(store_instr.without_result());
+                    }
                     t => unimplemented!()
-                };
-
-                // update local variable environment to reflect the change
-                self.block_context.as_mut().unwrap().update_variable(var_ident, entity);
+                }
             }
             StatementKind::Mut { r, op } => {
-                // get entity with a pointer to the referenced variable
-                // TODO: This part needs to be refactored-out to independent function
+                // get entity with a pointer to the referenced variable TODO: Refactor-out
                 let var_ident = match &r.item {
                     ReferenceKind::Ident { ident } => ident.clone(),
                     t => unimplemented!(),
@@ -627,13 +682,17 @@ impl Compiler {
         let mut compiler = self.nested_for_function();
         for (arg_reg, arg) in function.item.args.iter().enumerate() {
             // collect variable types in case the caller needs to cast the passed arguments later
-            // TODO: This is not necessary at the moment, re-visit before implementing method calls
-            args.push(arg.item.clone());
+            let arg_type = arg.get_type().clone();
+            let mapped_arg_item = ArgItem {
+                t: arg_type.clone(),
+                ident: arg.item.ident.clone()
+            };
+            args.push(mapped_arg_item);
 
             // mark location of the variable in the block environment
             let arg_ent = Entity::NamedRegister {
                 name: arg.item.ident.clone(),
-                t: arg.get_type(),
+                t: arg_type,
             };
             compiler.block_context.as_mut().unwrap().set_new_variable(arg.item.ident.clone(), arg_ent);
         }
@@ -649,10 +708,12 @@ impl Compiler {
         );
         compiler.function_context.as_mut().unwrap().push_block(block);
 
+        let ret_type = function.item.ret.clone();
+
         // build the LLVM function
         let llvm_function = FunctionDef {
             name: self.global_context.get_function(&function.item.ident),
-            ret_type: function.item.ret.clone(),
+            ret_type,
             args,
             body: compiler.function_context.as_mut().unwrap().conclude(),
         };
@@ -663,7 +724,61 @@ impl Compiler {
         llvm_function
     }
 
+    pub fn compile_init_function(
+        &mut self, func_name: String, struct_decl: StructDecl, struct_t: Type
+    ) -> FunctionDef {
+        let mut compiler = self.nested_for_function();
+
+        let load_ptr = Entity::GlobalConstInt { name: struct_decl.size_constant_name };
+        let load_ent = compiler.new_register(Type::Int);
+
+        // apparently, void* in C maps to i8* in LLVM
+        let array_init_ent = compiler.new_register(Type::Str );
+
+        let return_ent = compiler.new_register(struct_t.clone());
+
+        let instructions = vec![
+            // first, we load global constant representing the structure size
+            InstructionKind::Load {
+                ptr: load_ptr
+            }.with_result(load_ent.clone()),
+            // we use array init as a shorthand for malloc and memset
+            InstructionKind::Call {
+                func: String::from("__builtin_method__array__init__"),
+                args: vec![load_ent]
+            }.with_result(array_init_ent.clone()),
+            // before returning, we cast the result to appropriate type
+            InstructionKind::BitCast {
+                ent: array_init_ent,
+                to: struct_t.clone()
+            }.with_result(return_ent.clone()),
+            InstructionKind::RetVal {
+                val: return_ent
+            }.without_result()
+        ];
+        let func_def = FunctionDef {
+            name: func_name,
+            ret_type: struct_t,
+            args: vec![],
+            body: vec![BasicBlock {
+                label: None,
+                instructions
+            }]
+        };
+        func_def
+    }
+
     pub fn compile_program(&mut self, program: Program<TypeMeta>) -> Vec<LLVM> {
+        // declare structures for all classes
+        let mut init_functions = Vec::new();
+        for (class_name, class) in program.classes.iter() {
+            let struct_decl = self.global_context.declare_class(class);
+            let init_func = self.compile_init_function(
+                self.global_context.get_init(class.get_key()), struct_decl, class.get_type()
+            );
+            init_functions.push(LLVM:: Function { def: init_func });
+        }
+
         // compile all functions
         let mut compiled_functions: Vec<LLVM> = program.functions.values()
             .map(|func| {
@@ -678,6 +793,7 @@ impl Compiler {
         // return combined result
         let mut compiled = Vec::new();
         compiled.append(&mut declarations_after_compilation);
+        compiled.append(&mut init_functions);
         compiled.append(&mut compiled_functions);
         compiled
     }

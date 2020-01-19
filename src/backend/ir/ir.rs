@@ -16,21 +16,23 @@ use crate::util::env::Env;
 /// uuid fields are necessary for constants to guarantee that they are
 /// differentiate between variables with same, constant value
 pub enum Entity {
-    Null { uuid: usize },
+    Null { uuid: usize, t: Type },
     Int { v: i32, uuid: usize },
     Bool { v: bool, uuid: usize },
     Register { n: usize, t: Type },
     NamedRegister { name: String, t: Type },
+    GlobalConstInt { name: String },
 }
 
 impl GetType for Entity {
     fn get_type(&self) -> Type {
         match self {
-            Entity::Null { .. } => Type::Null,
+            Entity::Null { uuid, t } => t.clone(),
             Entity::Int { .. } => Type::Int,
             Entity::Bool { .. } => Type::Bool,
             Entity::Register { n: _, t } => t.clone(),
             Entity::NamedRegister { name: _, t } => t.clone(),
+            Entity::GlobalConstInt { .. } => Type::Reference { t: Box::new(Type::Int) },
         }
     }
 }
@@ -40,6 +42,7 @@ pub enum InstructionKind {
     Alloc { t: Type },
     Load { ptr: Entity },
     Store { val: Entity, ptr: Entity },
+    GetElementPtr { container_type_name: String, var: Entity, idx: Entity },
     LoadConst { name: String, len: usize },
     BitCast { ent: Entity, to: Type },
     UnaryOp { op: UnaryOperator, arg: Entity },
@@ -134,8 +137,23 @@ impl BasicBlock {
 
 #[derive(Debug, Clone)]
 pub struct StructDecl {
+    /// name of the structure
     pub name: String,
+
+    // name of the constant representing the structure
+    pub size_constant_name: String,
+
+    /// field types in fixed order
     pub fields: Vec<Type>,
+
+    /// mapping: field name => field index
+    pub field_env: Env<i32>,
+}
+
+impl StructDecl {
+    pub fn llvm_name(&self) -> String {
+        format!("%{}", self.name)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

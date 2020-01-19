@@ -34,7 +34,14 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     // interpret var_t as object and try to get the `field` instance variable
                     let cls = self.get_class(var_t, loc)?;
                     let field_t = self.get_instance_variable(cls, field, loc)?;
-                    Ok((ReferenceKind::Object { obj: obj.clone(), field: field.clone() }, field_t.clone()))
+
+                    // map reference to TypedObject, backend needs to know the name of the class
+                    let mapped_ref = ReferenceKind::TypedObject {
+                        obj: obj.clone(),
+                        cls: cls.item.get_key().clone(),
+                        field: field.clone()
+                    };
+                    Ok((mapped_ref, field_t.clone()))
                 }
             }
             ReferenceKind::ObjectSelf { field } => {
@@ -76,6 +83,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 // parser never creates these, ArrayLen can only be a result of a transformation
                 unreachable!();
             }
+            ReferenceKind::TypedObject { obj: _, cls: _, field: _ } => { unreachable!() }
         };
         match typecheck_result {
             Ok((kind, t)) => {
@@ -655,7 +663,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 if let Some(parent) = &class.item.parent {
                     item = item.with_parent(parent);
                 }
-                Ok(Class::new(item, TypeMeta { t: Type::Object }))
+                Ok(Class::new(item, TypeMeta { t: Type::Class { ident: class.item.get_key().clone() } }))
             } else {
                 // because we only transformed metadata in envs, we know creation cannot fail
                 unreachable!()

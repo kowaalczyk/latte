@@ -17,10 +17,18 @@ impl Display for Type {
             Type::Reference { t } => {
                 write!(f, "{}*", t)
             }
-            Type::Class { .. } => unimplemented!(),
+            Type::Class { ident } => write!(f, "%__class__{}*", ident),
             Type::Array { .. } => unimplemented!(),
             t => panic!("unexpected type: {:?}", t),
         }
+    }
+}
+
+fn llvm_complex_type_name(t: &Type) -> String {
+    if let Type::Class { ident } = t {
+        format!("%__class__{}", ident)
+    } else {
+        panic!("dereferencing not supported on type {}", t)
     }
 }
 
@@ -52,6 +60,7 @@ impl Display for Entity {
             Entity::NamedRegister { name, t: _ } => write!(f, "%{}", name),
             Entity::Int { v, uuid: _ } => write!(f, "{}", v),
             Entity::Bool { v, uuid: _ } => write!(f, "{}", v),
+            Entity::GlobalConstInt { name } => write!(f, "@{}", name),
         }
     }
 }
@@ -150,6 +159,14 @@ impl Display for Instruction {
                     self.get_type(), phi_args
                 )
             }
+            InstructionKind::GetElementPtr { container_type_name, var, idx } => {
+                write!(
+                    f, "{} = getelementptr {}, {} {}, i32 0, {} {}",
+                    self.get_entity(), container_type_name,
+                    var.get_type(), var,
+                    idx.get_type(), idx
+                )
+            }
         }
     }
 }
@@ -169,7 +186,12 @@ impl Display for BasicBlock {
 
 impl Display for StructDecl {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        unimplemented!()
+        let mapped_fields = self.fields.iter().map(|f| f.to_string()).join(", ");
+        write!(f, "%{} = type {{ {} }}\n", self.name, mapped_fields)?;
+        write!(
+            f, "@{} = constant i32 ptrtoint (%{}* getelementptr (%{}, %{}* null, i32 1) to i32)",
+            self.size_constant_name, self.name, self.name, self.name
+        )
     }
 }
 
