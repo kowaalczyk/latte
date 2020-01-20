@@ -118,7 +118,7 @@ impl Compiler {
     }
 
     /// clone entity, ensuring its uniqueness (new uuid) if it is a constant
-    pub fn make_unique_entity(&mut self, ent: Entity) -> Entity {
+    fn make_unique_entity(&mut self, ent: Entity) -> Entity {
         match ent {
             Entity::Null { uuid, t } => Entity::Null {
                 uuid: self.function_context.as_mut().unwrap().new_uuid(),
@@ -133,6 +133,50 @@ impl Compiler {
                 uuid: self.function_context.as_mut().unwrap().new_uuid(),
             },
             reg_entity => reg_entity,
+        }
+    }
+
+    /// compiles instructions necessary to access array_ent at idx_ent as a reference entity
+    fn compile_array_gep(&mut self, array_item_t: Type, array_ent: Entity, idx_ent: Entity) -> Entity {
+        // get ptr to raw array from array struct
+        let array_gep_instr = InstructionKind::GetStructElementPtr {
+            container_type_name: self.global_context.get_or_declare_array_struct(&array_item_t).llvm_name(),
+            var: array_ent,
+            idx: Entity::Int { v: 1, uuid: 0 }
+        };
+        let array_gep_reg = self.new_register(array_item_t.reference().reference());
+        self.push_instruction(array_gep_instr.with_result(array_gep_reg.clone()));
+
+        // load raw array
+        let array_load_instr = InstructionKind::Load {
+            ptr: array_gep_reg
+        };
+        let array_reg = self.new_register(array_item_t.reference());
+        self.push_instruction(array_load_instr.with_result(array_reg.clone()));
+
+        // get ptr to the index in raw array
+        let get_item_ptr = InstructionKind::GetArrayElementPtr {
+            item_t: array_item_t.clone(),
+            var: array_reg,
+            idx: idx_ent
+        };
+        let item_ptr_ent = self.new_register(array_item_t.reference());
+        self.push_instruction(get_item_ptr.with_result(item_ptr_ent.clone()));
+
+        item_ptr_ent
+    }
+
+    /// calculate size of a single value from reference
+    fn get_size(&mut self, t: &Type) -> Entity {
+        const PTR_SIZE: i32 = 4;
+        match t {
+            Type::Int => Entity::Int { v: 4, uuid: 0 },
+            Type::Str => Entity::Int { v: PTR_SIZE, uuid: 0 },
+            Type::Bool => Entity::Int { v: 1, uuid: 0 },
+            Type::Class { .. } => Entity::Int { v: PTR_SIZE, uuid: 0 },
+            Type::Array { .. } => Entity::Int { v: PTR_SIZE, uuid: 0 },
+            Type::Reference { .. } => Entity::Int { v: PTR_SIZE, uuid: 0 },
+            _ => Entity::Int { v: 0, uuid: 0 },
         }
     }
 
@@ -327,7 +371,103 @@ impl Compiler {
                 }
             }
             ExpressionKind::InitArr { t, size } => {
-                unimplemented!()
+                let void_ptr_t = Type::Str; // apparently this is it (returned in compiled runtime)
+
+                let array_t = t.clone(); // TODO: Cleanup code
+                let arr_item_t = if let Type::Array { item_t } = &array_t {
+                    item_t.as_ref().clone()
+                } else {
+                    panic!("expected array type, got {}", array_t)
+                };
+
+                // register new array type that has to be declared for our program
+                let arr_struct_decl = self.global_context.get_or_declare_array_struct(&arr_item_t);
+
+                // calculate length (number of items)
+                let length_ent = self.compile_expression(*size);
+
+                // calculate size of the array (in bytes)
+                let item_size_ent = self.get_size(&t);
+                let byte_count_instr = InstructionKind::BinaryOp {
+                    op: BinaryOperator::Times,
+                    l: length_ent.clone(),
+                    r: item_size_ent
+                };
+                let bytes_size_ent = self.new_register(Type::Int);
+                self.push_instruction(byte_count_instr.with_result(bytes_size_ent.clone()));
+
+                // allocate memory for the array
+                let raw_array_malloc = InstructionKind::Call {
+                    func: String::from("__builtin_method__array__init__"),
+                    args: vec![bytes_size_ent]
+                };
+                let malloc_result_ent = self.new_register(void_ptr_t.clone());
+                self.push_instruction(raw_array_malloc.with_result(malloc_result_ent.clone()));
+
+                // cast raw array to its appropriate type
+                let raw_array_t = Type::Reference { t: Box::new(arr_item_t.clone()) };
+                let raw_array_cast = InstructionKind::BitCast {
+                    ent: malloc_result_ent,
+                    to: raw_array_t.clone()
+                };
+                let raw_array_ent = self.new_register(raw_array_t.clone());
+                self.push_instruction(raw_array_cast.with_result(raw_array_ent.clone()));
+
+                // load size of array struct
+                let load_struct_size = InstructionKind::Load {
+                    ptr: Entity::GlobalConstInt { name: self.global_context.get_array_struct_size_name(&arr_item_t) }
+                };
+                let struct_size_ent = self.new_register(Type::Int);
+                self.push_instruction(load_struct_size.with_result(struct_size_ent.clone()));
+
+                // use array init to allocate array struct as well
+                let struct_init = InstructionKind::Call {
+                    func: String::from("__builtin_method__array__init__"),
+                    args: vec![struct_size_ent]
+                };
+                let array_init_ent = self.new_register(void_ptr_t);
+                self.push_instruction(struct_init.with_result(array_init_ent.clone()));
+
+                // cast the result to appropriate type
+                let array_struct_cast = InstructionKind::BitCast {
+                    ent: array_init_ent,
+                    to: array_t.clone()
+                };
+                let array_struct_ptr_ent = self.new_register(array_t.clone());
+                self.push_instruction(array_struct_cast.with_result(array_struct_ptr_ent.clone()));
+
+                // set length
+                let length_gep = InstructionKind::GetStructElementPtr {
+                    container_type_name: arr_struct_decl.llvm_name(),
+                    var: array_struct_ptr_ent.clone(),
+                    idx: Entity::Int { v: 0, uuid: 0 }
+                };
+                let length_ptr = self.new_register(Type::Int.reference());
+                self.push_instruction(length_gep.with_result(length_ptr.clone()));
+
+                let store_length = InstructionKind::Store {
+                    val: length_ent,
+                    ptr: length_ptr
+                };
+                self.push_instruction(store_length.without_result());
+
+                // move the allocated raw array into array struct
+                let raw_array_gep = InstructionKind::GetStructElementPtr {
+                    container_type_name: arr_struct_decl.llvm_name(),
+                    var: array_struct_ptr_ent.clone(),
+                    idx: Entity::Int { v: 1, uuid: 0 }
+                };
+                let raw_array_ptr = self.new_register(raw_array_t.reference());
+                self.push_instruction(raw_array_gep.with_result(raw_array_ptr.clone()));
+
+                let store_array = InstructionKind::Store {
+                    val: raw_array_ent,
+                    ptr: raw_array_ptr
+                };
+                self.push_instruction(store_array.without_result());
+
+                // return array struct: {length, array}
+                array_struct_ptr_ent
             }
             ExpressionKind::Reference { r } => {
                 match &r.item {
@@ -342,7 +482,7 @@ impl Compiler {
 
                         let obj_ent = self.block_context.as_ref().unwrap().get_variable(obj);
 
-                        let gep_instr = InstructionKind::GetElementPtr {
+                        let gep_instr = InstructionKind::GetStructElementPtr {
                             container_type_name: struct_decl.llvm_name(),
                             var: obj_ent,
                             idx: Entity::Int { v: *field_idx, uuid: 0 }
@@ -362,17 +502,47 @@ impl Compiler {
                             obj
                         )
                     }
-                    ReferenceKind::Array { .. } => {
-                        // 1. load by pointer, assign type from local env
-                        // 2. getelementptr to the struct field
-                        // 3. load the desired index, assign type from local env (based on array type)
-                        unimplemented!();  // TODO
+                    ReferenceKind::Array { arr, idx } => {
+                        let array_ent = self.block_context.as_ref().unwrap().get_variable(arr);
+                        let idx_ent = self.compile_expression(idx.as_ref().clone());
+                        let gep_reg = self.compile_array_gep(
+                            array_ent.get_array_item_t(),
+                            array_ent,
+                            idx_ent
+                        );
+
+                        let load_reg = self.new_register(result_t.clone());
+                        let load_instr = InstructionKind::Load { ptr: gep_reg };
+                        self.push_instruction(load_instr.with_result(load_reg.clone()));
+
+                        load_reg
                     }
                     ReferenceKind::ObjectSelf { field: _ } => {
                         unimplemented!();  // TODO
                     }
-                    ReferenceKind::ArrayLen { ident: _ } => {
-                        unimplemented!();  // TODO
+                    ReferenceKind::ArrayLen { ident } => {
+                        let field_t = Type::Int;
+                        let obj_ent = self.block_context.as_ref().unwrap().get_variable(ident);
+
+                        let arr_item_t = if let Type::Array { item_t } = obj_ent.get_type() {
+                            item_t.as_ref().clone()
+                        } else {
+                            panic!("expected array type, got {}", obj_ent.get_type())
+                        };
+
+                        let gep_instr = InstructionKind::GetStructElementPtr {
+                            container_type_name: self.global_context.get_or_declare_array_struct(&arr_item_t).llvm_name(),
+                            var: obj_ent,
+                            idx: Entity::Int { v: 0, uuid: 0 }
+                        };
+                        let gep_reg = self.new_register(field_t.reference());
+                        self.push_instruction(gep_instr.with_result(gep_reg.clone()));
+
+                        let load_reg = self.new_register(field_t.clone());
+                        let load_instr = InstructionKind::Load { ptr: gep_reg };
+                        self.push_instruction(load_instr.with_result(load_reg.clone()));
+
+                        load_reg
                     }
                 }
             }
@@ -435,6 +605,12 @@ impl Compiler {
                                     self.push_instruction(call_instr.with_result(call_result_ent.clone()));
                                     call_result_ent
                                 }
+                                Type::Array { item_t } => {
+                                    Entity::Null {
+                                        uuid: self.function_context.as_mut().unwrap().new_uuid(),
+                                        t: Type::Array { item_t: item_t.clone() }
+                                    }
+                                }
                                 _ => unimplemented!(),
                             };
                             (entity, ident)
@@ -454,12 +630,13 @@ impl Compiler {
             StatementKind::Ass { r, expr } => {
                 // collect instructions from the expression
                 let original_ent = self.compile_expression(*expr);
-                let entity = self.make_unique_entity(original_ent);
+//                let entity = self.make_unique_entity(original_ent);
 
                 // get entity with a pointer to the referenced variable TODO: Refactor-out
                 match &r.item {
                     ReferenceKind::Ident { ident } => {
                         // update local variable environment to reflect the change
+                        let entity = self.make_unique_entity(original_ent);
                         self.block_context.as_mut().unwrap().update_variable(ident.clone(), entity);
                     }
                     ReferenceKind::TypedObject { obj, cls, field } => {
@@ -470,7 +647,7 @@ impl Compiler {
 
                         // get pointer to the struct member
                         let ptr_t = r.get_type().reference();
-                        let gep_instr = InstructionKind::GetElementPtr {
+                        let gep_instr = InstructionKind::GetStructElementPtr {
                             container_type_name: struct_decl.llvm_name(),
                             var: obj_ent,
                             idx: Entity::Int { v: *field_idx, uuid: 0 }
@@ -480,10 +657,27 @@ impl Compiler {
 
                         // store expression result at the pointer
                         let store_instr = InstructionKind::Store {
-                            val: entity,
+                            val: original_ent,
                             ptr: gep_reg
                         };
                         self.push_instruction(store_instr.without_result());
+                    }
+                    ReferenceKind::Array { arr, idx } => {
+                        // compile necessary getelementptr instructions
+                        let idx_ent = self.compile_expression(idx.as_ref().clone());
+                        let array_ent = self.block_context.as_ref().unwrap().get_variable(arr);
+                        let gep_reg = self.compile_array_gep(
+                            array_ent.get_array_item_t(),
+                            array_ent,
+                            idx_ent,
+                        );
+
+                        // store entity at the location of array index
+                        let store_instruction = InstructionKind::Store {
+                            val: original_ent,
+                            ptr: gep_reg
+                        };
+                        self.push_instruction(store_instruction.without_result());
                     }
                     t => unimplemented!()
                 }
@@ -663,7 +857,105 @@ impl Compiler {
                 self.complete_loop_block(end_label);
             }
             StatementKind::For { t, ident, arr, stmt } => {
-                unimplemented!();
+                let suffix = self.global_context.new_label_suffix();
+                let cond_label = format!("__for_cond__{}", suffix);
+                let body_label = format!("__for_body__{}", suffix);
+                let end_label = format!("__for_end__{}", suffix);
+
+                // create variable i (index), dot prefix prevents conflicts with user variables
+                let index_ident = format!(".__i__{}", self.function_context.as_mut().unwrap().new_uuid());
+                let index_ent = Entity::Int { v: 0, uuid: self.function_context.as_mut().unwrap().new_uuid() };
+                self.block_context.as_mut().unwrap().set_new_variable(index_ident.clone(), index_ent.clone());
+
+                // create entity holding a pointer to the array
+                let array_ent = self.compile_expression(*arr);
+                let array_item_t = array_ent.get_array_item_t();
+
+                // jump to condition evaluation sequence
+                let cond_jump = InstructionKind::Jump { label: cond_label.clone() }
+                    .without_result();
+                self.push_instruction(cond_jump.clone());
+
+                // collect information for phi calculation
+                let in_label = self.get_current_block_label();
+                let in_env = self.get_current_env();
+
+                // compile loop body, that also jumps back to cond at the end
+                // we don't need to specify predecessor for body block
+                self.next_block(body_label.clone());
+
+                // get pointer to the current item from an array
+                let gep_reg = self.compile_array_gep(
+                    array_item_t.clone(),
+                    array_ent.clone(),
+                    self.block_context.as_ref().unwrap().get_variable(&index_ident)
+                );
+
+                // load current item from the pointer and update environment for the loop body
+                let load_reg = self.new_register(array_item_t.clone());
+                let load_instr = InstructionKind::Load { ptr: gep_reg };
+                self.push_instruction(load_instr.with_result(load_reg.clone()));
+                // TODO: Cast will be necessary here when inheritance is implemented
+                self.block_context.as_mut().unwrap().set_new_variable(ident.clone(), load_reg);
+
+                // compile block body
+                self.compile_statement(*stmt);
+
+                // increment index
+                let increment_instr = InstructionKind::BinaryOp {
+                    op: BinaryOperator::Plus,
+                    l: self.block_context.as_ref().unwrap().get_variable(&index_ident),
+                    r: Entity::Int { v: 1, uuid: 0 }
+                };
+                let increment_ent = self.new_register(Type::Int);
+                self.push_instruction(increment_instr.with_result(increment_ent.clone()));
+                self.block_context.as_mut().unwrap().update_variable(index_ident.clone(), increment_ent);
+
+                // jump to loop cond evaluation block
+                self.push_instruction(cond_jump);
+
+                // remove item variable so that no excessive phi nodes are generated
+                self.block_context.as_mut().unwrap().remove_variable(&ident);
+
+                // collect information for phi calculation
+                let body_env = self.get_current_env();
+
+                // begin next block by evaluating necessary phi statements based on block variables
+                self.next_block(cond_label);
+                self.builder.as_mut().unwrap().add_predecessor(in_label, &in_env);
+                self.builder.as_mut().unwrap().add_predecessor(body_label.clone(), &body_env);
+
+                // get array length
+                let length_gep_instr = InstructionKind::GetStructElementPtr {
+                    container_type_name: self.global_context.get_or_declare_array_struct(&array_item_t).llvm_name(),
+                    var: array_ent,
+                    idx: Entity::Int { v: 0, uuid: 0 }
+                };
+                let length_gep_reg = self.new_register(Type::Int.reference());
+                self.push_instruction(length_gep_instr.with_result(length_gep_reg.clone()));
+
+                let length_load_reg = self.new_register(Type::Int);
+                let length_load_instr = InstructionKind::Load { ptr: length_gep_reg };
+                self.push_instruction(length_load_instr.with_result(length_load_reg.clone()));
+
+                // evaluate loop condition (index < length) and jump
+                let cmp_instr = InstructionKind::BinaryOp {
+                    op: BinaryOperator::Less,
+                    l: self.block_context.as_ref().unwrap().get_variable(&index_ident),
+                    r: length_load_reg
+                };
+                let cmp_result = self.new_register(Type::Bool);
+                self.push_instruction(cmp_instr.with_result(cmp_result.clone()));
+
+                let loop_cond_jump = InstructionKind::JumpCond {
+                    cond: cmp_result,
+                    true_label: body_label,
+                    false_label: end_label.clone(),
+                };
+                self.push_instruction(loop_cond_jump.without_result());
+
+                // start new block with loop end label, and fix mapping in 2 previous blocks
+                self.complete_loop_block(end_label);
             }
             StatementKind::Expr { expr } => {
                 self.compile_expression(*expr);

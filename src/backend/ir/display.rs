@@ -18,7 +18,11 @@ impl Display for Type {
                 write!(f, "{}*", t)
             }
             Type::Class { ident } => write!(f, "%__class__{}*", ident),
-            Type::Array { .. } => unimplemented!(),
+            Type::Array { item_t } => {
+                let formatted = format!("__builtin_struct__array_{}", item_t)
+                    .replace("*", "ptr");
+                write!(f, "%{}*", formatted)
+            },
             t => panic!("unexpected type: {:?}", t),
         }
     }
@@ -159,10 +163,18 @@ impl Display for Instruction {
                     self.get_type(), phi_args
                 )
             }
-            InstructionKind::GetElementPtr { container_type_name, var, idx } => {
+            InstructionKind::GetStructElementPtr { container_type_name, var, idx } => {
                 write!(
                     f, "{} = getelementptr {}, {} {}, i32 0, {} {}",
                     self.get_entity(), container_type_name,
+                    var.get_type(), var,
+                    idx.get_type(), idx
+                )
+            }
+            InstructionKind::GetArrayElementPtr { item_t, var, idx } => {
+                write!(
+                    f, "{} = getelementptr {}, {} {}, {} {}",
+                    self.get_entity(), item_t,
                     var.get_type(), var,
                     idx.get_type(), idx
                 )

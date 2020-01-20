@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::backend::builder::MapEntities;
+use crate::backend::builder::{MapEntities, IncrementMapper};
 use crate::backend::ir::Entity;
 use crate::util::env::Env;
 
@@ -55,6 +55,11 @@ impl BlockContext {
         self.env_stack[self.current_depth].insert(ident, ent);
     }
 
+    /// remove variable from environment (at current depth)
+    pub fn remove_variable(&mut self, ident: &String) {
+        self.env_stack[self.current_depth].remove(ident);
+    }
+
     /// get view of the environment from the current depth
     /// (each variable will be mapped to related entity with the closest depth)
     pub fn get_env_view(&self) -> Env<Entity> {
@@ -67,10 +72,11 @@ impl BlockContext {
 
     /// substitute entities in entire environment stack using provided mapping
     pub fn map_env(&mut self, mapping: &HashMap<Entity, Entity>) {
+        let increment_mapper = IncrementMapper { offset: 0, from_value: 0 };
         self.env_stack = self.env_stack.iter()
             .map(|env| {
                 env.iter()
-                    .map(|(k, v)| (k.clone(), v.map_entities(0, &mapping)))
+                    .map(|(k, v)| (k.clone(), v.map_entities(&increment_mapper, &mapping)))
                     .collect()
             })
             .collect();

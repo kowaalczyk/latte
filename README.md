@@ -14,25 +14,17 @@ the extensions are partially implemented (most of the frontend is done, while ba
     - syntax tree pre-processing: done
     - typechecker: done
     - error handling: done
-
 - LLVM backend (8p): in progress
-    - code generation: done, without extensions
+    - code generation: done
     - runtime: done, without extensions
     - optimizations: todo
-
 - SSA (1p): done
-
-- tables (2p): in progress
-    - frontend: done
-    - backend: in progress
-
-- structs (2p): in progress
-    - frontend: done
-    - backend: todo
+- structs (2p): done
+- tables (2p): done
 
 - classes (3p): in progress
     - frontend: done
-    - backend: todo
+    - backend: in progress
 
 - virtual methods (3p): in progress
     - frontend: done

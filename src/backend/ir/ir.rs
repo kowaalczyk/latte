@@ -24,6 +24,17 @@ pub enum Entity {
     GlobalConstInt { name: String },
 }
 
+impl Entity {
+    /// interprets entity as array, returns type of its item
+    pub fn get_array_item_t(&self) -> Type {
+        if let Type::Array { item_t } = self.get_type() {
+            item_t.as_ref().clone()
+        } else {
+            panic!("expected array type, got {}", self.get_type())
+        }
+    }
+}
+
 impl GetType for Entity {
     fn get_type(&self) -> Type {
         match self {
@@ -42,7 +53,8 @@ pub enum InstructionKind {
     Alloc { t: Type },
     Load { ptr: Entity },
     Store { val: Entity, ptr: Entity },
-    GetElementPtr { container_type_name: String, var: Entity, idx: Entity },
+    GetStructElementPtr { container_type_name: String, var: Entity, idx: Entity },
+    GetArrayElementPtr { item_t: Type, var: Entity, idx: Entity },
     LoadConst { name: String, len: usize },
     BitCast { ent: Entity, to: Type },
     UnaryOp { op: UnaryOperator, arg: Entity },
@@ -56,10 +68,12 @@ pub enum InstructionKind {
 }
 
 impl InstructionKind {
+    /// convert to an instruction wihtout a result
     pub fn without_result(self) -> Instruction {
         Instruction::from(self)
     }
 
+    /// convert to an instruction with provided result entity
     pub fn with_result(self, result: Entity) -> Instruction {
         Instruction::new(self, Some(result))
     }

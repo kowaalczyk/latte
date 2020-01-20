@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::backend::builder::MapEntities;
+use crate::backend::builder::{MapEntities, IncrementMapper};
 use crate::backend::ir::{BasicBlock, Entity, Instruction, InstructionKind};
 use crate::frontend::ast::Type;
 use crate::util::env::Env;
@@ -52,7 +52,8 @@ impl FunctionContext {
     /// map entities in instructions from the last compiled block using provided mapping
     pub fn map_entities_in_last_block(&mut self, mapping: &HashMap<Entity, Entity>) {
         let mut last_block = self.compiled_blocks.pop().unwrap();
-        last_block = last_block.map_entities(0, mapping);
+        let increment_mapper = IncrementMapper { offset: 0, from_value: 0 };
+        last_block = last_block.map_entities(&increment_mapper, mapping);
         self.compiled_blocks.push(last_block);
     }
 

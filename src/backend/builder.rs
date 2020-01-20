@@ -137,9 +137,19 @@ impl BlockBuilder {
             cyclic_shift += 1;
         }
 
+        let increment_from_value = if let Some(Entity::Register { n, t: _ }) = self.block.get_first_register() {
+            n
+        } else {
+            0
+        };
+        let increment_mapper = IncrementMapper {
+            offset: cyclic_shift,
+            from_value: increment_from_value
+        };
+
         // re-number original block statements and append them after newly created phi instructions
         let mut block_instructions = self.block.instructions.iter()
-            .map(|i| i.map_entities(cyclic_shift, &entity_mapping))
+            .map(|i| i.map_entities(&increment_mapper, &entity_mapping))
             .collect();
         phi_instructions.append(&mut block_instructions);
         self.block.instructions = phi_instructions;
@@ -160,17 +170,35 @@ impl BlockBuilder {
     }
 }
 
+/// utility structure for increasing values >= min_threshold by offset
+pub struct IncrementMapper {
+    pub offset: usize,
+    pub from_value: usize,
+}
+
+impl IncrementMapper {
+    /// perform mapping of values
+    pub fn map(&self, u: usize) -> usize {
+        if u >= self.from_value {
+            u + self.offset
+        } else {
+            u
+        }
+    }
+}
+
 pub trait MapEntities {
-    fn map_entities(&self, cyclic_shift: usize, mapping: &HashMap<Entity, Entity>) -> Self;
+    /// map all entities in the structure using mapping or increment mapper
+    fn map_entities(&self, increment_mapper: &IncrementMapper, direct_mapping: &HashMap<Entity, Entity>) -> Self;
 }
 
 impl MapEntities for Entity {
     /// renumber register entities, correct ONLY for NON-PHI instructions
-    fn map_entities(&self, cyclic_shift: usize, mapping: &HashMap<Entity, Entity>) -> Self {
-        if let Some(mapped_ent) = mapping.get(self) {
+    fn map_entities(&self, increment_mapper: &IncrementMapper, direct_mapping: &HashMap<Entity, Entity>) -> Self {
+        if let Some(mapped_ent) = direct_mapping.get(self) {
             mapped_ent.clone()
         } else if let Entity::Register { n, t } = self {
-            Entity::Register { n: n + cyclic_shift, t: t.clone() }
+            Entity::Register { n: increment_mapper.map(*n), t: t.clone() }
         } else {
             self.clone()
         }
@@ -179,59 +207,66 @@ impl MapEntities for Entity {
 
 impl MapEntities for Instruction {
     /// renumber argument and result entities, correct ONLY for NON-PHI instructions
-    fn map_entities(&self, cyclic_shift: usize, mapping: &HashMap<Entity, Entity>) -> Self {
+    fn map_entities(&self, increment_mapper: &IncrementMapper, direct_mapping: &HashMap<Entity, Entity>) -> Self {
         let mapped_args_ent = match &self.item {
             InstructionKind::Load { ptr } => {
-                InstructionKind::Load { ptr: ptr.map_entities(cyclic_shift, mapping) }
+                InstructionKind::Load { ptr: ptr.map_entities(increment_mapper, direct_mapping) }
             }
             InstructionKind::Store { val, ptr } => {
                 InstructionKind::Store {
-                    val: val.map_entities(cyclic_shift, mapping),
-                    ptr: ptr.map_entities(cyclic_shift, mapping),
+                    val: val.map_entities(increment_mapper, direct_mapping),
+                    ptr: ptr.map_entities(increment_mapper, direct_mapping),
                 }
             }
             InstructionKind::BitCast { ent, to } => {
                 InstructionKind::BitCast {
-                    ent: ent.map_entities(cyclic_shift, mapping),
+                    ent: ent.map_entities(increment_mapper, direct_mapping),
                     to: to.clone(),
                 }
             }
             InstructionKind::UnaryOp { op, arg } => {
                 InstructionKind::UnaryOp {
                     op: op.clone(),
-                    arg: arg.map_entities(cyclic_shift, mapping),
+                    arg: arg.map_entities(increment_mapper, direct_mapping),
                 }
             }
             InstructionKind::BinaryOp { op, l, r } => {
                 InstructionKind::BinaryOp {
                     op: op.clone(),
-                    l: l.map_entities(cyclic_shift, mapping),
-                    r: r.map_entities(cyclic_shift, mapping),
+                    l: l.map_entities(increment_mapper, direct_mapping),
+                    r: r.map_entities(increment_mapper, direct_mapping),
                 }
             }
             InstructionKind::Call { func, args } => {
                 InstructionKind::Call {
                     func: func.clone(),
-                    args: args.iter().map(|arg| arg.map_entities(cyclic_shift, mapping)).collect(),
+                    args: args.iter().map(|arg| arg.map_entities(increment_mapper, direct_mapping)).collect(),
                 }
             }
             InstructionKind::RetVal { val } => {
                 InstructionKind::RetVal {
-                    val: val.map_entities(cyclic_shift, mapping)
+                    val: val.map_entities(increment_mapper, direct_mapping)
                 }
             }
             InstructionKind::JumpCond { cond, true_label, false_label } => {
                 InstructionKind::JumpCond {
-                    cond: cond.map_entities(cyclic_shift, mapping),
+                    cond: cond.map_entities(increment_mapper, direct_mapping),
                     true_label: true_label.clone(),
                     false_label: false_label.clone(),
                 }
             }
-            InstructionKind::GetElementPtr { container_type_name, var, idx } => {
-                InstructionKind::GetElementPtr {
+            InstructionKind::GetStructElementPtr { container_type_name, var, idx } => {
+                InstructionKind::GetStructElementPtr {
                     container_type_name: container_type_name.clone(),
-                    var: var.map_entities(cyclic_shift, mapping),
-                    idx: idx.map_entities(cyclic_shift, mapping)
+                    var: var.map_entities(increment_mapper, direct_mapping),
+                    idx: idx.map_entities(increment_mapper, direct_mapping)
+                }
+            }
+            InstructionKind::GetArrayElementPtr { item_t, var, idx } => {
+                InstructionKind::GetArrayElementPtr {
+                    item_t: item_t.clone(),
+                    var: var.map_entities(increment_mapper, direct_mapping),
+                    idx: idx.map_entities(increment_mapper, direct_mapping)
                 }
             }
             i => i.clone()
@@ -239,7 +274,7 @@ impl MapEntities for Instruction {
         if let Some(ent) = self.get_meta() {
             if let Entity::Register { n, t } = ent {
                 mapped_args_ent.with_result(Entity::Register {
-                    n: n + cyclic_shift,
+                    n: increment_mapper.map(*n),
                     t: t.clone(),
                 })
             } else {
@@ -252,15 +287,15 @@ impl MapEntities for Instruction {
 }
 
 impl MapEntities for BasicBlock {
-    fn map_entities(&self, cyclic_shift: usize, mapping: &HashMap<Entity, Entity, RandomState>) -> Self {
-        let mut mapping = mapping.clone();
+    fn map_entities(&self, increment_mapper: &IncrementMapper, direct_mapping: &HashMap<Entity, Entity, RandomState>) -> Self {
+        let mut direct_mapping = direct_mapping.clone();
         let mut instructions = Vec::new();
         for instr in &self.instructions {
-            let mapped_instr = instr.map_entities(cyclic_shift, &mapping);
+            let mapped_instr = instr.map_entities(increment_mapper, &direct_mapping);
             if let Some(entity) = mapped_instr.get_meta() {
-                // after assignment to a mapped variable, we remove it from mapping
+                // after assignment to a mapped variable, we remove it from direct_mapping
                 // to prevent it from being used in consecutive instructions
-                mapping.remove(entity);
+                direct_mapping.remove(entity);
             }
             instructions.push(mapped_instr);
         }
@@ -273,44 +308,50 @@ impl MapEntities for BasicBlock {
 
 #[cfg(test)]
 mod tests {
-    use crate::frontend::ast::UnaryOperator;
+    use crate::frontend::ast::{UnaryOperator, BinaryOperator};
 
     use super::*;
+    use crate::backend::ir::InstructionKind::BinaryOp;
 
     #[test]
     fn block_entities_are_mapped() {
         let block = BasicBlock {
             label: None,
             instructions: vec![
-                InstructionKind::UnaryOp {
-                    op: UnaryOperator::Neg,
-                    arg: Entity::Bool { v: false, uuid: 1 },
-                }.with_result(Entity::Register { n: 1, t: Type::Int }),
+                InstructionKind::BinaryOp {
+                    op: BinaryOperator::Plus,
+                    l: Entity::Register { n: 1, t: Type::Int },
+                    r: Entity::Bool { v: false, uuid: 1 },
+                }.with_result(Entity::Register { n: 2, t: Type::Int }),
                 InstructionKind::RetVal {
-                    val: Entity::Register { n: 1, t: Type::Int }
+                    val: Entity::Register { n: 2, t: Type::Int }
                 }.without_result(),
             ],
         };
         let expected_block = BasicBlock {
             label: None,
             instructions: vec![
-                InstructionKind::UnaryOp {
-                    op: UnaryOperator::Neg,
-                    arg: Entity::Register { n: 2, t: Type::Int },
-                }.with_result(Entity::Register { n: 3, t: Type::Int }),
+                InstructionKind::BinaryOp {
+                    op: BinaryOperator::Plus,
+                    l: Entity::Register { n: 1, t: Type::Int },
+                    r: Entity::Register { n: 2, t: Type::Int },
+                }.with_result(Entity::Register { n: 4, t: Type::Int }),
                 InstructionKind::RetVal {
-                    val: Entity::Register { n: 3, t: Type::Int }
+                    val: Entity::Register { n: 4, t: Type::Int }
                 }.without_result(),
             ],
         };
 
-        let mut mapping = HashMap::new();
-        mapping.insert(
+        let mut direct_mapping = HashMap::new();
+        direct_mapping.insert(
             Entity::Bool { v: false, uuid: 1 },
             Entity::Register { n: 2, t: Type::Int },
         );
-        let offset = 2 as usize;
+        let increment_mapper = IncrementMapper {
+            offset: 2 as usize,
+            from_value: 2
+        };
 
-        assert_eq!(block.map_entities(offset, &mapping), expected_block)
+        assert_eq!(block.map_entities(&increment_mapper, &direct_mapping), expected_block)
     }
 }

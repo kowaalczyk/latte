@@ -2,6 +2,7 @@ use crate::backend::ir::{LLVM, StringDecl, StructDecl};
 use crate::util::env::Env;
 use crate::frontend::ast::{Class, Keyed, ClassVar, Type};
 use crate::meta::{TypeMeta, GetType};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct GlobalContext {
@@ -13,6 +14,9 @@ pub struct GlobalContext {
 
     /// struct name to struct declaration mapping
     struct_declarations: Env<StructDecl>,
+
+    /// structs representing arrays have dedicated environment
+    array_struct_definitions: HashMap<Type, StructDecl>,
 
     /// number for next available global constant
     available_const: usize,
@@ -27,6 +31,7 @@ impl GlobalContext {
             string_declarations: Env::new(),
             function_declarations: vec![],
             struct_declarations: Env::new(),
+            array_struct_definitions: HashMap::new(),
             available_const: 1,
             available_label_suffix: 1,
         }
@@ -61,12 +66,7 @@ impl GlobalContext {
         let mut field_env = Env::new();
         for (field_idx, (field_name, field_var)) in s.item.vars.iter().enumerate() {
             // objects are always stored as references
-            let stored_field_t = match field_var.get_type() {
-//                Type::Class { ident } => {
-//                    Type::Class { ident }.reference()
-//                }
-                t => t
-            };
+            let stored_field_t = field_var.get_type().clone();
             fields.push(stored_field_t);
             field_env.insert(field_name.clone(), field_idx as i32);
         }
@@ -79,6 +79,36 @@ impl GlobalContext {
         };
         self.struct_declarations.insert(struct_name.clone(), new_struct.clone());
         new_struct
+    }
+
+    /// get declaration of a struct representing an array type
+    pub fn get_or_declare_array_struct(&mut self, item_t: &Type) -> StructDecl {
+        if let Some(s) = self.array_struct_definitions.get(item_t) {
+            s.clone()
+        } else {
+            let mut field_env = Env::new();
+            field_env.insert(String::from("length"), 0);
+            field_env.insert(String::from("array"), 1);
+
+            let array_struct = StructDecl {
+                // TODO: Ensure if there are no special symbols in type name (!!!)
+                name: self.get_array_struct_name(item_t),
+                size_constant_name: self.get_array_struct_size_name(item_t),
+                fields: vec![Type::Int, Type::Reference { t: Box::new(item_t.clone()) }],
+                field_env
+            };
+
+            self.array_struct_definitions.insert(item_t.clone(), array_struct.clone());
+            array_struct
+        }
+    }
+
+    pub fn get_array_struct_name(&self, item_t: &Type) -> String {
+        format!("__builtin_struct__array_{}", item_t).replace("*", "ptr")
+    }
+
+    pub fn get_array_struct_size_name(&self, item_t: &Type) -> String {
+        format!("__builtin_sizeof__array_{}", item_t).replace("*", "ptr")
     }
 
     /// get new unique name for a global constant
@@ -123,6 +153,12 @@ impl GlobalContext {
             .map(|decl| LLVM::DeclString { decl: decl.clone() });
         let llvm_struct_decl = self.struct_declarations.values()
             .map(|decl| LLVM::DeclStruct{ decl: decl.clone() });
-        llvm_func_decl.chain(llvm_str_decl).chain(llvm_struct_decl).collect()
+        let array_struct_decl = self.array_struct_definitions.values()
+            .map(|decl| LLVM::DeclStruct{ decl: decl.clone() });
+        llvm_func_decl
+            .chain(llvm_str_decl)
+            .chain(llvm_struct_decl)
+            .chain(array_struct_decl)
+            .collect()
     }
 }
