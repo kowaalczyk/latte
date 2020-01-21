@@ -3,7 +3,7 @@ use itertools::Itertools;
 use crate::frontend::ast::Program;
 use crate::meta::TypeMeta;
 
-use self::compiler::Compiler;
+use crate::backend::compiler::ProgramCompiler;
 
 mod compiler;
 mod builder;
@@ -23,7 +23,7 @@ pub fn compile(program: Program<TypeMeta>) -> String {
         String::from("declare i32 @__func__readInt()"),
         String::from("declare i8* @__func__readString()"),
     ];
-    let mut compiler = Compiler::with_builtin_functions(&mut builtins);
+    let mut compiler = ProgramCompiler::with_builtin_functions(&mut builtins);
     compiler.compile_program(program).iter()
         .map(|llvm| llvm.to_string())
         .join("\n")
