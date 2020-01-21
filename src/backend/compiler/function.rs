@@ -122,8 +122,7 @@ impl FunctionCompiler {
     }
 
     /// calculate size of a single value from reference
-    fn get_size(&mut self, t: &Type) -> Entity {
-        // TODO: Self is not needed 
+    fn get_size(t: &Type) -> Entity {
         const PTR_SIZE: i32 = 4;
         match t {
             Type::Int => Entity::Int { v: 4, uuid: 0 },
@@ -133,6 +132,24 @@ impl FunctionCompiler {
             Type::Array { .. } => Entity::Int { v: PTR_SIZE, uuid: 0 },
             Type::Reference { .. } => Entity::Int { v: PTR_SIZE, uuid: 0 },
             _ => Entity::Int { v: 0, uuid: 0 },
+        }
+    }
+
+    /// interpret type as array, get type of its element
+    fn get_array_item_type(t: &Type) -> Type {
+        if let Type::Array { item_t } = t {
+            item_t.as_ref().clone()
+        } else {
+            panic!("expected array type, got {}", t)
+        }
+    }
+
+    /// interpret type as function, get type of its return value
+    fn get_function_return_type(t: &Type) -> Type {
+        if let Type::Function { args: _, ret } = t {
+            ret.as_ref().clone()
+        } else {
+            panic!("invalid function type in compiler: {:?}", t)
         }
     }
 
@@ -182,7 +199,7 @@ impl FunctionCompiler {
             ExpressionKind::App { r, args } => {
                 // get name of the function / method, mapped by compiler
                 let func_name = match &r.item {
-                    ReferenceKind::Ident { ident } => self.global_context.get_function(&ident),
+                    ReferenceKind::Ident { ident } => self.global_context.get_function_name(&ident),
                     ReferenceKind::Object { obj, field } => {
                         unimplemented!();  // TODO: virtual method call
                     }
@@ -206,22 +223,17 @@ impl FunctionCompiler {
                 };
 
                 // function return type determines whether we store or forget the return value
-                // TODO: Consider using nightly version with syntax sugar for box destructuring
-                if let Type::Function { args: _, ret } = r.get_type() {
-                    match *ret {
-                        Type::Void => {
-                            self.builder.push_instruction(instr.without_result());
-                            // typechecker guarantees we don't use this so just return a placeholder
-                            Entity::Null { uuid: 0, t: Type::Null }
-                        }
-                        t => {
-                            let result_ent = self.function_context.new_register(t);
-                            self.builder.push_instruction(instr.with_result(result_ent.clone()));
-                            result_ent
-                        }
+                match Self::get_function_return_type(&r.get_type()) {
+                    Type::Void => {
+                        self.builder.push_instruction(instr.without_result());
+                        // typechecker guarantees we don't use this so just return a placeholder
+                        Entity::Null { uuid: 0, t: Type::Null }
                     }
-                } else {
-                    panic!("invalid function type in compiler: {:?}", r.get_type())
+                    t => {
+                        let result_ent = self.function_context.new_register(t);
+                        self.builder.push_instruction(instr.with_result(result_ent.clone()));
+                        result_ent
+                    }
                 }
             }
             ExpressionKind::Unary { op, arg } => {
@@ -316,7 +328,7 @@ impl FunctionCompiler {
             ExpressionKind::InitDefault { t } => {
                 if let Type::Class { ident } = t {
                     let instr = InstructionKind::Call {
-                        func: self.global_context.get_init(&ident),
+                        func: self.global_context.get_init_name(&ident),
                         args: vec![],
                     };
                     let result_ent = self.function_context.new_register(result_t);
@@ -327,14 +339,8 @@ impl FunctionCompiler {
                 }
             }
             ExpressionKind::InitArr { t, size } => {
-                let void_ptr_t = Type::Str; // apparently this is it (returned in compiled runtime)
-
-                let array_t = t.clone(); // TODO: Cleanup code
-                let arr_item_t = if let Type::Array { item_t } = &array_t {
-                    item_t.as_ref().clone()
-                } else {
-                    panic!("expected array type, got {}", array_t)
-                };
+                let void_ptr_t = Type::Str; // apparently void* in C is i8* in LLVM
+                let arr_item_t = Self::get_array_item_type(&t);
 
                 // register new array type that has to be declared for our program
                 let arr_struct_decl = self.global_context.get_or_declare_array_struct(&arr_item_t);
@@ -343,7 +349,7 @@ impl FunctionCompiler {
                 let length_ent = self.compile_expression(*size);
 
                 // calculate size of the array (in bytes)
-                let item_size_ent = self.get_size(&t);
+                let item_size_ent = Self::get_size(&t);
                 let byte_count_instr = InstructionKind::BinaryOp {
                     op: BinaryOperator::Times,
                     l: length_ent.clone(),
@@ -387,9 +393,9 @@ impl FunctionCompiler {
                 // cast the result to appropriate type
                 let array_struct_cast = InstructionKind::BitCast {
                     ent: array_init_ent,
-                    to: array_t.clone()
+                    to: t.clone()
                 };
-                let array_struct_ptr_ent = self.function_context.new_register(array_t.clone());
+                let array_struct_ptr_ent = self.function_context.new_register(t.clone());
                 self.builder.push_instruction(array_struct_cast.with_result(array_struct_ptr_ent.clone()));
 
                 // set length
@@ -477,24 +483,18 @@ impl FunctionCompiler {
                         unimplemented!();  // TODO
                     }
                     ReferenceKind::ArrayLen { ident } => {
-                        let field_t = Type::Int;
                         let obj_ent = self.block_context.get_variable(ident);
-
-                        let arr_item_t = if let Type::Array { item_t } = obj_ent.get_type() {
-                            item_t.as_ref().clone()
-                        } else {
-                            panic!("expected array type, got {}", obj_ent.get_type())
-                        };
+                        let arr_item_t = Self::get_array_item_type(&obj_ent.get_type());
 
                         let gep_instr = InstructionKind::GetStructElementPtr {
                             container_type_name: self.global_context.get_or_declare_array_struct(&arr_item_t).llvm_name(),
                             var: obj_ent,
                             idx: Entity::Int { v: 0, uuid: 0 }
                         };
-                        let gep_reg = self.function_context.new_register(field_t.reference());
+                        let gep_reg = self.function_context.new_register(Type::Int.reference());
                         self.builder.push_instruction(gep_instr.with_result(gep_reg.clone()));
 
-                        let load_reg = self.function_context.new_register(field_t.clone());
+                        let load_reg = self.function_context.new_register(Type::Int);
                         let load_instr = InstructionKind::Load { ptr: gep_reg };
                         self.builder.push_instruction(load_instr.with_result(load_reg.clone()));
 
@@ -554,7 +554,7 @@ impl FunctionCompiler {
                                 }
                                 Type::Class { ident } => {
                                     let call_instr = InstructionKind::Call {
-                                        func: self.global_context.get_init(&ident),
+                                        func: self.global_context.get_init_name(&ident),
                                         args: vec![],
                                     };
                                     let call_result_ent = self.function_context.new_register(result_t);
@@ -954,7 +954,7 @@ impl FunctionCompiler {
 
         // build the LLVM function
         let llvm_function = FunctionDef {
-            name: self.global_context.get_function(&function.item.ident),
+            name: self.global_context.get_function_name(&function.item.ident),
             ret_type,
             args,
             body: self.function_context.conclude(),

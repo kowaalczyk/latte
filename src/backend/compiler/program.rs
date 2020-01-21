@@ -1,9 +1,11 @@
 use crate::backend::context::GlobalContext;
-use crate::frontend::ast::Program;
+use crate::frontend::ast::{Program, Class, ClassItem};
 use crate::meta::{TypeMeta, GetType};
 use crate::backend::ir::LLVM;
 use crate::backend::compiler::function::FunctionCompiler;
 use crate::backend::compiler::class::ClassCompiler;
+use crate::util::env::Env;
+use std::collections::HashSet;
 
 #[derive(Clone)]
 pub struct ProgramCompiler {
@@ -35,11 +37,56 @@ impl ProgramCompiler {
         self.global_context = class_compiler.get_global_context().clone();
     }
 
+    /// apply inheritance and declare all classes' structs
+    fn declare_classes(&mut self, classes: &Env<Class<TypeMeta>>) {
+        let mut processed_classes = HashSet::new();
+
+        // insert all root tree nodes
+        for (class_name, class) in classes {
+            if class.item.parent.is_none() {
+                self.global_context.declare_class(&class);
+                processed_classes.insert(class_name.clone());
+            }
+        }
+
+        // insert all children
+        while classes.len() > processed_classes.len() {
+            // this loop is really inefficient, but it's not a problem unless we get > 10k total classes
+            for (class_name, class) in classes {
+                if let Some(parent) = &class.item.parent {
+                    // we apply inheritance only when parent already has all its inherited properties
+                    if let Some(parent_cls) = processed_classes.get(parent) {
+//                        // inherit all vars from parent, override when there are any conflicts
+//                        let mut inherited_vars = parent_cls.item.vars.clone();
+//                        for (var_ident, var_item) in class.item.vars {
+//                            inherited_vars.insert(var_ident, var_item);
+//                        }
+//
+//                        // do the same for methods
+//                        let mut inherited_methods = parent_cls.item.methods.clone();
+//                        for (method_name, method_item) in class.item.methods {
+//                            inherited_methods.insert(method_name, method_item);
+//                        }
+//
+//                        // build new class and insert to the results collection
+//                        let new_class_item = ClassItem {
+//                            ident: class_name.clone(),
+//                            vars: inherited_vars,
+//                            methods: inherited_methods,
+//                            parent: None // we no longer need to store parent information
+//                        };
+//                        let new_class = Class::new(new_class_item, class.get_meta().clone());
+                        self.global_context.declare_class(&class);
+                        processed_classes.insert(class_name.clone());
+                    }
+                }
+            }
+        }
+    }
+
     pub fn compile_program(&mut self, program: Program<TypeMeta>) -> Vec<LLVM> {
         // declare structures for all classes
-        for (class_name, class) in program.classes.iter() {
-            let struct_decl = self.global_context.declare_class(class);
-        }
+        self.declare_classes(&program.classes);
 
         // compile all functions
         let mut compiled_functions: Vec<LLVM> = program.functions.values()

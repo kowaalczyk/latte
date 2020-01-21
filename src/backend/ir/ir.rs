@@ -170,6 +170,21 @@ impl StructDecl {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct VTableDecl {
+    /// name of the structure representing vtable
+    pub name: String,
+
+    /// name of the constant value holding initial vtable data
+    pub data_const_name: String,
+
+    /// vector of method type and name (declarations)
+    pub methods: Vec<(Type, String)>,
+
+    /// mapping: method name => method index
+    pub method_env: Env<i32>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct StringDecl {
     pub name: String,
@@ -189,6 +204,7 @@ pub struct FunctionDef {
 pub enum LLVM {
     DeclFunction { decl: String },
     DeclStruct { decl: StructDecl },
+    DeclVTable { decl: VTableDecl },
     DeclString { decl: StringDecl },
     Function { def: FunctionDef },
 }

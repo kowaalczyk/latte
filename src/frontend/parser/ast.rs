@@ -93,6 +93,9 @@ pub enum Type {
 
     /// represents a reference to any other type
     Reference { t: Box<Type> },
+
+    /// represents builtin classes that are not prefixed in llvm representation
+    BuiltinClass { ident: String },
 }
 
 // TODO: Type semantics are getting out of hand, probably need to split between frontend and backend types

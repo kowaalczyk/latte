@@ -3,7 +3,7 @@ use std::string::ToString;
 
 use itertools::{Itertools, join};
 
-use crate::backend::ir::{BasicBlock, Entity, FunctionDef, GetEntity, Instruction, InstructionKind, LLVM, StringDecl, StructDecl};
+use crate::backend::ir::{BasicBlock, Entity, FunctionDef, GetEntity, Instruction, InstructionKind, LLVM, StringDecl, StructDecl, VTableDecl};
 use crate::frontend::ast::{BinaryOperator, Type, UnaryOperator};
 use crate::meta::GetType;
 
@@ -18,11 +18,12 @@ impl Display for Type {
                 write!(f, "{}*", t)
             }
             Type::Class { ident } => write!(f, "%__class__{}*", ident),
+            Type::BuiltinClass { ident } => write!(f, "%{}*", ident),
             Type::Array { item_t } => {
                 let formatted = format!("__builtin_struct__array_{}", item_t)
                     .replace("*", "ptr");
                 write!(f, "%{}*", formatted)
-            },
+            }
             t => panic!("unexpected type: {:?}", t),
         }
     }
@@ -30,6 +31,8 @@ impl Display for Type {
 
 fn llvm_complex_type_name(t: &Type) -> String {
     if let Type::Class { ident } = t {
+        format!("%__class__{}", ident)
+    } else if let Type::BuiltinClass { ident} = t {
         format!("%__class__{}", ident)
     } else {
         panic!("dereferencing not supported on type {}", t)
@@ -207,6 +210,22 @@ impl Display for StructDecl {
     }
 }
 
+impl Display for VTableDecl {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        // declare vtable structure type
+        let method_types = self.methods.iter()
+            .map(|(t,n)| format!("{}*", t))
+            .join(", ");
+        write!(f, "%{} = type {{ {} }}\n", self.name, method_types)?;
+
+        // define constant with actual vtable data
+        let method_pointers = self.methods.iter()
+            .map(|(t, n)| format!("{}* @{}", t, n))
+            .join(", ");
+        write!(f, "@{} = global %{} {{ {} }}", self.data_const_name, self.name, method_pointers)
+    }
+}
+
 impl Display for StringDecl {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         // string already contains quotes inside
@@ -243,6 +262,7 @@ impl Display for LLVM {
             LLVM::DeclStruct { decl } => write!(f, "{}", decl),
             LLVM::DeclString { decl } => write!(f, "{}", decl),
             LLVM::Function { def } => write!(f, "{}", def),
+            LLVM::DeclVTable { decl } => {write!(f, "{}", decl)},
         }
     }
 }

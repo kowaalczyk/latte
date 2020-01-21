@@ -24,13 +24,10 @@ impl ClassCompiler {
     pub fn compile_init_function(
         &mut self, func_name: String, struct_decl: StructDecl, struct_t: Type
     ) -> FunctionDef {
-        // TODO: Create FunctionBuilder or BlockBuilder class for doing this (!!!)
+        // prepare necessary entities
         let load_ptr = Entity::GlobalConstInt { name: struct_decl.size_constant_name };
         let load_ent = Entity::Register { n: 1, t: Type::Int };
-
-        // apparently, void* in C maps to i8* in LLVM
         let array_init_ent = Entity::Register { n: 2, t: Type::Str };
-
         let return_ent = Entity::Register { n: 3, t: struct_t.clone() };
 
         let instructions = vec![
@@ -69,7 +66,7 @@ impl ClassCompiler {
         let mut compiled_functions = Vec::new();
 
         let init_func = self.compile_init_function(
-            self.global_context.get_init(class.get_key()), struct_decl, class.get_type()
+            self.global_context.get_init_name(class.get_key()), struct_decl, class.get_type()
         );
         compiled_functions.push(init_func);
 
