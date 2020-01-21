@@ -20,6 +20,11 @@ impl ClassCompiler {
         &self.global_context
     }
 
+    /// merge with nested compiler that compiled a function
+    fn merge_function_compiler(&mut self, function_compiler: FunctionCompiler) {
+        self.global_context = function_compiler.get_global_context().clone();
+    }
+
     /// creates and compiles init function, used to initialize the struct representing a class
     pub fn compile_init_function(
         &mut self, class_name: &String, struct_decl: StructDecl, struct_t: Type
@@ -85,7 +90,9 @@ impl ClassCompiler {
     }
 
     pub fn compile_class(&mut self, class: Class<TypeMeta>) -> Vec<FunctionDef> {
-        let struct_decl = self.global_context.get_struct_decl(class.get_key());
+        let class_name = class.get_key().clone();
+
+        let struct_decl = self.global_context.get_struct_decl(&class_name);
         let mut compiled_functions = Vec::new();
 
         let init_func = self.compile_init_function(
@@ -93,7 +100,18 @@ impl ClassCompiler {
         );
         compiled_functions.push(init_func);
 
-        // TODO: Compile user-defined methods
+        for (method_name, method) in class.item.methods {
+            let mut function_compiler = FunctionCompiler::new(&self.global_context);
+
+            let compiled_method = function_compiler.compile_method(
+                &class_name,
+                &method_name,
+                method
+            );
+            compiled_functions.push(compiled_method);
+
+            self.merge_function_compiler(function_compiler);
+        }
 
         compiled_functions
     }

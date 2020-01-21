@@ -189,7 +189,7 @@ impl GlobalContext {
         format!("__vtable_const__{}", class_name)
     }
 
-    fn method_name(&self, class_name: &String, method_name: &String) -> String {
+    pub fn method_name(&self, class_name: &String, method_name: &String) -> String {
         format!("__method__{}__{}", class_name, method_name)
     }
 

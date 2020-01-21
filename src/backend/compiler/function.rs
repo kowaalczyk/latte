@@ -1,6 +1,6 @@
 use crate::backend::context::{BlockContext, FunctionContext, GlobalContext};
 use crate::backend::builder::BlockBuilder;
-use crate::frontend::ast::{Function, ArgItem, Expression, ExpressionKind, Type, ReferenceKind, BinaryOperator, Statement, StatementKind, DeclItemKind, StatementOp};
+use crate::frontend::ast::{Function, ArgItem, Expression, ExpressionKind, Type, ReferenceKind, BinaryOperator, Statement, StatementKind, DeclItemKind, StatementOp, Arg};
 use crate::meta::{TypeMeta, GetType};
 use crate::backend::ir::{FunctionDef, Entity, InstructionKind};
 
@@ -201,7 +201,7 @@ impl FunctionCompiler {
                     ReferenceKind::Ident { ident } => {
                         let func_name = self.global_context.get_function_name(&ident);
                         // compile argument expressions  TODO: Casting
-                        let mut arg_entities: Vec<Entity> = args.iter()
+                        let arg_entities: Vec<Entity> = args.iter()
                             .map(|a| self.compile_expression(*a.clone()))
                             .collect();
 
@@ -711,13 +711,35 @@ impl FunctionCompiler {
                 }
             }
             StatementKind::Mut { r, op } => {
-                let var_ident = match &r.item {
-                    ReferenceKind::Ident { ident } => ident.clone(),
-                    ReferenceKind::TypedObject { obj, cls, field } => unimplemented!(),
+                let var_ent = match &r.item {
+                    ReferenceKind::Ident { ident } => {
+                        self.block_context.get_variable(&ident)
+                    },
+                    ReferenceKind::TypedObject { obj, cls, field } => {
+                        // TODO: This is repeated way too many times, make a function
+                        let struct_decl = self.global_context.get_struct_decl(cls);
+                        let field_idx = *struct_decl.field_env.get(field).unwrap();
+                        let field_t = struct_decl.fields[field_idx as usize].clone();
+
+                        let obj_ent = self.block_context.get_variable(obj);
+
+                        let gep_instr = InstructionKind::GetStructElementPtr {
+                            container_type_name: struct_decl.llvm_name(),
+                            var: obj_ent,
+                            idx: Entity::Int { v: field_idx, uuid: 0 }
+                        };
+                        let gep_reg = self.function_context.new_register(field_t.reference());
+                        self.builder.push_instruction(gep_instr.with_result(gep_reg.clone()));
+
+                        let load_reg = self.function_context.new_register(field_t.clone());
+                        let load_instr = InstructionKind::Load { ptr: gep_reg };
+                        self.builder.push_instruction(load_instr.with_result(load_reg.clone()));
+
+                        load_reg
+                    },
                     // arrays may also be interesting, but are not supported at the moment
                     t => unreachable!(),
                 };
-                let var_ent = self.block_context.get_variable(&var_ident);
 
                 // perform the op on the extracted value
                 let binary_op = match op {
@@ -733,7 +755,32 @@ impl FunctionCompiler {
                 self.builder.push_instruction(mut_op.with_result(mut_result_ent.clone()));
 
                 // update local variable environment to reflect the change
-                self.block_context.update_variable(var_ident, mut_result_ent);
+                match &r.item {
+                    ReferenceKind::Ident { ident } => {
+                        self.block_context.update_variable(ident.clone(), mut_result_ent);
+                    },
+                    ReferenceKind::TypedObject { obj, cls, field } => {
+                        // TODO: This is repeated way too many times, make a function
+                        let struct_decl = self.global_context.get_struct_decl(cls);
+                        let field_idx = *struct_decl.field_env.get(field).unwrap();
+                        let field_t = struct_decl.fields[field_idx as usize].clone();
+
+                        let obj_ent = self.block_context.get_variable(obj);
+
+                        let gep_instr = InstructionKind::GetStructElementPtr {
+                            container_type_name: struct_decl.llvm_name(),
+                            var: obj_ent,
+                            idx: Entity::Int { v: field_idx, uuid: 0 }
+                        };
+                        let gep_reg = self.function_context.new_register(field_t.reference());
+                        self.builder.push_instruction(gep_instr.with_result(gep_reg.clone()));
+
+                        let store_instr = InstructionKind::Store { val: mut_result_ent, ptr: gep_reg };
+                        self.builder.push_instruction(store_instr.without_result())
+                    },
+                    // arrays may also be interesting, but are not supported at the moment
+                    t => unreachable!(),
+                };
             }
             StatementKind::Return { expr } => {
                 match expr {
@@ -1029,6 +1076,71 @@ impl FunctionCompiler {
         // build the LLVM function
         let llvm_function = FunctionDef {
             name: self.global_context.get_function_name(&function.item.ident),
+            ret_type,
+            args,
+            body: self.function_context.conclude(),
+        };
+
+        llvm_function
+    }
+
+    pub fn compile_method(
+        &mut self, class_name: &String, method_name: &String, function: Function<TypeMeta>
+    ) -> FunctionDef {
+        // collect method info to ensure correct type values in signature & body environment
+        let vtable_decl = self.global_context.get_vtable_decl(class_name);
+        let method_idx = *vtable_decl.method_env.get(method_name).unwrap() as usize;
+        let (method_type, _) = vtable_decl.methods[method_idx].clone();
+        let method_arg_types = if let Type::Function { args, ret } = method_type {
+            args
+        } else {
+            panic!("Expected function type, got {}", method_type)
+        };
+
+        let mut args = Vec::new();
+        for (arg_reg, arg_type) in method_arg_types.iter().enumerate() {
+            // first arg is self, and is missing from the signature provided by the front-end
+            let arg_ident = if arg_reg == 0 {
+//                let item = ArgItem {
+//                    t: arg_type.as_ref().clone(),
+//                    ident: String::from("self")
+//                };
+//                Arg::new(item, TypeMeta { t: arg_type.as_ref().clone() })
+                String::from("self")
+            } else {
+                function.item.args[arg_reg - 1].item.ident.clone()
+            };
+
+            // collect variable types in case the caller needs to cast the passed arguments later
+            let mapped_arg_item = ArgItem {
+                t: arg_type.as_ref().clone(),
+//                ident: arg_ident.item.ident.clone()
+                ident: arg_ident.clone()
+            };
+            args.push(mapped_arg_item);
+
+            // mark location of the variable in the block environment
+            let arg_ent = Entity::NamedRegister {
+                name: arg_ident.clone(),
+                t: arg_type.as_ref().clone(),
+            };
+            self.block_context.set_new_variable(arg_ident, arg_ent);
+        }
+
+        // compile function instructions using the nested compiler
+        for stmt in function.item.block.item.stmts {
+            self.compile_statement(*stmt);
+        }
+
+        // finish last block within the nested compiler
+        let block = self.builder.build(&mut self.function_context);
+        self.function_context.push_block(block);
+
+        let ret_type = function.item.ret.clone();
+
+        // build the LLVM function
+        let llvm_function = FunctionDef {
+            name: self.global_context.method_name(class_name, method_name),
             ret_type,
             args,
             body: self.function_context.conclude(),
