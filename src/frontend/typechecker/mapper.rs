@@ -16,10 +16,16 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
         let typecheck_result = match &r.item {
             ReferenceKind::Ident { ident } => {
                 let var_t = self.get_variable(ident, loc)?;
-                // if the variable actually refers to class member, mark it explicitly
+                // if the variable actually refers to current class member, mark it explicitly
                 // this is necessary for compiler backend to assign correct operation later
                 if self.is_class_variable(ident) {
-                    Ok((ReferenceKind::ObjectSelf { field: ident.clone() }, var_t.clone()))
+                    // we use unwrap on current class because is_class_variable implies it exists
+                    let typed_self_reference = ReferenceKind::TypedObject {
+                        obj: String::from("self"),
+                        cls: self.get_current_class().unwrap().item.get_key().clone(),
+                        field: ident.clone()
+                    };
+                    Ok((typed_self_reference, var_t.clone()))
                 } else {
                     Ok((ReferenceKind::Ident { ident: ident.clone() }, var_t.clone()))
                 }
@@ -53,7 +59,12 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
             ReferenceKind::ObjectSelf { field } => {
                 if let Some(cls) = self.get_current_class() {
                     let field_t = self.get_instance_variable(cls, field, loc)?;
-                    Ok((ReferenceKind::ObjectSelf { field: field.clone() }, field_t.clone()))
+                    let typed_self_reference = ReferenceKind::TypedObject {
+                        obj: String::from("self"),
+                        cls: cls.item.get_key().clone(),
+                        field: field.clone()
+                    };
+                    Ok((typed_self_reference, field_t.clone()))
                 } else {
                     let kind = FrontendErrorKind::EnvError {
                         message: String::from("No object in the current context")
