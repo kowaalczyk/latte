@@ -246,7 +246,7 @@ impl MapEntities for Instruction {
             }
             InstructionKind::CallReference { func, args } => {
                 InstructionKind::CallReference {
-                    func: func.clone(),
+                    func: func.map_entities(increment_mapper, direct_mapping),
                     args: args.iter().map(|arg| arg.map_entities(increment_mapper, direct_mapping)).collect(),
                 }
             }
