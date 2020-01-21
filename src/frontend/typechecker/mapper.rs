@@ -15,11 +15,17 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
         let loc = r.get_meta();
         let typecheck_result = match &r.item {
             ReferenceKind::Ident { ident } => {
-                let var_t = self.get_local_variable(ident, loc)?;
-                Ok((ReferenceKind::Ident { ident: ident.clone() }, var_t.clone()))
+                let var_t = self.get_variable(ident, loc)?;
+                // if the variable actually refers to class member, mark it explicitly
+                // this is necessary for compiler backend to assign correct operation later
+                if self.is_class_variable(ident) {
+                    Ok((ReferenceKind::ObjectSelf { field: ident.clone() }, var_t.clone()))
+                } else {
+                    Ok((ReferenceKind::Ident { ident: ident.clone() }, var_t.clone()))
+                }
             }
             ReferenceKind::Object { obj, field } => {
-                let var_t = self.get_local_variable(obj, loc)?;
+                let var_t = self.get_variable(obj, loc)?;
                 if let Type::Array { item_t } = var_t {
                     // manually check field name and convert ReferenceKind to ArrayLen
                     if field == "length" {
@@ -57,7 +63,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
             }
             ReferenceKind::Array { arr, idx } => {
                 // TODO: Refactor to 2 simpler methods (like class & member)
-                let var_t = self.get_local_variable(arr, loc)?;
+                let var_t = self.get_variable(arr, loc)?;
                 if let Type::Array { item_t } = var_t {
                     let item_t = *item_t.clone();
                     let mapped_expr = self.map_expression(idx)?;
@@ -102,7 +108,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 Ok((ReferenceKind::Ident { ident: ident.clone() }, func_t.clone()))
             }
             ReferenceKind::Object { obj, field } => {
-                let var_t = self.get_local_variable(obj, loc)?;
+                let var_t = self.get_variable(obj, loc)?;
                 let cls = self.get_class(var_t, loc)?;
                 let method_t = self.get_method(cls, field, loc)?;
                 Ok((ReferenceKind::Object { obj: obj.clone(), field: field.clone() }, method_t.clone()))
@@ -626,7 +632,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
     }
 
     fn map_class(&mut self, class: &Class<LocationMeta>) -> TypeCheckResult<Class<TypeMeta>> {
-        let mut typechecker = self.with_env(class.to_type_env()).with_class(class);
+        let mut typechecker = self.with_class(class);
 
         // variables are mapped by swapping meta, no errors can happen here
         let mut mapped_vars: Vec<_> = class.item.vars

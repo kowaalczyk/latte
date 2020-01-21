@@ -13,6 +13,8 @@ test-e2e: runtime
 	bash test_e2e.sh tests/good
 	bash test_e2e.sh tests/extensions/struct
 	bash test_e2e.sh tests/extensions/arrays1
+	bash test_e2e.sh tests/extensions/objects1
+	bash test_e2e.sh tests/extensions/objects2
 
 release: runtime
 	cargo build --package latc_llvm --bin latc_llvm --release

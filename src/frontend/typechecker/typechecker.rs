@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use crate::frontend::ast::{Class, Keyed, Program, Type};
 use crate::frontend::error::{FrontendError, FrontendErrorKind};
+use crate::frontend::typechecker::util::ToTypeEnv;
 use crate::meta::LocationMeta;
 use crate::util::env::Env;
 
@@ -22,6 +23,9 @@ pub struct TypeChecker<'prog> {
 
     /// set of variables declared in current block, necessary to prevent re-declaration
     pub local_decl: HashSet<String>,
+
+    /// set of variables that belong to current class (empty if there is no class)
+    pub class_env: Env<Type>,
 }
 
 impl<'p> TypeChecker<'p> {
@@ -33,6 +37,7 @@ impl<'p> TypeChecker<'p> {
             local_env: Env::new(),
             local_decl: HashSet::new(),
             current_class: Option::None,
+            class_env: Env::new(),
         }
     }
 
@@ -49,6 +54,7 @@ impl<'p> TypeChecker<'p> {
             local_decl: HashSet::new(),
             builtins: self.builtins,
             current_class: self.current_class,
+            class_env: Env::new(),
         }
     }
 
@@ -70,6 +76,7 @@ impl<'p> TypeChecker<'p> {
     pub fn with_class(&self, cls: &'p Class<LocationMeta>) -> Self {
         let mut new_self = self.clone();
         new_self.current_class = Option::Some(cls);
+        new_self.class_env = cls.to_type_env();
         new_self
     }
 
@@ -140,9 +147,16 @@ impl<'p> TypeChecker<'p> {
         }
     }
 
-    /// get variable type from local environment
-    pub fn get_local_variable(&self, ident: &String, loc: &LocationMeta) -> Result<&Type, Vec<FrontendError<LocationMeta>>> {
+    /// checks if the variable is a member of current class
+    pub fn is_class_variable(&self, ident: &String) -> bool {
+        self.class_env.contains_key(ident) && !self.local_env.contains_key(ident)
+    }
+
+    /// get variable type from local environment or class environment
+    pub fn get_variable(&self, ident: &String, loc: &LocationMeta) -> Result<&Type, Vec<FrontendError<LocationMeta>>> {
         if let Some(t) = self.local_env.get(ident) {
+            Ok(t)
+        } else if let Some(t) = self.class_env.get(ident) {
             Ok(t)
         } else {
             let kind = FrontendErrorKind::EnvError {
@@ -238,6 +252,7 @@ impl Clone for TypeChecker<'_> {
             local_env: self.local_env.clone(),
             local_decl: self.local_decl.clone(),
             current_class: self.current_class,
+            class_env: self.class_env.clone()
         }
     }
 
@@ -247,5 +262,6 @@ impl Clone for TypeChecker<'_> {
         self.local_env = source.local_env.clone();
         self.local_decl = source.local_decl.clone();
         self.current_class = source.current_class;
+        self.class_env = source.class_env.clone();
     }
 }

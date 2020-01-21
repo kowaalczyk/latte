@@ -13,7 +13,10 @@ mod env;
 mod typechecker;
 
 
-/// main typechecker function: checks types of the entire program
+/// main typechecker function: checks types of the entire program,
+/// converts implicit self-references to current object into explicit ones,
+/// converts all references to object members to the typed ones,
+/// converts array.length to the dedicated ArrayLength reference
 pub fn check_types(program: Program<LocationMeta>) -> TypeCheckResult<Program<TypeMeta>> {
     // get builtin functions and check for duplicate declarations
     let buitlins = get_builtins();

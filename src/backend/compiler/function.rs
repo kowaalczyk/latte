@@ -14,7 +14,7 @@ pub struct FunctionCompiler {
 
 impl FunctionCompiler {
     pub fn new(global_context: &GlobalContext) -> Self {
-        // TODO: Store global_context as reference to avoid unnecessary copying
+        // TODO: Store global_context as reference to avoid unnecessary copying (?)
         Self {
             builder: BlockBuilder::without_label(),
             block_context: BlockContext::new(),
