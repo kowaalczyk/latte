@@ -122,12 +122,23 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 let var_t = self.get_variable(obj, loc)?;
                 let cls = self.get_class(var_t, loc)?;
                 let method_t = self.get_method(cls, field, loc)?;
-                Ok((ReferenceKind::Object { obj: obj.clone(), field: field.clone() }, method_t.clone()))
+
+                let typed_reference = ReferenceKind::TypedObject {
+                    obj: obj.clone(),
+                    cls: cls.item.get_key().clone(),
+                    field: field.clone()
+                };
+                Ok((typed_reference, method_t.clone()))
             }
             ReferenceKind::ObjectSelf { field } => {
                 if let Some(cls) = self.get_current_class() {
                     let method_t = self.get_method(cls, field, loc)?;
-                    Ok((ReferenceKind::ObjectSelf { field: field.clone() }, method_t.clone()))
+                    let typed_self_reference = ReferenceKind::TypedObject {
+                        obj: String::from("self"),
+                        cls: cls.item.get_key().clone(),
+                        field: field.clone()
+                    };
+                    Ok((typed_self_reference, method_t.clone()))
                 } else {
                     let kind = FrontendErrorKind::EnvError {
                         message: String::from("No object in the current context")

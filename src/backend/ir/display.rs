@@ -24,6 +24,12 @@ impl Display for Type {
                     .replace("*", "ptr");
                 write!(f, "%{}*", formatted)
             }
+            Type::Function { args, ret } => {
+                let formatted_args = args.iter()
+                    .map(|t| format!("{}", t))
+                    .join(", ");
+                write!(f, "{}({})", *ret, formatted_args)
+            }
             t => panic!("unexpected type: {:?}", t),
         }
     }
@@ -138,6 +144,19 @@ impl Display for Instruction {
                     )
                 } else {
                     write!(f, "call void @{} ({})", func, args)
+                }
+            }
+            InstructionKind::CallReference { func, args } => {
+                let args = args.iter()
+                    .map(|ent| format!("{} {}", ent.get_type(), ent))
+                    .join(",");
+                if self.has_result_entity() {
+                    write!(
+                        f, "{} = call {} {} ({})",
+                        self.get_entity(), self.get_type(), func, args
+                    )
+                } else {
+                    write!(f, "call void {} ({})", func, args)
                 }
             }
             InstructionKind::RetVal { val } => {

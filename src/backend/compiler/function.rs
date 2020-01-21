@@ -197,42 +197,112 @@ impl FunctionCompiler {
                 }
             }
             ExpressionKind::App { r, args } => {
-                // get name of the function / method, mapped by compiler
-                let func_name = match &r.item {
-                    ReferenceKind::Ident { ident } => self.global_context.get_function_name(&ident),
-                    ReferenceKind::Object { obj, field } => {
-                        unimplemented!();  // TODO: virtual method call
-                    }
-                    ReferenceKind::ObjectSelf { field } => {
-                        unimplemented!();  // TODO: virtual method call
+                match &r.item {
+                    ReferenceKind::Ident { ident } => {
+                        let func_name = self.global_context.get_function_name(&ident);
+                        // compile argument expressions  TODO: Casting
+                        let mut arg_entities: Vec<Entity> = args.iter()
+                            .map(|a| self.compile_expression(*a.clone()))
+                            .collect();
+
+                        // compile actual call instruction
+                        let instr = InstructionKind::Call {
+                            func: func_name,
+                            args: arg_entities,
+                        };
+
+                        // function return type determines whether we store or forget the return value
+                        match Self::get_function_return_type(&r.get_type()) {
+                            Type::Void => {
+                                self.builder.push_instruction(instr.without_result());
+                                // typechecker guarantees we don't use this so just return a placeholder
+                                Entity::Null { uuid: 0, t: Type::Null }
+                            }
+                            t => {
+                                let result_ent = self.function_context.new_register(t);
+                                self.builder.push_instruction(instr.with_result(result_ent.clone()));
+                                result_ent
+                            }
+                        }
+                    },
+                    ReferenceKind::TypedObject { obj, cls, field } => {
+                        let struct_decl = self.global_context.get_struct_decl(cls);
+                        let obj_ent = self.block_context.get_variable(obj);
+
+                        let vtable_t = Type::BuiltinClass {
+                            ident: self.global_context.vtable_struct_name(cls)
+                        };
+                        let vtable_constant_name = Entity::GlobalConst {
+                            name: self.global_context.vtable_struct_const(cls),
+                            t: vtable_t.clone()
+                        };
+
+                        // get vtable reference
+                        let vtable_gep_instr = InstructionKind::GetStructElementPtr {
+                            container_type_name: struct_decl.llvm_name(),
+                            var: obj_ent.clone(),
+                            idx: Entity::Int { v: 0, uuid: 0 }
+                        };
+                        let vtable_gep_reg = self.function_context.new_register(vtable_t.reference());
+                        self.builder.push_instruction(vtable_gep_instr.with_result(vtable_gep_reg.clone()));
+
+                        // load vtable
+                        let vtable_load_instr = InstructionKind::Load {
+                            ptr: vtable_gep_reg
+                        };
+                        let vtable_ent = self.function_context.new_register(vtable_t.clone());
+                        self.builder.push_instruction(vtable_load_instr.with_result(vtable_ent.clone()));
+
+                        // get reference to method from vtable
+                        let vtable_struct = self.global_context.get_vtable_decl(cls);
+                        let method_idx = vtable_struct.method_env.get(field).unwrap();
+                        let method_gep_instr = InstructionKind::GetStructElementPtr {
+                            container_type_name: vtable_struct.llvm_name(),
+                            var: vtable_ent,
+                            idx: Entity::Int { v: *method_idx, uuid: 0 }
+                        };
+                        let method_t = vtable_struct.methods[*method_idx as usize].0.clone();
+                        let method_ptr = self.function_context.new_register(method_t.reference().reference());
+                        self.builder.push_instruction(method_gep_instr.with_result(method_ptr.clone()));
+
+                        // load method
+                        let method_load_instr = InstructionKind::Load {
+                            ptr: method_ptr
+                        };
+                        let method_ent = self.function_context.new_register(method_t.reference());
+                        self.builder.push_instruction(method_load_instr.with_result(method_ent.clone()));
+
+                        // build args: self, compiled results of passed expressions
+                        let mut args_with_self = Vec::new();
+                        args_with_self.push(obj_ent); // TODO: Casting
+                        for arg in args {
+                            let arg_ent = self.compile_expression(*arg);
+                            args_with_self.push(arg_ent); // TODO: Casting
+                        }
+
+                        // call method, pass object reference as the 1st argument
+                        let call_instr = InstructionKind::CallReference {
+                            func: method_ent,
+                            args: args_with_self
+                        };
+                        // function return type determines whether we store or forget the return value
+                        // TODO: refactor to 1 method (same as for regular function)
+                        match Self::get_function_return_type(&method_t) {
+                            Type::Void => {
+                                self.builder.push_instruction(call_instr.without_result());
+                                // typechecker guarantees we don't use this so just return a placeholder
+                                Entity::Null { uuid: 0, t: Type::Null }
+                            }
+                            t => {
+                                let result_ent = self.function_context.new_register(t);
+                                self.builder.push_instruction(call_instr.with_result(result_ent.clone()));
+                                result_ent
+                            }
+                        }
                     }
                     r => {
+                        // all self-references are mapped to typed object references with "self" variable
                         panic!("unsupported reference type for function call: {:?}", r)
-                    }
-                };
-
-                // compile argument expressions
-                let mut arg_entities: Vec<Entity> = args.iter()
-                    .map(|a| self.compile_expression(*a.clone()))
-                    .collect();
-
-                // compile actual call instruction
-                let instr = InstructionKind::Call {
-                    func: func_name,
-                    args: arg_entities,
-                };
-
-                // function return type determines whether we store or forget the return value
-                match Self::get_function_return_type(&r.get_type()) {
-                    Type::Void => {
-                        self.builder.push_instruction(instr.without_result());
-                        // typechecker guarantees we don't use this so just return a placeholder
-                        Entity::Null { uuid: 0, t: Type::Null }
-                    }
-                    t => {
-                        let result_ent = self.function_context.new_register(t);
-                        self.builder.push_instruction(instr.with_result(result_ent.clone()));
-                        result_ent
                     }
                 }
             }
@@ -480,7 +550,9 @@ impl FunctionCompiler {
                         load_reg
                     }
                     ReferenceKind::ObjectSelf { field: _ } => {
-                        unimplemented!();  // TODO
+                        // all ObjectSelf references are mapped to TypedObject with variable "self"
+                        // by the typechecker
+                        unreachable!()
                     }
                     ReferenceKind::ArrayLen { ident } => {
                         let obj_ent = self.block_context.get_variable(ident);
@@ -506,7 +578,8 @@ impl FunctionCompiler {
                 if let Entity::Null { uuid, t: _ } = self.compile_expression(*expr) {
                     Entity::Null { uuid, t }
                 } else {
-                    unimplemented!()
+                    // currently, this is not possible, however it may be worth supporting in the future
+                    unreachable!()
                 }
             }
             ExpressionKind::Error => {
@@ -567,7 +640,7 @@ impl FunctionCompiler {
                                         t: Type::Array { item_t: item_t.clone() }
                                     }
                                 }
-                                _ => unimplemented!(),
+                                _ => unreachable!(),
                             };
                             (entity, ident)
                         }
@@ -634,14 +707,15 @@ impl FunctionCompiler {
                         };
                         self.builder.push_instruction(store_instruction.without_result());
                     }
-                    t => unimplemented!()
+                    t => unreachable!()
                 }
             }
             StatementKind::Mut { r, op } => {
-                // get entity with a pointer to the referenced variable TODO: Refactor-out
                 let var_ident = match &r.item {
                     ReferenceKind::Ident { ident } => ident.clone(),
-                    t => unimplemented!(),
+                    ReferenceKind::TypedObject { obj, cls, field } => unimplemented!(),
+                    // arrays may also be interesting, but are not supported at the moment
+                    t => unreachable!(),
                 };
                 let var_ent = self.block_context.get_variable(&var_ident);
 

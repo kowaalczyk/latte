@@ -25,9 +25,9 @@ impl ClassCompiler {
         &mut self, class_name: &String, struct_decl: StructDecl, struct_t: Type
     ) -> FunctionDef {
         let vtable_struct_t = Type::BuiltinClass {
-            ident: self.global_context.get_vtable_struct_name(class_name)
+            ident: self.global_context.vtable_struct_name(class_name)
         };
-        let vtable_constant_name = self.global_context.get_vtable_struct_const(class_name);
+        let vtable_constant_name = self.global_context.vtable_struct_const(class_name);
 
         // prepare necessary entities
         let load_ptr = Entity::GlobalConst {

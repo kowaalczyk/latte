@@ -92,6 +92,9 @@ impl GlobalContext {
         if let Some(parent_vtable) = self.get_parent_struct_vtable(cls) {
             for (method_type, method_name) in parent_vtable.methods {
                 method_declarations.push((method_type.clone(), method_name));
+
+                // inherited functions always have the parent type specified as this,
+                // this prevents unnecessary re-declaration of same function for a subclass
                 method_types.push(Box::new(method_type));
             }
             for (k, v) in parent_vtable.method_env {
@@ -109,15 +112,25 @@ impl GlobalContext {
             };
             method_env.insert(method_name.clone(), actual_method_idx);
 
-            let method_t = method.get_type();
+            // stored method type contains information about type of "self" variable which is always
+            // passed as the 1st argument and puts responsibility of casting on the caller
+            let method_t = if let Type::Function { mut args, ret } = method.get_type() {
+                let mut args_with_self = Vec::new();
+                args_with_self.push(Box::new(Type::Class { ident: class_name.clone() }));
+                args_with_self.append(&mut args);
+
+                Type::Function { args: args_with_self, ret }
+            } else {
+                panic!("invalid type, expected Function, got {}", method.get_type())
+            };
             method_types.insert(actual_method_idx as usize, Box::new(method_t.clone()));
 
-            let method_name = self.get_method_name(class_name, method_name);
+            let method_name = self.method_name(class_name, method_name);
             method_declarations.insert(actual_method_idx as usize, (method_t, method_name));
         }
         let vtable_decl = VTableDecl {
-            name: self.get_vtable_struct_name(class_name),
-            data_const_name: self.get_vtable_struct_const(class_name),
+            name: self.vtable_struct_name(class_name),
+            data_const_name: self.vtable_struct_const(class_name),
             methods: method_declarations,
             method_env
         };
@@ -125,7 +138,7 @@ impl GlobalContext {
 
         // build LLVM representation of the structure
         let mut fields = Vec::new();
-        fields.push(Type::BuiltinClass { ident: self.get_vtable_struct_name(class_name) });
+        fields.push(Type::BuiltinClass { ident: self.vtable_struct_name(class_name) });
         let mut field_env = Env::new();
 
         if let Some(parent_decl) = self.get_parent_struct_decl(cls) {
@@ -151,8 +164,8 @@ impl GlobalContext {
         }
 
         let new_struct = StructDecl {
-            name: self.get_struct_name(class_name),
-            size_constant_name: self.get_size_constant_name(class_name),
+            name: self.struct_name(class_name),
+            size_constant_name: self.size_constant_name(class_name),
             fields,
             field_env,
         };
@@ -160,24 +173,23 @@ impl GlobalContext {
         new_struct
     }
 
-    pub fn get_struct_name(&self, class_name: &String) -> String {
+    pub fn struct_name(&self, class_name: &String) -> String {
         format!("__class__{}", class_name)
     }
 
-    pub fn get_size_constant_name(&self, class_name: &String) -> String {
+    pub fn size_constant_name(&self, class_name: &String) -> String {
         format!("__sizeof__{}", class_name.clone())
     }
 
-    pub fn get_vtable_struct_name(&self, class_name: &String) -> String {
+    pub fn vtable_struct_name(&self, class_name: &String) -> String {
         format!("__vtable_type__{}", class_name)
     }
 
-    pub fn get_vtable_struct_const(&self, class_name: &String) -> String {
+    pub fn vtable_struct_const(&self, class_name: &String) -> String {
         format!("__vtable_const__{}", class_name)
     }
 
-    /// get name of LLVM function that represents the given method for the given class
-    fn get_method_name(&self, class_name: &String, method_name: &String) -> String {
+    fn method_name(&self, class_name: &String, method_name: &String) -> String {
         format!("__method__{}__{}", class_name, method_name)
     }
 
@@ -243,6 +255,11 @@ impl GlobalContext {
     /// get struct declaration from the original class identifier
     pub fn get_struct_decl(&self, class_ident: &String) -> StructDecl {
         self.struct_declarations.get(class_ident).unwrap().clone()
+    }
+
+    /// get vtable declaration from the original class identifier
+    pub fn get_vtable_decl(&self, class_ident: &String) -> VTableDecl {
+        self.struct_vtable_declarations.get(class_ident).unwrap().clone()
     }
 
     /// get all global declarations

@@ -60,6 +60,7 @@ pub enum InstructionKind {
     UnaryOp { op: UnaryOperator, arg: Entity },
     BinaryOp { op: BinaryOperator, l: Entity, r: Entity },
     Call { func: String, args: Vec<Entity> },
+    CallReference { func: Entity, args: Vec<Entity> },
     RetVal { val: Entity },
     RetVoid,
     JumpCond { cond: Entity, true_label: String, false_label: String },
@@ -183,6 +184,12 @@ pub struct VTableDecl {
 
     /// mapping: method name => method index
     pub method_env: Env<i32>,
+}
+
+impl VTableDecl {
+    pub fn llvm_name(&self) -> String {
+        format!("%{}", self.name)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
