@@ -67,7 +67,7 @@ impl Display for Entity {
             Entity::NamedRegister { name, t: _ } => write!(f, "%{}", name),
             Entity::Int { v, uuid: _ } => write!(f, "{}", v),
             Entity::Bool { v, uuid: _ } => write!(f, "{}", v),
-            Entity::GlobalConstInt { name } => write!(f, "@{}", name),
+            Entity::GlobalConst { name, t } => write!(f, "@{}", name),
         }
     }
 }
@@ -258,11 +258,11 @@ impl Display for FunctionDef {
 impl Display for LLVM {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self {
-            LLVM::DeclFunction { decl } => write!(f, "{}", decl),
-            LLVM::DeclStruct { decl } => write!(f, "{}", decl),
+            LLVM::DeclFunction { decl } => write!(f, "{}\n", decl),
+            LLVM::DeclStruct { decl } => write!(f, "{}\n", decl),
             LLVM::DeclString { decl } => write!(f, "{}", decl),
             LLVM::Function { def } => write!(f, "{}", def),
-            LLVM::DeclVTable { decl } => {write!(f, "{}", decl)},
+            LLVM::DeclVTable { decl } => {write!(f, "{}\n", decl)},
         }
     }
 }

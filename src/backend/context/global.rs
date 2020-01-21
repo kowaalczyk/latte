@@ -160,19 +160,19 @@ impl GlobalContext {
         new_struct
     }
 
-    fn get_struct_name(&self, class_name: &String) -> String {
+    pub fn get_struct_name(&self, class_name: &String) -> String {
         format!("__class__{}", class_name)
     }
 
-    fn get_size_constant_name(&self, class_name: &String) -> String {
+    pub fn get_size_constant_name(&self, class_name: &String) -> String {
         format!("__sizeof__{}", class_name.clone())
     }
 
-    fn get_vtable_struct_name(&self, class_name: &String) -> String {
+    pub fn get_vtable_struct_name(&self, class_name: &String) -> String {
         format!("__vtable_type__{}", class_name)
     }
 
-    fn get_vtable_struct_const(&self, class_name: &String) -> String {
+    pub fn get_vtable_struct_const(&self, class_name: &String) -> String {
         format!("__vtable_const__{}", class_name)
     }
 

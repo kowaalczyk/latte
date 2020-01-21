@@ -377,7 +377,7 @@ impl FunctionCompiler {
 
                 // load size of array struct
                 let load_struct_size = InstructionKind::Load {
-                    ptr: Entity::GlobalConstInt { name: self.global_context.get_array_struct_size_name(&arr_item_t) }
+                    ptr: Entity::GlobalConst { name: self.global_context.get_array_struct_size_name(&arr_item_t), t: Type::Int.reference() }
                 };
                 let struct_size_ent = self.function_context.new_register(Type::Int);
                 self.builder.push_instruction(load_struct_size.with_result(struct_size_ent.clone()));

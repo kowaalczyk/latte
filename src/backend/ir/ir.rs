@@ -21,7 +21,7 @@ pub enum Entity {
     Bool { v: bool, uuid: usize },
     Register { n: usize, t: Type },
     NamedRegister { name: String, t: Type },
-    GlobalConstInt { name: String },
+    GlobalConst { name: String, t: Type },
 }
 
 impl Entity {
@@ -43,7 +43,7 @@ impl GetType for Entity {
             Entity::Bool { .. } => Type::Bool,
             Entity::Register { n: _, t } => t.clone(),
             Entity::NamedRegister { name: _, t } => t.clone(),
-            Entity::GlobalConstInt { .. } => Type::Reference { t: Box::new(Type::Int) },
+            Entity::GlobalConst { name: _, t } => t.clone(),
         }
     }
 }

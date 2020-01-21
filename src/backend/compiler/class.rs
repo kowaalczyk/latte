@@ -22,13 +22,26 @@ impl ClassCompiler {
 
     /// creates and compiles init function, used to initialize the struct representing a class
     pub fn compile_init_function(
-        &mut self, func_name: String, struct_decl: StructDecl, struct_t: Type
+        &mut self, class_name: &String, struct_decl: StructDecl, struct_t: Type
     ) -> FunctionDef {
+        let vtable_struct_t = Type::BuiltinClass {
+            ident: self.global_context.get_vtable_struct_name(class_name)
+        };
+        let vtable_constant_name = self.global_context.get_vtable_struct_const(class_name);
+
         // prepare necessary entities
-        let load_ptr = Entity::GlobalConstInt { name: struct_decl.size_constant_name };
+        let load_ptr = Entity::GlobalConst {
+            name: struct_decl.size_constant_name.clone(),
+            t: Type::Int.reference()
+        };
         let load_ent = Entity::Register { n: 1, t: Type::Int };
         let array_init_ent = Entity::Register { n: 2, t: Type::Str };
         let return_ent = Entity::Register { n: 3, t: struct_t.clone() };
+        let vtable_ptr = Entity::Register {
+            n: 4,
+            t: Type::Reference { t: Box::new(vtable_struct_t.clone()) }
+        };
+        let vtable_ent = Entity::GlobalConst { name: vtable_constant_name, t: vtable_struct_t };
 
         let instructions = vec![
             // first, we load global constant representing the structure size
@@ -40,17 +53,27 @@ impl ClassCompiler {
                 func: String::from("__builtin_method__array__init__"),
                 args: vec![load_ent]
             }.with_result(array_init_ent.clone()),
-            // before returning, we cast the result to appropriate type
+            // then we cast the result to appropriate type
             InstructionKind::BitCast {
                 ent: array_init_ent,
                 to: struct_t.clone()
             }.with_result(return_ent.clone()),
+            // before retuning we also need to assign the right vtable to initial struct member
+            InstructionKind::GetStructElementPtr {
+                container_type_name: struct_decl.llvm_name(),
+                var: return_ent.clone(),
+                idx: Entity::Int { v: 0, uuid: 0 }
+            }.with_result(vtable_ptr.clone()),
+            InstructionKind::Store {
+                val: vtable_ent,
+                ptr: vtable_ptr
+            }.without_result(),
             InstructionKind::RetVal {
                 val: return_ent
             }.without_result()
         ];
         let func_def = FunctionDef {
-            name: func_name,
+            name: self.global_context.get_init_name(class_name),
             ret_type: struct_t,
             args: vec![],
             body: vec![BasicBlock {
@@ -66,7 +89,7 @@ impl ClassCompiler {
         let mut compiled_functions = Vec::new();
 
         let init_func = self.compile_init_function(
-            self.global_context.get_init_name(class.get_key()), struct_decl, class.get_type()
+            class.get_key(), struct_decl, class.get_type()
         );
         compiled_functions.push(init_func);
 
