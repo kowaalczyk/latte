@@ -6,31 +6,26 @@ written in Rust.
 
 ## Development status
 
-All basic features are implemented and pass provided test cases,
-the extensions are partially implemented (most of the frontend is done, while backend not even started yet).
+All features except garbage collection are implemented and pass provided test cases.
 
-- Front end (4p): done
-    - parser: done
-    - syntax tree pre-processing: done
-    - typechecker: done
-    - error handling: done
-- LLVM backend (8p): in progress
-    - code generation: done
-    - runtime: done, without extensions
-    - optimizations: todo
-- SSA (1p): done
-- structs (2p): done
-- tables (2p): done
-
-- classes (3p): in progress
-    - frontend: done
-    - backend: in progress
-
-- virtual methods (3p): in progress
-    - frontend: done
-    - backend: todo
-
-- garbage collection (2p): todo
+- [x] Front end (4p)
+    - parser
+    - syntax tree pre-processing
+    - typechecker
+    - error handling
+- [x] LLVM backend (8p)
+    - code generation
+    - runtime
+    - optimizations
+- [x] SSA (1p)
+- [x] structs (2p)
+- [x] tables (2p)
+- [x] classes (3p)
+- [x] virtual methods (3p)
+- [ ] garbage collection (2p)
+- [ ] code refactor
+- [ ] generated docs
+- [ ] integration with [community-created tests](https://github.com/tomwys/mrjp-tests)
 
 
 ## How to use
@@ -147,12 +142,24 @@ Definition and detailed documentation of these structures can be found [here](sr
 Frontend module handles most of the heavy tasks, and because no backend optimizations are implemented yet
 the `backend` module consists of the single `backend::compiler` submodule.
 
-The [compiler structure](src/backend/compiler.rs) implements a `AstVisitor` pattern
-(trait implementation for compiler is defined [here](src/backend/compiler/visitor.rs)) 
-that walks the abstract syntax tree and assembles the program into a list of LLVM statements. 
-These statements are a part of the compiler internal representation format (defined [here](src/backend/compiler/ir.rs)), 
-and implement the `Display` trait (implementation defined [here](src/backend/compiler/display.rs)) 
-that allows to represent them as LLVM IR instructions during string conversion.
+The compiler is separated into 3 structures, responsible for compiling entire `Program`, single `Class` and single `Function`.
+Most of the logic (expression and statement compilation) is implemented in [FunctionCompiler](src/backend/compiler/function.rs).
+The rest of the logic is also implemented in the [compiler submodule](src/backend/compiler/mod.rs).
+Output of the compiler structures uses internal representation format (defined [here](src/backend/compiler/ir.rs)), 
+which implements the `Display` trait (implementation defined [here](src/backend/compiler/display.rs)) 
+that allows to convert it directly to LLVM IR instructions during string conversion.
+
+To allow easy management of dependencies, such as next number of free llvm register or local environment,
+I separated this logic into `Context` classes, defined in [context submodule](src/backend/context/mod.rs).
+
+The part I found the trickiest and most error-prone is correct generation of LLVM PHI nodes - to help myself with
+that process I defined `BlockBuilder` class that is responsible for adding instructions to the block, and keeping
+track of their numbering in case it needs to be altered - which is also triggered automatically as soon as the 
+block ends. The instructions are re-mapped to use new register numbers after phi nodes are added, and sometimes 
+(esp. in case of loops) the same mapping has to apply to other blocks. To do this, I added `MapEntities` trait
+that performs this task. Implementation of this trait, as well as `BlockBuilder` class can be found [here](src/backend/builder.rs).
+
+Other implementation details are documented in individual files. 
 
 
 **Public interface**

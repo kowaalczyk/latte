@@ -203,7 +203,6 @@ impl GlobalContext {
             field_env.insert(String::from("array"), 1);
 
             let array_struct = StructDecl {
-                // TODO: Ensure if there are no special symbols in type name (!!!)
                 name: self.get_array_struct_name(item_t),
                 size_constant_name: self.get_array_struct_size_name(item_t),
                 fields: vec![Type::Int, Type::Reference { t: Box::new(item_t.clone()) }],

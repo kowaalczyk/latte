@@ -23,7 +23,7 @@ release: runtime
 	chmod +x latc_llvm latc
 
 clean:
-	rm latc latc_llvm
+	-rm latc latc_llvm
 	find tests -name '*.ll' | xargs rm
 	find tests -name '*.bc' | xargs rm
 	find tests -name '*.realout' | xargs rm

@@ -305,7 +305,7 @@ impl FunctionCompiler {
                         for (idx, arg) in args.iter().enumerate() {
                             let arg_ent = self.compile_expression(arg.as_ref().clone());
                             let arg_ent = self.cast_to_expected_type(arg_ent, method_arg_types[idx+1].as_ref().clone());
-                            args_with_self.push(arg_ent); // TODO: Casting
+                            args_with_self.push(arg_ent);
                         }
 
                         // call method, pass object reference as the 1st argument
@@ -390,10 +390,21 @@ impl FunctionCompiler {
 
                         // build args: self, compiled results of passed expressions
                         let mut args_with_self = Vec::new();
-                        args_with_self.push(obj_ent); // TODO: Casting
-                        for arg in args {
-                            let arg_ent = self.compile_expression(*arg);
-                            args_with_self.push(arg_ent); // TODO: Casting
+
+                        // TODO: Refactor, this was also repeated in ClassCompiler
+                        let method_arg_types = if let Type::Function { args, ret } = method_t.clone() {
+                            args
+                        } else {
+                            panic!("Expected function type, got {}", method_t)
+                        };
+
+                        let obj_ent = self.cast_to_expected_type(obj_ent, method_arg_types[0].as_ref().clone());
+                        args_with_self.push(obj_ent);
+
+                        for (idx, arg) in args.iter().enumerate() {
+                            let arg_ent = self.compile_expression(arg.as_ref().clone());
+                            let arg_ent = self.cast_to_expected_type(arg_ent, method_arg_types[idx+1].as_ref().clone());
+                            args_with_self.push(arg_ent);
                         }
 
                         // call method, pass object reference as the 1st argument
