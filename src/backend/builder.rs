@@ -6,6 +6,7 @@ use crate::backend::ir::{BasicBlock, Entity, GetEntity, Instruction, Instruction
 use crate::frontend::ast::Type;
 use crate::meta::{GetType, Meta};
 use crate::util::env::Env;
+use regex::internal::Inst;
 
 #[derive(Debug, Clone)]
 pub struct BlockBuilder {
@@ -239,6 +240,12 @@ impl MapEntities for Instruction {
             }
             InstructionKind::Call { func, args } => {
                 InstructionKind::Call {
+                    func: func.clone(),
+                    args: args.iter().map(|arg| arg.map_entities(increment_mapper, direct_mapping)).collect(),
+                }
+            }
+            InstructionKind::CallReference { func, args } => {
+                InstructionKind::CallReference {
                     func: func.clone(),
                     args: args.iter().map(|arg| arg.map_entities(increment_mapper, direct_mapping)).collect(),
                 }

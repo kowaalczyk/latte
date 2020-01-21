@@ -1,6 +1,6 @@
 use crate::backend::context::{BlockContext, FunctionContext, GlobalContext};
 use crate::backend::builder::BlockBuilder;
-use crate::frontend::ast::{Function, ArgItem, Expression, ExpressionKind, Type, ReferenceKind, BinaryOperator, Statement, StatementKind, DeclItemKind, StatementOp, Arg};
+use crate::frontend::ast::{Function, ArgItem, Expression, ExpressionKind, Type, Reference, ReferenceKind, BinaryOperator, Statement, StatementKind, DeclItemKind, StatementOp, Arg};
 use crate::meta::{TypeMeta, GetType};
 use crate::backend::ir::{FunctionDef, Entity, InstructionKind};
 
@@ -91,6 +91,11 @@ impl FunctionCompiler {
         }
     }
 
+    // TODO: This is not as modular as it looks, probably beter to have separate functions for load & store
+    fn compile_object_gep(&mut self, class_name: &String, member_name: &String, obj_ent: Entity) -> Entity {
+        unimplemented!()
+    }
+
     /// compiles instructions necessary to access array_ent at idx_ent as a reference entity
     fn compile_array_gep(&mut self, array_item_t: Type, array_ent: Entity, idx_ent: Entity) -> Entity {
         // get ptr to raw array from array struct
@@ -150,6 +155,18 @@ impl FunctionCompiler {
             ret.as_ref().clone()
         } else {
             panic!("invalid function type in compiler: {:?}", t)
+        }
+    }
+
+    /// perform cast if entity type is different than t
+    fn cast_to_expected_type(&mut self, ent: Entity, t: Type) -> Entity {
+        if ent.get_type() != t {
+            let cast_instr = InstructionKind::BitCast { ent, to: t.clone() };
+            let result_ent = self.function_context.new_register(t);
+            self.builder.push_instruction(cast_instr.with_result(result_ent.clone()));
+            result_ent
+        } else {
+            ent
         }
     }
 
@@ -255,6 +272,105 @@ impl FunctionCompiler {
 
                         // get reference to method from vtable
                         let vtable_struct = self.global_context.get_vtable_decl(cls);
+                        let method_idx = vtable_struct.method_env.get(field).unwrap();
+                        let method_gep_instr = InstructionKind::GetStructElementPtr {
+                            container_type_name: vtable_struct.llvm_name(),
+                            var: vtable_ent,
+                            idx: Entity::Int { v: *method_idx, uuid: 0 }
+                        };
+                        let method_t = vtable_struct.methods[*method_idx as usize].0.clone();
+                        let method_ptr = self.function_context.new_register(method_t.reference().reference());
+                        self.builder.push_instruction(method_gep_instr.with_result(method_ptr.clone()));
+
+                        // load method
+                        let method_load_instr = InstructionKind::Load {
+                            ptr: method_ptr
+                        };
+                        let method_ent = self.function_context.new_register(method_t.reference());
+                        self.builder.push_instruction(method_load_instr.with_result(method_ent.clone()));
+
+                        // build args: self, compiled results of passed expressions
+                        let mut args_with_self = Vec::new();
+
+                        // TODO: Refactor, this was also repeated in ClassCompiler
+                        let method_arg_types = if let Type::Function { args, ret } = method_t.clone() {
+                            args
+                        } else {
+                            panic!("Expected function type, got {}", method_t)
+                        };
+
+                        let obj_ent = self.cast_to_expected_type(obj_ent, method_arg_types[0].as_ref().clone());
+                        args_with_self.push(obj_ent);
+
+                        for (idx, arg) in args.iter().enumerate() {
+                            let arg_ent = self.compile_expression(arg.as_ref().clone());
+                            let arg_ent = self.cast_to_expected_type(arg_ent, method_arg_types[idx+1].as_ref().clone());
+                            args_with_self.push(arg_ent); // TODO: Casting
+                        }
+
+                        // call method, pass object reference as the 1st argument
+                        let call_instr = InstructionKind::CallReference {
+                            func: method_ent,
+                            args: args_with_self
+                        };
+                        // function return type determines whether we store or forget the return value
+                        // TODO: refactor to 1 method (same as for regular function)
+                        match Self::get_function_return_type(&method_t) {
+                            Type::Void => {
+                                self.builder.push_instruction(call_instr.without_result());
+                                // typechecker guarantees we don't use this so just return a placeholder
+                                Entity::Null { uuid: 0, t: Type::Null }
+                            }
+                            t => {
+                                let result_ent = self.function_context.new_register(t);
+                                self.builder.push_instruction(call_instr.with_result(result_ent.clone()));
+                                result_ent
+                            }
+                        }
+                    }
+                    ReferenceKind::TypedMemberObject { self_cls, obj, obj_class, field } => {
+                        let obj_type = Type::Class { ident: self_cls.clone() };
+                        let expr_kind = ExpressionKind::Reference {
+                            r: Reference::new(
+                                ReferenceKind::TypedObject {
+                                    obj: String::from("self"),
+                                    cls: self_cls.clone(),
+                                    field: obj.clone()
+                                },
+                                TypeMeta { t: obj_type.clone() }
+                            )
+                        };
+                        let obj_ent = self.compile_expression(Expression::new(expr_kind, TypeMeta { t: obj_type.clone() }));
+
+                        // now we can perform actual call, in the same way as for TypedObject
+                        let struct_decl = self.global_context.get_struct_decl(obj_class);
+
+                        let vtable_t = Type::BuiltinClass {
+                            ident: self.global_context.vtable_struct_name(obj_class)
+                        };
+                        let vtable_constant_name = Entity::GlobalConst {
+                            name: self.global_context.vtable_struct_const(obj_class),
+                            t: vtable_t.clone()
+                        };
+
+                        // get vtable reference
+                        let vtable_gep_instr = InstructionKind::GetStructElementPtr {
+                            container_type_name: struct_decl.llvm_name(),
+                            var: obj_ent.clone(),
+                            idx: Entity::Int { v: 0, uuid: 0 }
+                        };
+                        let vtable_gep_reg = self.function_context.new_register(vtable_t.reference());
+                        self.builder.push_instruction(vtable_gep_instr.with_result(vtable_gep_reg.clone()));
+
+                        // load vtable
+                        let vtable_load_instr = InstructionKind::Load {
+                            ptr: vtable_gep_reg
+                        };
+                        let vtable_ent = self.function_context.new_register(vtable_t.clone());
+                        self.builder.push_instruction(vtable_load_instr.with_result(vtable_ent.clone()));
+
+                        // get reference to method from vtable
+                        let vtable_struct = self.global_context.get_vtable_decl(obj_class);
                         let method_idx = vtable_struct.method_env.get(field).unwrap();
                         let method_gep_instr = InstructionKind::GetStructElementPtr {
                             container_type_name: vtable_struct.llvm_name(),
@@ -528,6 +644,40 @@ impl FunctionCompiler {
 
                         load_reg
                     }
+                    ReferenceKind::TypedMemberObject { self_cls, obj, obj_class, field } => {
+                        // TODO: Refactor references (!!!)
+                        let obj_type = Type::Class { ident: self_cls.clone() };
+                        let expr_kind = ExpressionKind::Reference {
+                            r: Reference::new(
+                                ReferenceKind::TypedObject {
+                                    obj: String::from("self"),
+                                    cls: self_cls.clone(),
+                                    field: obj.clone()
+                                },
+                                TypeMeta { t: obj_type.clone() }
+                            )
+                        };
+                        let obj_ent = self.compile_expression(Expression::new(expr_kind, TypeMeta { t: obj_type.clone() }));
+
+                        // get reference to the field in the referenced object
+                        let obj_struct_decl = self.global_context.get_struct_decl(obj_class);
+                        let field_idx = *obj_struct_decl.field_env.get(field).unwrap();
+                        let field_t: &Type = obj_struct_decl.fields.get(field_idx as usize).unwrap();
+
+                        let field_gep_instr = InstructionKind::GetStructElementPtr {
+                            container_type_name: obj_struct_decl.llvm_name(),
+                            var: obj_ent,
+                            idx: Entity::Int { v: field_idx, uuid: 0 }
+                        };
+                        let field_gep_reg = self.function_context.new_register(field_t.reference());
+                        self.builder.push_instruction(field_gep_instr.with_result(field_gep_reg.clone()));
+
+                        let field_ent = self.function_context.new_register(field_t.clone());
+                        let field_load_instr = InstructionKind::Load { ptr: field_gep_reg };
+                        self.builder.push_instruction(field_load_instr.with_result(field_ent.clone()));
+
+                        field_ent
+                    }
                     ReferenceKind::Object { obj, field } => {
                         panic!(
                             "Reference to {} should've been converted to TypedObject before compiling",
@@ -646,7 +796,9 @@ impl FunctionCompiler {
                         }
                         DeclItemKind::Init { ident, val } => {
                             // collect instructions from the expression
+                            let result_t = t.clone();
                             let original_ent = self.compile_expression(*val);
+                            let original_ent = self.cast_to_expected_type(original_ent, result_t);
                             let entity = self.make_unique_entity(original_ent);
                             (entity, ident)
                         }
@@ -659,6 +811,7 @@ impl FunctionCompiler {
             StatementKind::Ass { r, expr } => {
                 // collect instructions from the expression
                 let original_ent = self.compile_expression(*expr);
+                let original_ent = self.cast_to_expected_type(original_ent, r.get_type());
 
                 // get entity with a pointer to the referenced variable TODO: Refactor-out
                 match &r.item {

@@ -122,6 +122,7 @@ pub enum ReferenceKind<MetaT> {
     // after typechecker mapping:
     ArrayLen { ident: String },
     TypedObject { obj: String, cls: String, field: String },
+    TypedMemberObject { self_cls: String, obj: String, obj_class: String, field: String }
 }
 
 pub type Reference<MetaT> = AstItem<ReferenceKind<MetaT>, MetaT>;

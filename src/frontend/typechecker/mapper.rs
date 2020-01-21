@@ -47,13 +47,24 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     let cls = self.get_class(var_t, loc)?;
                     let field_t = self.get_instance_variable(cls, field, loc)?;
 
-                    // map reference to TypedObject, backend needs to know the name of the class
-                    let mapped_ref = ReferenceKind::TypedObject {
-                        obj: obj.clone(),
-                        cls: cls.item.get_key().clone(),
-                        field: field.clone()
-                    };
-                    Ok((mapped_ref, field_t.clone()))
+                    if self.is_class_variable(obj) {
+                        // map reference to TypedMemberObject, backend needs more than just name of the class
+                        let typed_self_reference = ReferenceKind::TypedMemberObject {
+                            self_cls: self.get_current_class().unwrap().item.get_key().clone(),
+                            obj: obj.clone(),
+                            obj_class: cls.item.get_key().clone(),
+                            field: field.clone(),
+                        };
+                        Ok((typed_self_reference, field_t.clone()))
+                    } else {
+                        // map reference to TypedObject, backend needs to know the name of the class
+                        let mapped_ref = ReferenceKind::TypedObject {
+                            obj: obj.clone(),
+                            cls: cls.item.get_key().clone(),
+                            field: field.clone()
+                        };
+                        Ok((mapped_ref, field_t.clone()))
+                    }
                 }
             }
             ReferenceKind::ObjectSelf { field } => {
@@ -96,11 +107,7 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                     Err(vec![FrontendError::new(kind, loc.clone())])
                 }
             }
-            ReferenceKind::ArrayLen { ident } => {
-                // parser never creates these, ArrayLen can only be a result of a transformation
-                unreachable!();
-            }
-            ReferenceKind::TypedObject { obj: _, cls: _, field: _ } => { unreachable!() }
+            _ => unreachable!()
         };
         match typecheck_result {
             Ok((kind, t)) => {
@@ -123,12 +130,24 @@ impl AstMapper<LocationMeta, TypeMeta, FrontendError<LocationMeta>> for TypeChec
                 let cls = self.get_class(var_t, loc)?;
                 let method_t = self.get_method(cls, field, loc)?;
 
-                let typed_reference = ReferenceKind::TypedObject {
-                    obj: obj.clone(),
-                    cls: cls.item.get_key().clone(),
-                    field: field.clone()
-                };
-                Ok((typed_reference, method_t.clone()))
+                // similarly to the variable case, if we refer to member function of a class member
+                // we need to provide additional information about self class for the compiler
+                if self.is_class_variable(obj) {
+                    let typed_self_reference = ReferenceKind::TypedMemberObject {
+                        self_cls: self.get_current_class().unwrap().item.get_key().clone(),
+                        obj: obj.clone(),
+                        obj_class: cls.item.get_key().clone(),
+                        field: field.clone(),
+                    };
+                    Ok((typed_self_reference, method_t.clone()))
+                } else {
+                    let typed_reference = ReferenceKind::TypedObject {
+                        obj: obj.clone(),
+                        cls: cls.item.get_key().clone(),
+                        field: field.clone()
+                    };
+                    Ok((typed_reference, method_t.clone()))
+                }
             }
             ReferenceKind::ObjectSelf { field } => {
                 if let Some(cls) = self.get_current_class() {
