@@ -1,7 +1,7 @@
 # Latte
 
-An LLVM compiler for language [Latte](https://www.mimuw.edu.pl/~ben/Zajecia/Mrj2019/Latte/description.html) (subset of Java),
-written in Rust.
+An LLVM compiler for [Latte](https://www.mimuw.edu.pl/~ben/Zajecia/Mrj2019/Latte/description.html) 
+(imperative & object-oriented programming language, similar to Java or C++), written in Rust.
 
 
 ## Development status
